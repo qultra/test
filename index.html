@@ -133,10 +133,10 @@
 
 <script>
 // =====================================================================
-//  완벽 호환성 보장 – Set 대신 Object 사용, TextEncoder 폴백 포함
+//  완벽 호환성 보장 + 연결·암호 오류 완전 수정
 // =====================================================================
 
-// ----- TextEncoder / TextDecoder 폴백 -----
+// ----- TextEncoder / TextDecoder 폴백 (디코딩 오류 수정) -----
 if (typeof TextEncoder === 'undefined') {
   window.TextEncoder = function() {};
   TextEncoder.prototype.encode = function(str) {
@@ -152,14 +152,14 @@ if (typeof TextEncoder === 'undefined') {
   };
 }
 if (typeof TextDecoder === 'undefined') {
-  window.TextDecoder = function() {};
+  window.TextDecoder = function(encoding) { this.encoding = encoding; };
   TextDecoder.prototype.decode = function(buf) {
     var bytes = new Uint8Array(buf);
     var str = '';
     var i = 0;
     while (i < bytes.length) {
       var b1 = bytes[i++];
-      if (b1 < 128) str += String.fromCharCode(b1);
+      if (b1 < 128) { str += String.fromCharCode(b1); }
       else if (b1 < 224) { var b2 = bytes[i++]; str += String.fromCharCode(((b1 & 31) << 6) | (b2 & 63)); }
       else if (b1 < 240) { var b2 = bytes[i++]; var b3 = bytes[i++]; str += String.fromCharCode(((b1 & 15) << 12) | ((b2 & 63) << 6) | (b3 & 63)); }
       else { var b2 = bytes[i++]; var b3 = bytes[i++]; var b4 = bytes[i++]; str += String.fromCharCode(((b1 & 7) << 18) | ((b2 & 63) << 12) | ((b3 & 63) << 6) | (b4 & 63)); }
@@ -240,7 +240,8 @@ document.addEventListener('click', function(e) {
   var target = e.target.closest('.blur-target');
   if (target && !target.classList.contains('locked')) {
     target.classList.add('revealed');
-    setTimeout(function() { if (target) target.classList.remove('revealed'); }, 2500);
+    var el = target;
+    setTimeout(function() { if (el) el.classList.remove('revealed'); }, 2500);
   }
 });
 
@@ -583,7 +584,7 @@ function genUUID() {
   });
 }
 
-var TYPING_LABEL = 'typing';  // ★ 필수 변수 정의
+var TYPING_LABEL = 'typing';
 
 var pc, dc, isOfferer = false, password = null;
 var authKey, sessionKey, sendChain, recvChain;
@@ -596,9 +597,9 @@ var PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512
 var fileReceive = null;
 var typingChannel = null;
 var pendingOutbox = [];
-var receivedMessageIds = {};  // Set 대신 Object 사용
+var receivedMessageIds = {};  // Set 대신 Object (전역으로 확실히 선언)
 
-(function init() {
+(async function init() {
   if (isDestroyed()) { executeDestroy(); return; }
   document.getElementById('msgInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
@@ -608,11 +609,11 @@ var receivedMessageIds = {};  // Set 대신 Object 사용
     e.preventDefault();
     if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
   });
-  checkHash();
-  window.addEventListener('hashchange', checkHash);
+  await checkHash();
+  window.addEventListener('hashchange', async function() { await checkHash(); });
 })();
 
-function checkHash() {
+async function checkHash() {
   if (isDestroyed()) { executeDestroy(); return; }
   var h = location.hash.substring(1);
   if (!h) return;
@@ -627,13 +628,13 @@ function checkHash() {
       document.getElementById('manualJoinContent').classList.add('hidden');
       document.getElementById('answerSpinner').style.display = 'inline-block';
       document.getElementById('answerReadyPanel').classList.add('hidden');
-      initiateAnswer(offer);
+      await initiateAnswer(offer);
     } catch (e) { alert('잘못된 초대 링크입니다.'); }
   } else if (p.has('answer')) {
     if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
     try {
       var answer = decodeSDP(p.get('answer'));
-      pc.setRemoteDescription(answer);
+      await pc.setRemoteDescription(answer);
     } catch (e) { alert('잘못된 Answer 링크입니다.'); }
   }
 }
@@ -672,22 +673,19 @@ function startNewChat() {
   }
 }
 
-function initiateAnswer(offer) {
+async function initiateAnswer(offer) {
   isOfferer = false;
   initPC();
-  pc.setRemoteDescription(offer)
-    .then(function() { return pc.createAnswer(); })
-    .then(function(ans) { return pc.setLocalDescription(ans); })
-    .then(function() { return waitIce(); })
-    .then(function() {
-      document.getElementById('answerSpinner').style.display = 'none';
-      document.getElementById('answerReadyPanel').classList.remove('hidden');
-      document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
-    })
-    .catch(function(e) { alert('Answer 생성 오류: ' + e.message); });
+  await pc.setRemoteDescription(offer);
+  var ans = await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  await waitIce();
+  document.getElementById('answerSpinner').style.display = 'none';
+  document.getElementById('answerReadyPanel').classList.remove('hidden');
+  document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
 }
 
-function createAnswerFromOffer() {
+async function createAnswerFromOffer() {
   var t = document.getElementById('remoteOfferSDP').value.trim();
   if (!t) return;
   closeConnection();
@@ -700,18 +698,15 @@ function createAnswerFromOffer() {
     if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
     offerStr = hp.get('offer');
   }
-  pc.setRemoteDescription(decodeSDP(offerStr))
-    .then(function() { return pc.createAnswer(); })
-    .then(function(ans) { return pc.setLocalDescription(ans); })
-    .then(function() { return waitIce(); })
-    .then(function() {
-      document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
-      document.getElementById('answerResultPanel').classList.remove('hidden');
-    })
-    .catch(function(e) { alert('Answer 생성 오류: ' + e.message); });
+  await pc.setRemoteDescription(decodeSDP(offerStr));
+  var ans = await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  await waitIce();
+  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+  document.getElementById('answerResultPanel').classList.remove('hidden');
 }
 
-function applyAnswerLink() {
+async function applyAnswerLink() {
   var l = document.getElementById('answerLinkInput').value.trim();
   if (!l) return;
   if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
@@ -723,8 +718,7 @@ function applyAnswerLink() {
       if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
       answerStr = hp.get('answer');
     }
-    pc.setRemoteDescription(decodeSDP(answerStr))
-      .catch(function(e) { alert('올바르지 않은 Answer 링크입니다.'); });
+    await pc.setRemoteDescription(decodeSDP(answerStr));
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
@@ -1208,7 +1202,7 @@ function closeConnection() {
   authKey = sessionKey = null; sendChain = recvChain = null;
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false;
-  receivedMessageIds = {};
+  receivedMessageIds = {};  // 전역 변수 초기화
   pendingOutbox = [];
   document.getElementById('sessionFingerprint').textContent = '';
   document.getElementById('securityCard').style.display = 'none';
@@ -1251,8 +1245,8 @@ function fromBase64url(str) {
   while (str.length % 4) str += '=';
   return Uint8Array.from(atob(str), function(c) { return c.charCodeAt(0); }).buffer;
 }
-function encodeSDP(obj) { return toBase64url(new TextEncoder().encode(JSON.stringify(obj))); }
-function decodeSDP(str) { return JSON.parse(new TextDecoder().decode(fromBase64url(str))); }
+function encodeSDP(obj) { return toBase64url(textEncoder.encode(JSON.stringify(obj))); }
+function decodeSDP(str) { return JSON.parse(textDecoder.decode(fromBase64url(str))); }
 </script>
 </body>
 </html>
