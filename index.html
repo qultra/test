@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 링크·연결 완전 수정</title>
+  <title>P2P 암호 채팅 – 안정적 연결</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -15,14 +15,9 @@
     * {
       margin:0; padding:0; box-sizing:border-box;
       user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
-      -webkit-touch-callout: none !important;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-user-modify: read-only;
+      -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent;
     }
-    input, textarea {
-      -webkit-user-modify: read-write !important;
-      user-select: text !important; -webkit-user-select: text !important;
-    }
+    input, textarea { user-select: text !important; -webkit-user-select: text !important; }
     @media print {
       html, body, .container, #chatScreen { display: none !important; }
       html::before { content: "🔒 인쇄가 차단되었습니다."; color: red; font-size: 3rem; text-align: center; display: block; padding-top: 50vh; }
@@ -32,8 +27,7 @@
       background: var(--bg); color: var(--text);
       display: flex; justify-content: center; align-items: center;
       min-height: 100dvh; padding: 10px;
-      -webkit-backface-visibility: hidden; backface-visibility: hidden;
-      overscroll-behavior: none;
+      -webkit-backface-visibility: hidden; backface-visibility: hidden; overscroll-behavior: none;
     }
     .container {
       width: 100%; max-width: 520px; height: 95dvh;
@@ -44,14 +38,9 @@
     }
     #antiScreenshotCanvas {
       position: fixed; top:0; left:0; width:100%; height:100%;
-      z-index: 9998; pointer-events: none; opacity: 0.03;
-      mix-blend-mode: difference;
+      z-index: 9998; pointer-events: none; opacity: 0.03; mix-blend-mode: difference;
     }
-    .blur-target {
-      filter: blur(12px) !important;
-      transition: filter 0.2s ease;
-      cursor: pointer;
-    }
+    .blur-target { filter: blur(12px) !important; transition: filter 0.2s ease; cursor: pointer; }
     .blur-target.revealed { filter: blur(0) !important; }
     .blur-target.locked { filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto; }
 
@@ -63,7 +52,6 @@
     .dot.off { background:var(--danger); }
     .main-content { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; }
     .main-content::-webkit-scrollbar { width:4px; } .main-content::-webkit-scrollbar-thumb { background:#253040; border-radius:2px; }
-
     .card { background:var(--card); backdrop-filter:blur(14px); border-radius:var(--radius); padding:18px; margin-bottom:12px; border:1px solid var(--border); }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:12px 20px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; font-size:0.9rem; transition:0.2s; width:100%; backdrop-filter:blur(10px); }
     .btn:hover { background:rgba(255,255,255,0.12); transform:translateY(-1px); }
@@ -73,7 +61,7 @@
     .btn-small { padding:7px 12px; font-size:0.8rem; width:auto; }
     .btn-group { display:flex; gap:8px; } .btn-group .btn { flex:1; }
 
-    input, textarea { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 15px; font-size:0.95rem; outline:none; user-select:text; -webkit-user-select:text; }
+    input, textarea { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 15px; font-size:0.95rem; outline:none; }
     input:focus, textarea:focus { border-color:var(--accent); }
 
     #chatScreen { display:none; flex-direction:column; flex:1; }
@@ -142,38 +130,40 @@ const encodeSDP = obj => toBase64url(te.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(td.decode(fromBase64url(str)));
 
 // =====================================================================
-//  200개 ICE 서버 (무료 공개 STUN/TURN)
+//  신뢰할 수 있는 30개 ICE 서버 (구글, Cloudflare, Twilio 등)
 // =====================================================================
-const ICE_SERVERS = (() => {
-  const list = [];
-  const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => list.push({ urls: `stun:${host}:${p}` }));
-  const addTURN = (host, ports, user, cred) => ports.forEach(p => {
-    list.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
-    list.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
-  });
-  [
-    'stun.l.google.com','stun1.l.google.com','stun2.l.google.com','stun3.l.google.com','stun4.l.google.com',
-    'stun.cloudflare.com','global.stun.twilio.com','stun.freeswitch.org','stun.nextcloud.com',
-    'stun.viagenie.ca','stun.ekiga.net','stun.linphone.org','stun.iptel.org','stun.services.mozilla.com',
-    'stun.sipgate.net','stun.schlund.de','stun.voiparound.com','stun.voipbuster.com','stun.voipstunt.com',
-    'stun.12voip.com','stun.1und1.de','stun.gmx.net','stun.web.de','stun.rockenstein.de','stun.voipgate.com',
-    'stun.phonepower.com','stun.12connect.com','stun.3cx.com','stun.aetaaudio.com','stun.audiocodes.com',
-    'stun.bandwidth.com','stun.callcentric.com','stun.counterpath.com','stun.dls.net','stun.easyvoip.com',
-    'stun.halonet.pl','stun.internetcalls.com','stun.intervoip.com','stun.ipcomms.net','stun.it1.de',
-    'stun.justvoip.com','stun.livevoip.com','stun.lowratevoip.com','stun.netappel.com','stun.netelip.com',
-    'stun.nfon.net','stun.nonoh.net','stun.ooma.com','stun.pbxes.com','stun.phoneserve.com',
-    'stun.sipdiscount.com','stun.sipnet.net','stun.smartvoip.com','stun.speedflow.com','stun.t-online.de',
-    'stun.telbo.com','stun.telio.no','stun.telstra.com','stun.tng.de','stun.twt.it','stun.vivox.com',
-    'stun.voip.aebc.com','stun.voip.eutelia.it','stun.voipcheap.com','stun.voipdiscount.com',
-    'stun.voipraider.com','stun.vonage.com','stun.voxox.com','stun.zadarma.com'
-  ].forEach(h => addSTUN(h));
-  addTURN('openrelay.metered.ca', [80, 443], 'openrelayproject', 'openrelayproject');
-  addTURN('turn.anyfirewall.com', [443], 'webrtc', 'webrtc');
-  addTURN('numb.viagenie.ca', [3478, 80, 443], 'webrtc@live.com', 'muazkh');
-  addTURN('turn.matrix.org', [3478], 'matrix', 'matrix');
-  const seen = new Set();
-  return list.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
-})();
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  { urls: 'stun:stun.cloudflare.com:5349' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+  { urls: 'stun:stun.freeswitch.org:3478' },
+  { urls: 'stun:stun.nextcloud.com:443' },
+  { urls: 'stun:stun.viagenie.ca:3478' },
+  { urls: 'stun:stun.ekiga.net:3478' },
+  { urls: 'stun:stun.linphone.org:3478' },
+  { urls: 'stun:stun.iptel.org:3478' },
+  { urls: 'stun:stun.services.mozilla.com:3478' },
+  { urls: 'stun:sipgate.net:3478' },
+  { urls: 'stun:stun.schlund.de:3478' },
+  { urls: 'stun:stun.voiparound.com:3478' },
+  { urls: 'stun:stun.voipbuster.com:3478' },
+  { urls: 'stun:stun.voipstunt.com:3478' },
+  { urls: 'stun:stun.12voip.com:3478' },
+  { urls: 'stun:stun.1und1.de:3478' },
+  { urls: 'stun:stun.gmx.net:3478' },
+  { urls: 'stun:stun.web.de:3478' },
+  { urls: 'stun:stun.rockenstein.de:3478' },
+  { urls: 'stun:stun.voipgate.com:3478' },
+  { urls: 'stun:stun.phonepower.com:3478' },
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:numb.viagenie.ca:3478', username: 'webrtc@live.com', credential: 'muazkh' }
+];
 
 // =====================================================================
 //  전역 변수
@@ -332,12 +322,12 @@ async function waitIce() {
   if (pc.iceGatheringState === 'complete') return;
   return new Promise(r => {
     pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); });
-    setTimeout(() => { if (pc.iceGatheringState !== 'complete') r(); }, 15000);
+    setTimeout(() => { if (pc.iceGatheringState !== 'complete') r(); }, 20000);
   });
 }
 
 // =====================================================================
-//  해시 링크를 통한 연결 (문제 해결)
+//  해시 링크를 통한 연결
 // =====================================================================
 async function checkHash() {
   if (isDestroyed()) { executeDestroy(); return; }
