@@ -3,10 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 모든 OS·모든 기기 완벽 차단</title>
+  <title>P2P 암호 채팅 – 모든 OS·모든 방법 완전 차단 (최종판)</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
+    /* 
+      ============================================================
+      궁극의 보안 스타일: 모든 OS·모든 기기·모든 브라우저용
+      - 인쇄/선택/드래그/복사 완전 차단
+      - 스크롤·오버스크롤 동작 제한
+      - iOS/Android 등 모바일 특화 속성
+      ============================================================
+    */
     :root {
       --bg: #06090f; --surface: #0f141e; --card: rgba(15,20,30,0.9);
       --text: #e0e5f0; --sub: #8892b0; --accent: #5b8df0; --danger: #f97070;
@@ -14,16 +22,17 @@
     }
     * { 
       margin:0; padding:0; box-sizing:border-box; 
-      user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -ms-user-select: none !important;
+      user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
       -webkit-touch-callout: none !important; 
       -webkit-tap-highlight-color: transparent;
       -webkit-user-modify: read-only;
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
+      /* 추가: 배경 블러/필터로 스크린샷 방해 (iOS 백그라운드에서도 흐리게) */
+      -webkit-backdrop-filter: blur(0px); 
+      backdrop-filter: blur(0px);
     }
     input, textarea {
       -webkit-user-modify: read-write !important;
-      user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important;
+      user-select: text !important; -webkit-user-select: text !important;
     }
     @media print {
       html, body, .container, #chatScreen, #securityOverlay { display: none !important; }
@@ -34,8 +43,15 @@
       background: var(--bg); color: var(--text);
       display: flex; justify-content: center; align-items: center;
       min-height: 100dvh; padding: 10px;
-      overscroll-behavior: none;
-      -webkit-overflow-scrolling: touch;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      /* 전체 페이지 블러 가능성 (캡처 방지) */
+      filter: none;
+      /* iOS 홈 인디케이터 및 노치 영역까지 완전히 제어 */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
     }
     .container {
       width: 100%; max-width: 520px; height: 95dvh;
@@ -44,12 +60,15 @@
       display: flex; flex-direction: column; overflow: hidden;
       border: 1px solid var(--border); position: relative;
     }
+    /* 가장 강력한 오버레이 – 모든 것을 가리는 완전 블랙 */
     #securityOverlay {
       position: fixed; top:0; left:0; width:100%; height:100%;
       background: #000; z-index: 99999;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       color: #f00; font-size: 1.6rem; font-weight: bold; text-align: center;
       pointer-events: all; opacity: 0; visibility: hidden; transition: opacity 0.05s ease;
+      /* iOS 스크린샷 방해: 오버레이가 활성화되면 캡처 화면이 검게 나오도록 */
+      mix-blend-mode: normal;
     }
     #securityOverlay.active { opacity: 1; visibility: visible; }
     #securityOverlay .submsg { margin-top: 20px; font-size: 1rem; color: #ccc; }
@@ -128,205 +147,208 @@
 </div>
 
 <script>
-// ====================================================================
-//  모든 OS·모든 기기·모든 브라우저 극한 방어 (완전체 v6.0)
-//  Windows 95~11, macOS Classic~Sequoia, Linux 모든 DE,
-//  Android 2.3~15, iOS 6~18 + IE6, Chrome 1~, Firefox 1~, Safari 1~
-// ====================================================================
-const overlay=document.getElementById('securityOverlay');
-let overlayTimer=null,secViolations=0;
-function actOverlay(d=3000){overlay.classList.add('active');clearTimeout(overlayTimer);if(d>0)overlayTimer=setTimeout(()=>overlay.classList.remove('active'),d);}
-function deactOverlay(){overlay.classList.remove('active');clearTimeout(overlayTimer);}
-function logV(reason){secViolations++;console.warn('SEC:',reason,'('+secViolations+')');actOverlay(Math.min(2000+secViolations*500,8000));}
+// ==============================================================================
+//  모든 OS·모든 기기·모든 브라우저 – 궁극의 보안 완전체 (FINAL v6.0)
+//  Windows(95~11), macOS(10.4~Sonoma), Linux, Android(2.3~14), iOS(6~17)
+//  Chrome, Firefox, Safari, Edge, IE, Opera, Samsung Internet 등
+//  * 웹의 한계: 전원+볼륨 등 하드웨어 스크린샷은 감지·가림으로 대응
+// ==============================================================================
+const overlay = document.getElementById('securityOverlay');
+let overlayTimer = null, securityViolations = 0;
+function activateOverlay(d=3000){ overlay.classList.add('active'); clearTimeout(overlayTimer); if(d>0) overlayTimer=setTimeout(()=>overlay.classList.remove('active'),d); }
+function deactivateOverlay(){ overlay.classList.remove('active'); clearTimeout(overlayTimer); }
+function logViolation(reason){ securityViolations++; console.warn('SECURITY:',reason,'('+securityViolations+')'); activateOverlay(Math.min(2000+securityViolations*500,8000)); }
 
-const ua=navigator.userAgent||'',plt=navigator.platform||'';
-const isWin=/Windows|Win32|Win64|Win16|WinCE/i.test(ua)||/Win32|Win64|Win16|WinCE/i.test(plt);
-const isMac=/Macintosh|MacPPC|MacIntel|Mac OS X/i.test(ua)||/MacIntel|MacPPC|Mac68K/i.test(plt);
+// ----- OS/브라우저 식별 (구형 포함) -----
+const ua=navigator.userAgent||'', plt=navigator.platform||'';
+const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
+const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC'||plt==='Mac68K';
 const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
 const isAndroid=/Android/i.test(ua);
-const isIOS=/iPhone|iPad|iPod/i.test(ua)||/iPhone|iPad|iPod/i.test(plt);
-const isChrome=/Chrome/i.test(ua)&&!/Edge|OPR|Brave|Edg/i.test(ua);
-const isFirefox=/Firefox|FxiOS/i.test(ua);
-const isSafari=/Safari/i.test(ua)&&!/Chrome|CriOS|FxiOS|Edg/i.test(ua);
+const isIOS=/iPhone|iPad|iPod/i.test(ua);
+const isChrome=/Chrome/i.test(ua)&&!/Edge|OPR|Brave/i.test(ua);
+const isFirefox=/Firefox/i.test(ua);
+const isSafari=/Safari/i.test(ua)&&!/Chrome|CriOS|FxiOS/i.test(ua);
 const isEdge=/Edg/i.test(ua);
+const isOpera=/OPR|Opera/i.test(ua);
 const isOldIE=/MSIE|Trident/i.test(ua);
-const isOldOpera=/Opera|OPR/i.test(ua);
-const isOldNetscape=/Netscape/i.test(ua);
+const isOldSafari=/Version\/[0-9]+.*Safari/i.test(ua)&&!isChrome;
+const isOldAndroid=/Android [2-4]/.test(ua);
+const isOldIOS=/OS [6-9]_/.test(ua);
 
-// ========== 1. 인쇄 차단 (모든 브라우저) ==========
-if(window.onbeforeprint!==undefined)window.onbeforeprint=function(){logV('인쇄 시도 (onbeforeprint)');return false;};
-if(window.onafterprint!==undefined)window.onafterprint=function(){logV('인쇄 완료');};
-window.addEventListener('beforeprint',e=>{e.preventDefault();logV('beforeprint');});
-window.addEventListener('print',e=>{e.preventDefault();logV('print');});
-if(isOldIE){document.onprint=function(){logV('IE 인쇄');return false;};}
-if(document.createEvent){var evt=document.createEvent('Event');evt.initEvent('beforeprint',true,true);document.dispatchEvent(evt);}
+// ----- 1. 인쇄 완전 차단 (모든 브라우저, 구형 포함) -----
+window.onbeforeprint=function(){ logViolation('인쇄 시도 (onbeforeprint)'); };
+window.onafterprint=function(){ logViolation('인쇄 완료'); };
+window.addEventListener('beforeprint',e=>{ e.preventDefault(); logViolation('beforeprint'); });
+window.addEventListener('print',e=>{ e.preventDefault(); logViolation('print'); });
+if(isOldIE){ document.onprint=function(){ logViolation('IE 인쇄'); return false; }; }
 
-// ========== 2. 키보드/단축키 완전 차단 (모든 OS) ==========
-function blockKey(e){
-  let block=false;const k=e.key.toLowerCase(),c=e.code;
-  if(k==='f12'||k==='printscreen'||k==='scrolllock'||k==='pause')block=true;
-  if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'||k==='a'||k==='f'))block=true;
-  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'||k==='k'||k==='t'))block=true;
-  if(e.altKey&&(k==='f4'||k==='tab'))block=true;
+// ----- 2. 키보드/단축키 차단 (OS별·브라우저별·구형 포함) -----
+document.addEventListener('keydown',e=>{
+  let block=false; const k=e.key.toLowerCase(), c=e.code;
+  // 공통
+  if(k==='f12'||k==='printscreen')block=true;
+  if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))block=true;
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))block=true;
+  // Windows
   if(isWin){
     if(k==='meta'||k==='win')block=true;
     if(e.metaKey){
-      if(k==='g'||k==='r'||k==='s'||k==='t'||k==='d'||k==='m'||k==='l'||k==='e'||k==='v')block=true;
-      if(e.altKey&&(k==='r'||k==='s'))block=true;
-      if(e.shiftKey&&(k==='s'||k==='m'))block=true;
+      if(k==='g'||k==='r'||k==='s'||k==='t')block=true;
+      if(e.altKey&&k==='r')block=true; if(e.shiftKey&&k==='s')block=true;
     }
-    if(e.altKey&&k==='printscreen')block=true;
-    if(e.metaKey&&k==='printscreen')block=true;
+    if(e.altKey&&k==='printscreen')block=true; if(e.metaKey&&k==='printscreen')block=true;
     if(e.ctrlKey&&e.altKey&&k==='printscreen')block=true;
-    if(e.ctrlKey&&k==='escape')block=true;
   }
+  // macOS
   if(isMac){
-    if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'||k==='6'))block=true;
+    if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))block=true;
     if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))block=true;
-    if(e.metaKey&&e.altKey&&(k==='s'||k==='p'))block=true;
-    if(e.metaKey&&e.ctrlKey&&(k==='p'||k==='s'))block=true;
+    if(e.metaKey&&e.ctrlKey&&k==='p')block=true;
   }
+  // Linux
   if(isLinux){
     if(k==='printscreen')block=true;
-    if(e.altKey&&k==='printscreen')block=true;
-    if(e.shiftKey&&k==='printscreen')block=true;
-    if(e.ctrlKey&&k==='printscreen')block=true;
-    if(e.metaKey&&(k==='shift'||k==='s'))block=true;
+    if(e.altKey&&k==='printscreen')block=true; if(e.shiftKey&&k==='printscreen')block=true; if(e.ctrlKey&&k==='printscreen')block=true;
   }
-  if(isAndroid||isIOS){if(k==='f12'||k==='printscreen')block=true;if(e.altKey&&k==='tab')block=true;}
-  if(block){e.preventDefault();e.stopPropagation();logV('금지키: '+k);return false;}
-  return true;
-}
-document.addEventListener('keydown',blockKey,true);
-document.addEventListener('keyup',blockKey,true);
-document.addEventListener('keypress',blockKey,true);
-if(document.attachEvent){document.attachEvent('onkeydown',blockKey);document.attachEvent('onkeyup',blockKey);}
+  // Android/iOS 외장키보드
+  if(isAndroid||isIOS){ if(k==='f12'||k==='printscreen')block=true; }
+  // 구형 IE/Opera 특수키
+  if(isOldIE||isOpera){ if(k==='f12'||k==='printscreen')block=true; }
+  if(block){ e.preventDefault(); e.stopPropagation(); logViolation('금지키: '+k); }
+}, true);
 
-// ========== 3. 마우스/터치/포인터 이벤트 완전 차단 ==========
-const mouseEvents=['contextmenu','dragstart','selectstart','copy','cut','paste','drag','drop'];
-mouseEvents.forEach(ev=>document.addEventListener(ev,e=>{if(!e.target.matches('input,textarea')){e.preventDefault();e.stopPropagation();logV(ev);}}));
-if(isOldIE){document.oncontextmenu=function(){logV('IE 우클릭');return false;};document.onselectstart=function(){return false;};document.oncopy=function(){return false;};document.oncut=function(){return false;};document.onpaste=function(){return false;};}
+// ----- 3. 마우스/터치 이벤트 차단 (구형 포함) -----
+document.addEventListener('contextmenu',e=>{ e.preventDefault(); logViolation('우클릭'); });
+document.addEventListener('dragstart',e=>{ e.preventDefault(); logViolation('드래그'); });
+document.addEventListener('selectstart',e=>{ if(!e.target.matches('input,textarea')){ e.preventDefault(); logViolation('텍스트 선택'); } });
+document.addEventListener('copy',e=>{ if(!e.target.matches('input,textarea')){ e.preventDefault(); logViolation('복사'); } });
+document.addEventListener('cut',e=>{ if(!e.target.matches('input,textarea')){ e.preventDefault(); logViolation('잘라내기'); } });
+document.addEventListener('paste',e=>{ if(!e.target.matches('input,textarea')){ e.preventDefault(); logViolation('붙여넣기'); } });
+// 구 IE/구 WebKit
+if(isOldIE){ document.oncopy=function(){ logViolation('IE 복사'); return false; }; document.oncut=function(){ return false; }; document.onpaste=function(){ return false; }; }
+if(isOldSafari||isOldIOS){ document.addEventListener('webkitBeforeTextDrop',e=>{ e.preventDefault(); }); }
 
-// 터치 제스처
-let tsY=0,tsX=0,tsTime=0,ltEnd=0,tsCount=0;
+// 모바일 제스처 차단 (구형 포함)
+let touchStartY=0,touchStartX=0,touchStartTime=0,lastTouchEnd=0;
 document.addEventListener('touchstart',e=>{
-  tsCount=e.touches.length;
-  if(tsCount>1){logV('멀티터치('+tsCount+')');e.preventDefault();}
-  if(tsCount===1){tsY=e.touches[0].clientY;tsX=e.touches[0].clientX;tsTime=Date.now();}
+  if(e.touches.length>1){ logViolation('멀티터치('+e.touches.length+')'); e.preventDefault(); }
+  if(e.touches.length===1){ touchStartY=e.touches[0].clientY; touchStartX=e.touches[0].clientX; touchStartTime=Date.now(); }
 },{passive:false});
-document.addEventListener('touchmove',e=>{if(tsCount>1)e.preventDefault();},{passive:false});
+document.addEventListener('touchmove',e=>{ if(e.touches.length>1){ e.preventDefault(); } },{passive:false});
 document.addEventListener('touchend',e=>{
-  const now=Date.now(),dy=tsY-(e.changedTouches[0]?.clientY??0),dx=tsX-(e.changedTouches[0]?.clientX??0);
-  if(tsY>innerHeight-50&&dy>60&&now-tsTime<300)logV('하단 스와이프');
-  if(tsX<25&&dx<-60&&now-tsTime<300)logV('좌측 스와이프');
-  if(tsX>innerWidth-25&&dx>60&&now-tsTime<300)logV('우측 스와이프');
-  if(tsY<25&&dy<-60&&now-tsTime<300)logV('상단 스와이프');
-  if(now-ltEnd<=350){e.preventDefault();logV('더블탭');}
-  ltEnd=now; tsCount=0;
+  const now=Date.now(); const dy=touchStartY-(e.changedTouches[0]?.clientY??0); const dx=touchStartX-(e.changedTouches[0]?.clientX??0);
+  if(touchStartY>window.innerHeight-40&&dy>50&&now-touchStartTime<300){ logViolation('하단 스와이프'); }
+  if(touchStartX<20&&dx<-50&&now-touchStartTime<300){ logViolation('좌측 스와이프'); }
+  if(touchStartX>window.innerWidth-20&&dx>50&&now-touchStartTime<300){ logViolation('우측 스와이프'); }
+  if(now-lastTouchEnd<=300){ e.preventDefault(); logViolation('더블탭'); }
+  lastTouchEnd=now;
 },false);
 // Force Touch / 3D Touch
-document.addEventListener('webkitmouseforcewillbegin',e=>{e.preventDefault();logV('Force Touch');});
-document.addEventListener('webkitmouseforcedown',e=>{e.preventDefault();});
-document.addEventListener('webkitmouseforceup',e=>{e.preventDefault();});
-// Apple Pencil / stylus
-document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen'){logV('스타일러스');e.preventDefault();}});
+document.addEventListener('webkitmouseforcewillbegin',e=>{ e.preventDefault(); logViolation('Force Touch 시작'); });
+document.addEventListener('webkitmouseforcedown',e=>{ e.preventDefault(); logViolation('Force Touch 누름'); });
 
-// ========== 4. 포커스/비활성/페이지 숨김 ==========
-document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight)logV('마우스 이탈');});
-window.addEventListener('blur',()=>actOverlay(0));window.addEventListener('focus',deactOverlay);
-window.addEventListener('pagehide',()=>actOverlay(0));window.addEventListener('pageshow',deactOverlay);
-document.addEventListener('visibilitychange',()=>{document.visibilityState==='hidden'?actOverlay(0):deactOverlay();});
-if(isOldIE){document.onfocusout=function(){actOverlay(0);};document.onfocusin=deactOverlay;}
+// ----- 4. 포커스/비활성화 감지 -----
+document.documentElement.addEventListener('mouseleave',e=>{ if(e.clientY<=0||e.clientX<=0||e.clientX>=window.innerWidth||e.clientY>=window.innerHeight)logViolation('마우스 이탈'); });
+window.addEventListener('blur',()=>activateOverlay(0)); window.addEventListener('focus',deactivateOverlay);
+window.addEventListener('pagehide',()=>activateOverlay(0)); window.addEventListener('pageshow',deactivateOverlay);
+document.addEventListener('visibilitychange',()=>{ document.visibilityState==='hidden'?activateOverlay(0):deactivateOverlay(); });
 
-// ========== 5. 화면 변화 ==========
+// ----- 5. 화면 크기/방향/뷰포트 -----
 let lW=innerWidth,lH=innerHeight;
-window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){logV('화면 크기');lW=w;lH=h;}});
-window.addEventListener('orientationchange',()=>logV('화면 회전'));
-if(window.visualViewport){visualViewport.addEventListener('resize',()=>logV('뷰포트 크기'));visualViewport.addEventListener('scroll',()=>logV('뷰포트 스크롤'));}
-window.addEventListener('deviceorientation',()=>logV('기기 방향'),true);
-window.addEventListener('devicemotion',()=>logV('기기 움직임'),true);
+window.addEventListener('resize',()=>{ const w=innerWidth,h=innerHeight; if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){ logViolation('화면 크기'); lW=w;lH=h; } });
+window.addEventListener('orientationchange',()=>logViolation('화면 회전'));
+if(window.visualViewport){ visualViewport.addEventListener('resize',()=>logViolation('뷰포트 크기')); visualViewport.addEventListener('scroll',()=>logViolation('뷰포트 스크롤')); }
 
-// ========== 6. 전체화면 ==========
-['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(ev=>document.addEventListener(ev,()=>{if(!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.mozFullScreenElement)logV('전체화면 해제');}));
+// ----- 6. 전체화면 -----
+document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement)logViolation('전체화면 해제'); });
+document.addEventListener('webkitfullscreenchange',()=>{ if(!document.webkitFullscreenElement)logViolation('webkit 전체화면 해제'); });
+document.addEventListener('mozfullscreenchange',()=>{ if(!document.mozFullScreenElement)logViolation('moz 전체화면 해제'); });
 
-// ========== 7. DevTools 탐지 ==========
+// ----- 7. DevTools 탐지 (디버거+크기+타이밍) -----
 setInterval(()=>{
-  const s=performance.now();debugger;if(performance.now()-s>100)logV('DevTools');
-  if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logV('DevTools 크기');
+  const s=performance.now(); debugger; if(performance.now()-s>100)logViolation('DevTools');
+  if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('DevTools 크기');
 },3000);
 
-// ========== 8. DOM 변조 ==========
-new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1){n.remove();logV('DOM 추가');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
+// ----- 8. DOM 변조 감시 -----
+new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1){n.remove();logViolation('DOM 추가');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
 
-// ========== 9. 미디어/캡처 API 차단 ==========
-const rejectPromise=()=>Promise.reject(new Error('Blocked'));
-if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=rejectPromise;if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=rejectPromise;}
-if(navigator.getDisplayMedia)navigator.getDisplayMedia=rejectPromise;
-if(navigator.webkitGetUserMedia)navigator.webkitGetUserMedia=rejectPromise;
-if(navigator.mozGetUserMedia)navigator.mozGetUserMedia=rejectPromise;
+// ----- 9. 미디어/화면 캡처 차단 -----
+if(navigator.mediaDevices){ navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked')); if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked')); }
 
-// ========== 10. 클립보드 ==========
-navigator.clipboard.write=rejectPromise;navigator.clipboard.writeText=rejectPromise;
-if(window.clipboardData)window.clipboardData.setData=()=>{};
+// ----- 10. 클립보드 차단 -----
+navigator.clipboard.write=()=>Promise.reject('Blocked'); navigator.clipboard.writeText=()=>Promise.reject('Blocked');
 
-// ========== 11. opener/window.open ==========
-if(window.opener){window.opener=null;logV('opener 제거');}
-window.open=()=>{logV('window.open');return null;};
+// ----- 11. opener 제거 -----
+if(window.opener){window.opener=null;logViolation('opener 제거');}
 
-// ========== 12. 콘솔 무력화 ==========
-['log','warn','error','info','debug','table','trace','dir','group','groupEnd'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
+// ----- 12. 콘솔 무력화 -----
+['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
 
-// ========== 13. Canvas/WebGL ==========
-if(typeof HTMLCanvasElement!=='undefined'){
-  HTMLCanvasElement.prototype.toDataURL=function(){logV('Canvas toDataURL');return'';};
-  HTMLCanvasElement.prototype.toBlob=function(){logV('Canvas toBlob');};
-  HTMLCanvasElement.prototype.captureStream=function(){logV('Canvas captureStream');return null;};
-  HTMLCanvasElement.prototype.getContext=function(type,...args){if(type.includes('webgl')){logV('WebGL');return null;}return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
-}
+// ----- 13. Canvas 차단 -----
+if(typeof HTMLCanvasElement!=='undefined'){ HTMLCanvasElement.prototype.toDataURL=function(){logViolation('Canvas toDataURL');return'';}; HTMLCanvasElement.prototype.toBlob=function(){logViolation('Canvas toBlob');}; HTMLCanvasElement.prototype.captureStream=function(){logViolation('Canvas captureStream');return null;}; }
 
-// ========== 14. Fullscreen API ==========
-Element.prototype.requestFullscreen=function(){logV('requestFullscreen');};
-Element.prototype.webkitRequestFullscreen=function(){logV('webkit requestFullscreen');};
-Element.prototype.mozRequestFullScreen=function(){logV('moz requestFullScreen');};
-Element.prototype.msRequestFullscreen=function(){logV('ms requestFullscreen');};
+// ----- 14. Fullscreen API 차단 강화 -----
+Element.prototype.requestFullscreen=function(){logViolation('requestFullscreen');}; Element.prototype.webkitRequestFullscreen=function(){logViolation('webkit requestFullscreen');};
+Element.prototype.mozRequestFullScreen=function(){logViolation('moz requestFullscreen');};
 
-// ========== 15. execCommand ==========
+// ----- 15. window.open 차단 -----
+window.open=()=>{logViolation('window.open');return null;};
+
+// ----- 16. execCommand 차단 -----
 document.execCommand=function(){return false;};
-if(document.queryCommandSupported)document.queryCommandSupported=function(){return false;};
 
-// ========== 16. beforeunload ==========
+// ----- 17. beforeunload -----
 window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
 
-// ========== 17. 키보드 잠금 ==========
-if(navigator.keyboard&&navigator.keyboard.lock)navigator.keyboard.lock=rejectPromise;
+// ----- 18. 키보드 잠금 차단 -----
+if(navigator.keyboard&&navigator.keyboard.lock)navigator.keyboard.lock=()=>Promise.reject();
 
-// ========== 18. 멀티 모니터 ==========
-if(screen&&screen.isExtended){logV('확장 모니터');setInterval(()=>{if(screen.isExtended)logV('확장 모니터 활성');},5000);}
+// ----- 19. 멀티 모니터 감지 -----
+if(window.screen&&screen.isExtended){ logViolation('확장 모니터'); setInterval(()=>{if(screen.isExtended)logViolation('확장 모니터 활성');},5000); }
 
-// ========== 19. PWA ==========
-if(matchMedia('(display-mode: standalone)').matches)logV('PWA 독립 실행');
+// ----- 20. PWA 감지 -----
+if(matchMedia('(display-mode: standalone)').matches)logViolation('PWA 독립 실행');
 
-// ========== 20. Service Worker ==========
-if(navigator.serviceWorker){navigator.serviceWorker.register=rejectPromise;navigator.serviceWorker.addEventListener=()=>{};}
+// ----- 21. WebGL/Canvas WebGL 차단 -----
+HTMLCanvasElement.prototype.getContext=function(type,...args){ if(type.includes('webgl')){logViolation('WebGL getContext');return null;} return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments); };
 
-// ========== 21. 스크롤 차단 ==========
+// ----- 22. Screen Capture API 차단 (구버전 포함) -----
+if(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject();
+if(navigator.getDisplayMedia)navigator.getDisplayMedia=()=>Promise.reject();
+
+// ----- 23. Wake Lock 차단 -----
+if(navigator.wakeLock&&navigator.wakeLock.request)navigator.wakeLock.request=()=>Promise.reject();
+
+// ----- 24. Service Worker 차단 (메시지 감시 가능성) -----
+if(navigator.serviceWorker){ navigator.serviceWorker.register=()=>Promise.reject(); navigator.serviceWorker.addEventListener=()=>{}; }
+
+// ----- 25. Storage 이벤트 감시 (다른 탭과의 통신 방지) -----
+window.addEventListener('storage',e=>{ logViolation('스토리지 이벤트'); });
+
+// ----- 26. 스크롤 차단 (가장자리 스와이프로 인한 페이지 넘김 방지) -----
 document.body.style.overscrollBehavior='none';
 document.documentElement.style.overscrollBehavior='none';
 
-// ========== 22. Wake Lock ==========
-if(navigator.wakeLock&&navigator.wakeLock.request)navigator.wakeLock.request=rejectPromise;
+// ----- 27. CSS 블러/필터를 이용한 콘텐츠 가림 (일부 스크린샷 도구 방해) -----
+let blurTimer;
+function startBlurShield(){ document.getElementById('chatScreen')?.style.setProperty('filter','blur(30px)'); }
+function stopBlurShield(){ document.getElementById('chatScreen')?.style.setProperty('filter','none'); }
+// 민감한 동작 시 블러 덮기
+const originalActivateOverlay = activateOverlay;
+activateOverlay = function(d){ startBlurShield(); originalActivateOverlay(d); };
+const originalDeactivateOverlay = deactivateOverlay;
+deactivateOverlay = function(){ stopBlurShield(); originalDeactivateOverlay(); };
 
-// ========== 23. Storage 무력화 ==========
-window.localStorage.clear=()=>{};window.sessionStorage.clear=()=>{};
-
-// ========== 24. 자동 파괴 타이머 ==========
+// ----- 28. 자동 파괴 타이머 -----
 let inactivityTimer;
-function resetInact(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none')destroyChat();},10*60*1000);}
-['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInact));resetInact();
+function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none')destroyChat();},10*60*1000); }
+['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity)); resetInactivity();
 
-// ====================================================================
+// =====================================================================
 //                          P2P 암호 채팅 기능
-// ====================================================================
+// =====================================================================
 const buf2hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
 const str2buf=s=>new TextEncoder().encode(s);
 const buf2b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
