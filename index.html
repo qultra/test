@@ -133,7 +133,7 @@
 
 <script>
 // =====================================================================
-//  구형 브라우저 호환성 100% 보장 + 모든 기능 정상 작동
+//  완벽 호환성 보장 – Set 대신 Object 사용, TextEncoder 폴백 포함
 // =====================================================================
 
 // ----- TextEncoder / TextDecoder 폴백 -----
@@ -290,7 +290,8 @@ setInterval(function() {
 
 function executeDestroy() {
   document.getElementById('messages').innerHTML = '';
-  receivedMessageIds.clear();
+  // receivedMessageIds를 빈 객체로 초기화
+  receivedMessageIds = {};
   pendingOutbox = [];
   markDestroyed();
   document.getElementById('simpleMode').style.display = 'block';
@@ -594,7 +595,7 @@ var PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512
 var fileReceive = null;
 var typingChannel = null;
 var pendingOutbox = [];
-var receivedMessageIds = new Set();
+var receivedMessageIds = {};  // ★ Set 대신 Object 사용
 
 (function init() {
   if (isDestroyed()) { executeDestroy(); return; }
@@ -898,9 +899,7 @@ function deriveSessionKey() {
       return crypto.subtle.exportKey('raw', sessionKey);
     })
     .then(function(sb) {
-      var chainAPromise = hkdfExpand(sb, str2buf('chain-a'));
-      var chainBPromise = hkdfExpand(sb, str2buf('chain-b'));
-      return Promise.all([chainAPromise, chainBPromise, sb]);
+      return Promise.all([hkdfExpand(sb, str2buf('chain-a')), hkdfExpand(sb, str2buf('chain-b')), sb]);
     })
     .then(function(results) {
       var chainA = results[0], chainB = results[1], sb = results[2];
@@ -1025,8 +1024,8 @@ function onMsg(e) {
       if (!sessionKey) { addEncryptedMessage(d); return; }
       decryptPayload(d).then(function(inner) {
         if (isDestroyed()) return;
-        if (inner.id && receivedMessageIds.has(inner.id)) return;
-        if (inner.id) receivedMessageIds.add(inner.id);
+        if (inner.id && receivedMessageIds[inner.id]) return;  // ★ 객체로 확인
+        if (inner.id) receivedMessageIds[inner.id] = true;      // ★ 표시
         if (inner.type === 'text') { addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
         else if (inner.type === 'read') markAsRead(inner.id);
         else if (inner.type === 'delete') { var delEl = document.getElementById('msg-' + inner.id); if (delEl) delEl.remove(); }
@@ -1208,7 +1207,7 @@ function closeConnection() {
   authKey = sessionKey = null; sendChain = recvChain = null;
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false;
-  receivedMessageIds.clear();
+  receivedMessageIds = {};  // ★ 객체 초기화
   pendingOutbox = [];
   document.getElementById('sessionFingerprint').textContent = '';
   document.getElementById('securityCard').style.display = 'none';
