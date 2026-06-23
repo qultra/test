@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 완전 삭제 + 블러 강제</title>
+  <title>P2P 암호 채팅 – 스마트 블러 + 완전 삭제</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -32,8 +32,7 @@
       background: var(--bg); color: var(--text);
       display: flex; justify-content: center; align-items: center;
       min-height: 100dvh; padding: 10px;
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden; backface-visibility: hidden;
       overscroll-behavior: none;
     }
     .container {
@@ -48,23 +47,34 @@
       z-index: 9998; pointer-events: none; opacity: 0.03;
       mix-blend-mode: difference;
     }
-    /* 블러 요소 */
-    .blur-sensitive {
-      filter: blur(14px) !important;
+    /* 중요 정보만 블러 처리 – 메시지 버블, 세션 지문, 링크 상자 */
+    .bubble, .fingerprint, .link-box, .encrypted-bubble {
       transition: filter 0.2s ease;
+    }
+    .blur-sensitive {
+      filter: blur(12px) !important;
       cursor: pointer;
       position: relative;
     }
     .blur-sensitive::after {
-      content: "터치하여 보기";
+      content: "두 번 터치 후 길게 누르기";
       position: absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,0.5); color: #fff; font-size:0.7rem;
-      pointer-events: none; z-index:10; opacity:0.8; border-radius: inherit;
+      background: rgba(0,0,0,0.45); color: #fff; font-size:0.7rem;
+      pointer-events: none; z-index:10; border-radius: inherit;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .blur-sensitive.revealed { filter: blur(0) !important; }
-    .blur-sensitive.revealed::after { display: none; }
-    .blur-sensitive.locked { filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto; }
-    .blur-sensitive.locked::after { content: "🔒 잠금"; background: rgba(255,0,0,0.6); font-size:0.8rem; font-weight:bold; }
+    .blur-sensitive.revealed {
+      filter: blur(0) !important;
+    }
+    .blur-sensitive.revealed::after {
+      display: none;
+    }
+    .blur-sensitive.locked {
+      filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto;
+    }
+    .blur-sensitive.locked::after {
+      content: "🔒 보안 잠금"; background: rgba(255,0,0,0.5); font-weight:bold; font-size:0.75rem;
+    }
 
     .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
     .header h1 { font-size:1.1rem; font-weight:700; background:linear-gradient(135deg,#90b4ff,#b794f4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
@@ -100,7 +110,7 @@
     .msg.system .bubble { background:rgba(255,255,255,0.04); border:none; font-size:0.78rem; color:var(--sub); }
     .msg.me .bubble { background:linear-gradient(140deg,rgba(74,130,250,0.5),rgba(124,92,240,0.5)); border-bottom-right-radius:6px; }
     .msg.other .bubble { border-bottom-left-radius:6px; }
-    .msg .time { font-size:0.65rem; color:var(--sub); margin-top:4px; display:flex; justify-content:flex-end; gap:6px; position:relative; z-index:5; pointer-events: none; }
+    .msg .time { font-size:0.65rem; color:var(--sub); margin-top:4px; display:flex; justify-content:flex-end; gap:6px; position:relative; z-index:5; }
     .encrypted-bubble { background:#0a0f18; border:1px solid var(--border); font-family:monospace; font-size:0.7rem; color:#94a3b8; white-space:pre-wrap; word-break:break-all; padding:10px; border-radius:12px; max-width:90%; }
     .typing-indicator { font-size:0.75rem; color:var(--sub); padding:4px 16px; display:none; }
     .progress { height:3px; background:#1e293b; border-radius:2px; overflow:hidden; margin-top:6px; }
@@ -129,7 +139,7 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>메시지 블러·렌더링 왜곡·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>스마트 블러·렌더링 왜곡·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
       <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
@@ -145,18 +155,24 @@
 
 <script>
 // =====================================================================
-//  완전 삭제 + 블러 강제 + 512급 암호화 – 최종 완결판
+//  스마트 블러 + 완전 삭제 + 512+급 암호화 – 최종 완성판
 // =====================================================================
-// base64url 인코딩/디코딩 (URL-safe)
 const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; return Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer; };
 const encodeSDP = obj => toBase64url(new TextEncoder().encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(new TextDecoder().decode(fromBase64url(str)));
 
-// ==================== 블러 관리 시스템 ====================
+// ----- 스마트 블러 시스템 (더블탭+길게누르기) -----
 let securityLockLevel = 0;
 let globalBlurTimer = null;
 const revealTimers = new Map();
+// 더블탭 감지용 변수
+let lastTapTime = 0;
+let lastTapElement = null;
+let longPressTimer = null;
+const DOUBLE_TAP_DELAY = 400; // 더블탭 간 최대 간격 (ms)
+const LONG_PRESS_DURATION = 400; // 길게 누르기 필요 시간 (ms)
+const REVEAL_DURATION = 4000; // 블러 해제 지속 시간 (4초)
 
 function applyBlurToSensitiveElements() {
   document.querySelectorAll('.bubble, .fingerprint, .link-box, .encrypted-bubble').forEach(el => {
@@ -166,10 +182,8 @@ function applyBlurToSensitiveElements() {
   });
 }
 
-function revealElement(el, duration = 3000) {
-  if (isDestroyed()) return;
-  if (securityLockLevel >= 3) return;
-  if (el.classList.contains('locked')) return;
+function revealElement(el, duration = REVEAL_DURATION) {
+  if (isDestroyed() || securityLockLevel >= 3 || el.classList.contains('locked')) return;
   const id = Math.random().toString(36);
   el.dataset.revealId = id;
   clearTimeout(revealTimers.get(id));
@@ -179,7 +193,7 @@ function revealElement(el, duration = 3000) {
   revealTimers.set(id, timer);
 }
 
-function lockAllBlurs(duration = 15000) {
+function lockAllBlurs(duration = 12000) {
   document.querySelectorAll('.blur-sensitive').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); });
   clearTimeout(globalBlurTimer);
   globalBlurTimer = setTimeout(() => { document.querySelectorAll('.blur-sensitive').forEach(el => el.classList.remove('locked')); }, duration);
@@ -188,11 +202,56 @@ function lockAllBlurs(duration = 15000) {
 function triggerSecurityLock(level = 1) {
   securityLockLevel = Math.max(securityLockLevel, level);
   if (securityLockLevel >= 2) lockAllBlurs(20000 + securityLockLevel * 8000);
-  else if (securityLockLevel >= 1) lockAllBlurs(8000);
+  else if (securityLockLevel >= 1) lockAllBlurs(6000);
   setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
 }
 
-// ==================== 파괴 플래그 관리 ====================
+// ----- 더블탭 + 길게누르기 처리 -----
+function handlePointerDown(e) {
+  if (e.target.closest('#msgInput') || e.target.closest('.input-bar') || e.target.closest('button')) return;
+  let target = e.target.closest('.bubble');
+  if (!target) target = e.target.closest('.fingerprint');
+  if (!target) target = e.target.closest('.link-box');
+  if (!target) target = e.target.closest('.encrypted-bubble');
+  if (!target || !target.classList.contains('blur-sensitive') || target.classList.contains('locked')) return;
+
+  const now = Date.now();
+  if (now - lastTapTime < DOUBLE_TAP_DELAY && lastTapElement === target) {
+    // 더블탭 감지 → 길게 누르기 대기 시작
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      revealElement(target, REVEAL_DURATION);
+      lastTapTime = 0;
+      lastTapElement = null;
+      longPressTimer = null;
+    }, LONG_PRESS_DURATION);
+    e.preventDefault();
+  } else {
+    // 첫 탭
+    clearTimeout(longPressTimer);
+    lastTapTime = now;
+    lastTapElement = target;
+    longPressTimer = null;
+  }
+}
+
+function handlePointerUp(e) {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+// 마우스/터치 이벤트 등록
+document.addEventListener('mousedown', handlePointerDown);
+document.addEventListener('mouseup', handlePointerUp);
+document.addEventListener('touchstart', handlePointerDown, {passive: false});
+document.addEventListener('touchend', handlePointerUp);
+document.addEventListener('touchcancel', handlePointerUp);
+
+// 클릭 이벤트로 블러 해제는 더 이상 사용하지 않음 (오직 더블탭+길게누르기만)
+
+// ----- 완전 삭제 플래그 관리 -----
 const DESTROY_KEY = 'p2p_chat_destroyed_v2';
 const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session';
 
@@ -204,7 +263,6 @@ function markDestroyed() {
   const ts = Date.now();
   localStorage.setItem(DESTROY_KEY, ts);
   sessionStorage.setItem(DESTROY_SESSION_KEY, ts);
-  // URL에서 해시 제거
   if (location.hash) history.replaceState(null, '', location.pathname);
 }
 
@@ -213,14 +271,32 @@ function clearDestroyedFlags() {
   sessionStorage.removeItem(DESTROY_SESSION_KEY);
 }
 
-// 주기적으로 파괴 플래그 확인 (오프라인에서 복귀 시 즉시 감지)
-setInterval(() => {
-  if (isDestroyed()) {
-    executeDestroy();
-  }
-}, 1000);
+setInterval(() => { if (isDestroyed()) executeDestroy(); }, 1000);
 
-// ==================== 렌더링 왜곡 ====================
+function executeDestroy() {
+  document.getElementById('messages').innerHTML = '';
+  receivedMessageIds.clear();
+  pendingOutbox = [];
+  markDestroyed();
+  document.getElementById('simpleMode').style.display = 'block';
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('securityCard').style.display = 'none';
+  document.getElementById('sessionFingerprint').textContent = '';
+  document.getElementById('passwordPrompt').style.display = 'block';
+  document.getElementById('passwordError').style.display = 'none';
+  if (pc) { pc.close(); pc = null; }
+  dc = null; typingChannel = null;
+  authKey = sessionKey = null; sendChain = recvChain = null;
+  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
+  handshakeDone = false;
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  document.body.style.filter = '';
+  securityLockLevel = 0;
+  document.querySelectorAll('.blur-sensitive').forEach(el => { el.classList.remove('blur-sensitive','revealed','locked'); });
+  alert('💥 대화가 완전히 삭제되었습니다.');
+}
+
+// ----- 렌더링 왜곡 -----
 (function initAntiScreenshot() {
   const canvas = document.getElementById('antiScreenshotCanvas');
   const ctx = canvas.getContext('2d');
@@ -246,39 +322,26 @@ setInterval(() => {
   (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
 })();
 
-// ==================== 보안 레이어 ====================
+// ----- 보안 레이어 (단축키, 복사, 드래그 등 완전 차단) -----
 const ua=navigator.userAgent||'', plt=navigator.platform||'';
 const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
 const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
 const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
 
 function logViolation(r) { triggerSecurityLock(1+(securityLockLevel>0?1:0)); }
-
 window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
 window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
-
-document.addEventListener('keydown',e=>{
-  let b=false; const k=e.key.toLowerCase();
-  if(k==='f12'||k==='printscreen')b=true;
-  if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;
-  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;
-  if(e.altKey&&k==='printscreen')b=true;
-  if(isWin){ if(k==='meta'||k==='win')b=true; if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true; if(e.metaKey&&e.altKey&&k==='r')b=true; if(e.metaKey&&e.shiftKey&&k==='s')b=true; }
-  if(isMac){ if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true; if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true; }
-  if(isLinux){ if(k==='printscreen')b=true; if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true; }
-  if(b){e.preventDefault();e.stopPropagation();logViolation('key');}
-},true);
-
+document.addEventListener('keydown',e=>{let b=false;const k=e.key.toLowerCase();if(k==='f12'||k==='printscreen')b=true;if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;if(e.altKey&&k==='printscreen')b=true;if(isWin){if(k==='meta'||k==='win')b=true;if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true;if(e.metaKey&&e.altKey&&k==='r')b=true;if(e.metaKey&&e.shiftKey&&k==='s')b=true;}if(isMac){if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true;if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true;}if(isLinux){if(k==='printscreen')b=true;if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true;}if(b){e.preventDefault();e.stopPropagation();logViolation('key');}},true);
 document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
 document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
 document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
 document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
 document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
 
-let tSy=0,tSx=0,tSt=0,ltE=0;
+let tSy=0,tSx=0,tSt=0;
 document.addEventListener('touchstart',e=>{if(e.touches.length>1){logViolation('multi');e.preventDefault();}if(e.touches.length===1){tSy=e.touches[0].clientY;tSx=e.touches[0].clientX;tSt=Date.now();}},{passive:false});
 document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
-document.addEventListener('touchend',e=>{const n=Date.now();const dy=tSy-(e.changedTouches[0]?.clientY??0);const dx=tSx-(e.changedTouches[0]?.clientX??0);if(tSy>innerHeight-40&&dy>50&&n-tSt<300)logViolation('bottom');if(tSx<20&&dx<-50&&n-tSt<300)logViolation('left');if(tSx>innerWidth-20&&dx>50&&n-tSt<300)logViolation('right');if(n-ltE<=300){e.preventDefault();logViolation('dbltap');}ltE=n;},false);
+document.addEventListener('touchend',e=>{const n=Date.now();const dy=tSy-(e.changedTouches[0]?.clientY??0);const dx=tSx-(e.changedTouches[0]?.clientX??0);if(tSy>innerHeight-40&&dy>50&&n-tSt<300)logViolation('bottom');if(tSx<20&&dx<-50&&n-tSt<300)logViolation('left');if(tSx>innerWidth-20&&dx>50&&n-tSt<300)logViolation('right');});
 
 document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight)logViolation('mouse');});
 window.addEventListener('blur',()=>triggerSecurityLock(2));
@@ -292,7 +355,6 @@ window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.a
 window.addEventListener('orientationchange',()=>logViolation('orient'));
 if(visualViewport){visualViewport.addEventListener('resize',()=>logViolation('vport'));visualViewport.addEventListener('scroll',()=>logViolation('vpscroll'));}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)logViolation('fs');});
-document.addEventListener('webkitfullscreenchange',()=>{if(!document.webkitFullscreenElement)logViolation('wfs');});
 setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
 new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
 if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
@@ -317,14 +379,11 @@ let rafC=0,lastR=0;
 let inactivityTimer;
 function resetInactivity(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none')destroyChat();},15*60*1000);}
 ['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity));resetInactivity();
-window.Worker=function(){throw new Error('Blocked');};
-window.SharedWorker=function(){throw new Error('Blocked');};
-window.eval=()=>{};
-window.Function=()=>{};
+window.Worker=function(){throw new Error('Blocked');};window.SharedWorker=function(){throw new Error('Blocked');};
+window.eval=()=>{};window.Function=()=>{};
 const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
 const _si=window.setInterval;window.setInterval=function(c,...a){if(typeof c==='string')return;return _si.call(this,c,...a);};
-window.WebSocket=function(){throw new Error('Blocked');};
-window.EventSource=function(){throw new Error('Blocked');};
+window.WebSocket=function(){throw new Error('Blocked');};window.EventSource=function(){throw new Error('Blocked');};
 navigator.sendBeacon=()=>false;
 if(navigator.permissions)navigator.permissions.query=()=>Promise.reject(new Error('Blocked'));
 if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
@@ -345,61 +404,8 @@ document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Err
 const _sa=Element.prototype.setAttribute;
 Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chatScreen'))return;return _sa.call(this,n,v);};
 
-// ==================== 블러 클릭/터치 상호작용 ====================
-document.addEventListener('click', e => {
-  if (isDestroyed()) return;
-  // 버블 요소를 찾을 때 closest로 정확히 찾기
-  let target = e.target.closest('.bubble');
-  if (!target) target = e.target.closest('.fingerprint');
-  if (target && target.classList.contains('blur-sensitive') && !target.classList.contains('locked')) {
-    revealElement(target, 3000);
-    e.stopPropagation();
-  }
-}, true);
-
-// 터치 이벤트도 동일하게 처리
-document.addEventListener('touchend', e => {
-  if (isDestroyed()) return;
-  if (e.target.closest('#msgInput') || e.target.closest('.input-bar')) return;
-  let target = e.target.closest('.bubble');
-  if (!target) target = e.target.closest('.fingerprint');
-  if (target && target.classList.contains('blur-sensitive') && !target.classList.contains('locked')) {
-    revealElement(target, 3000);
-    e.stopPropagation();
-  }
-}, true);
-
-// ==================== 파괴 시 채팅 화면 초기화 ====================
-function executeDestroy() {
-  document.getElementById('messages').innerHTML = '';
-  receivedMessageIds.clear();
-  pendingOutbox = [];
-  markDestroyed();
-  // 채팅 화면에서 초기 화면으로 강제 전환
-  document.getElementById('simpleMode').style.display = 'block';
-  document.getElementById('chatScreen').style.display = 'none';
-  document.getElementById('securityCard').style.display = 'none';
-  document.getElementById('sessionFingerprint').textContent = '';
-  document.getElementById('passwordPrompt').style.display = 'block';
-  document.getElementById('passwordError').style.display = 'none';
-  // 연결 종료
-  if (pc) { pc.close(); pc = null; }
-  dc = null; typingChannel = null;
-  authKey = sessionKey = null; sendChain = recvChain = null;
-  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
-  handshakeDone = false;
-  // URL 정리
-  if (location.hash) history.replaceState(null, '', location.pathname);
-  // 추가 UI 정리
-  document.body.style.filter = '';
-  securityLockLevel = 0;
-  document.querySelectorAll('.blur-sensitive').forEach(el => { el.classList.remove('blur-sensitive','revealed','locked'); });
-  alert('💥 대화가 완전히 삭제되었습니다.');
-}
-
-// ==================== P2P 암호화 엔진 (P-521 + SHA-512 + AES-256) ====================
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+// ----- P2P 암호화 엔진 (P-521 + SHA-512 + AES-256) -----
+const textEncoder = new TextEncoder(); const textDecoder = new TextDecoder();
 const str2buf = s => textEncoder.encode(s);
 const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
 const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
@@ -413,10 +419,7 @@ let ourEcdhPair = null, peerEcdhPub = null;
 let salt;
 let handshakeDone = false;
 const ECDH_ALG = { name:'ECDH', namedCurve:'P-521' };
-const PBKDF2_ITERS = 1000000;
-const SALT_SIZE = 128;
-const AES_LEN = 256;
-const HMAC_HASH = 'SHA-512';
+const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
 let fileReceive = null;
 let typingChannel = null;
