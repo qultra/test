@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 오프라인 복원</title>
+  <title>P2P 암호 채팅 – 완벽 복원</title>
   <style>
     :root {
       --bg: #06090f; --surface: #0f141e; --card: rgba(15,20,30,0.9);
@@ -117,7 +117,6 @@
     </div>
   </div>
   <div class="main-content" id="mainArea">
-    <!-- 초기 화면 -->
     <div id="simpleMode">
       <div class="card text-center">
         <h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3>
@@ -205,9 +204,9 @@ let typingChannel = null;
 const TYPING_LABEL = 'typing';
 const ICE_SERVERS = ['stun:stun.services.mozilla.com:3478','stun:stun.nextcloud.com:443'].map(u=>({urls:u}));
 
-// 오프라인 큐 및 중복 방지
 let pendingOutbox = [];
 const receivedMessageIds = new Set();
+let reconnectTimer = null;
 
 (async function init(){
   document.getElementById('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}});
@@ -252,9 +251,7 @@ async function startNewChat(){
   document.getElementById('answerPanel').classList.add('hidden');
   document.getElementById('offerSpinner').style.display='inline-block';
   initPC();
-  dc = pc.createDataChannel('chat', { ordered: true });
-  typingChannel = pc.createDataChannel(TYPING_LABEL, { ordered: false, maxRetransmits: 0 });
-  setupDC(); setupTypingChannel();
+  createDataChannels();
   pc.createOffer().then(o=>pc.setLocalDescription(o)).then(()=>waitIce().then(()=>{
     document.getElementById('offerSpinner').style.display='none';
     const offerB64=btoa(JSON.stringify(pc.localDescription));
@@ -263,10 +260,6 @@ async function startNewChat(){
 }
 async function initiateAnswer(offer){
   isOfferer=false; initPC();
-  pc.ondatachannel = (e) => {
-    if (e.channel.label === 'chat') { dc = e.channel; setupDC(); }
-    else if (e.channel.label === TYPING_LABEL) { typingChannel = e.channel; setupTypingChannel(); }
-  };
   await pc.setRemoteDescription(offer);
   const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
   document.getElementById('answerSpinner').style.display='none';
@@ -276,10 +269,6 @@ async function initiateAnswer(offer){
 async function createAnswerFromOffer(){
   const t=document.getElementById('remoteOfferSDP').value.trim(); if(!t)return;
   closeConnection(); isOfferer=false; initPC();
-  pc.ondatachannel = (e) => {
-    if (e.channel.label === 'chat') { dc = e.channel; setupDC(); }
-    else if (e.channel.label === TYPING_LABEL) { typingChannel = e.channel; setupTypingChannel(); }
-  };
   const u=new URL(t); const hp=new URLSearchParams(u.hash.substring(1));
   if(!hp.has('offer')){alert('올바른 초대 링크가 아닙니다.');return;}
   await pc.setRemoteDescription(JSON.parse(atob(hp.get('offer'))));
@@ -298,20 +287,48 @@ async function applyAnswerLink(){
 function initPC(){ 
   pc=new RTCPeerConnection({iceServers:ICE_SERVERS}); 
   pc.oniceconnectionstatechange=onIceState; 
+  // 리모트에서 오는 모든 데이터 채널을 수락
+  pc.ondatachannel = e => {
+    if (e.channel.label === 'chat') {
+      if (dc) { dc.close(); }
+      dc = e.channel;
+      setupDC();
+      if (handshakeDone && sessionKey) flushOutbox();
+    } else if (e.channel.label === TYPING_LABEL) {
+      if (typingChannel) typingChannel.close();
+      typingChannel = e.channel;
+      setupTypingChannel();
+    }
+  };
 }
+
+function createDataChannels() {
+  if (!pc || !isOfferer) return;
+  // 기존 채널이 있으면 닫기
+  if (dc) { dc.close(); }
+  if (typingChannel) { typingChannel.close(); }
+  dc = pc.createDataChannel('chat', { ordered: true });
+  typingChannel = pc.createDataChannel(TYPING_LABEL, { ordered: false, maxRetransmits: 0 });
+  setupDC();
+  setupTypingChannel();
+}
+
 function setupDC(){
   if(!dc)return;
-  dc.onopen=()=>{
-    updateConn(true); showChat();
-    // 연결 복구 시 큐 전송
+  dc.onopen = () => {
+    updateConn(true);
+    showChat();
     flushOutbox();
     if (!handshakeDone && !sessionKey) {
       startEcdhExchange();
     }
   };
-  dc.onmessage=onMsg;
-  dc.onclose=()=>{ updateConn(false); };
+  dc.onmessage = onMsg;
+  dc.onclose = () => {
+    updateConn(false);
+  };
 }
+
 function setupTypingChannel(){
   if(!typingChannel)return;
   typingChannel.onmessage = (e) => {
@@ -320,21 +337,26 @@ function setupTypingChannel(){
     }
   };
 }
+
 function onIceState(){
-  const s=pc.iceConnectionState;
-  if(s==='connected' || s==='completed') updateConn(true);
-  else if(s==='disconnected') {
+  const s = pc.iceConnectionState;
+  if (s === 'connected' || s === 'completed') {
+    updateConn(true);
+    // 데이터 채널이 닫혀있다면 재생성 시도
+    if ((!dc || dc.readyState !== 'open') && isOfferer) {
+      createDataChannels();
+    }
+  } else if (s === 'disconnected') {
     updateConn(false);
     pc.restartIce();
-  }
-  else if(s==='failed' || s==='closed') {
+  } else if (s === 'failed' || s === 'closed') {
     updateConn(false);
   }
 }
+
 function waitIce(){return new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')r();});});}
 function updateConn(ok){document.getElementById('connDot').className='dot '+(ok?'on':'off');document.getElementById('connLabel').textContent=ok?'연결됨':'오프라인';}
 
-// 오프라인 큐 처리
 async function flushOutbox(){
   if (!dc || dc.readyState !== 'open' || pendingOutbox.length === 0) return;
   const toSend = [...pendingOutbox];
@@ -343,9 +365,9 @@ async function flushOutbox(){
     try {
       const enc = await encryptPayload(msg.payload);
       dc.send(JSON.stringify({ type:'msg', ...enc }));
-    } catch(e) { /* 실패해도 무시 */ }
+    } catch(e) {}
   }
-  addMsg('📬 대기 중인 메시지 전송 완료', 'system');
+  addMsg('📬 대기 메시지 전송 완료', 'system');
 }
 
 function sendTyping(state) {
@@ -471,12 +493,11 @@ async function sendText(){
   const msgId = genUUID();
   const payload = { type:'text', content: txt, id: msgId };
 
-  // 연결이 열려 있지 않으면 큐에 추가
   if (!dc || dc.readyState !== 'open' || !sessionKey) {
     if (sessionKey) {
       pendingOutbox.push({ payload, id: msgId });
       addMsg(txt, 'me', msgId);
-      addMsg('⏳ 오프라인 상태 - 연결 복구 시 전송됩니다', 'system');
+      addMsg('⏳ 오프라인 상태 - 연결 복구 시 전송', 'system');
     } else {
       addMsg('⚠️ 암호를 설정하세요.', 'system');
     }
@@ -489,7 +510,6 @@ async function sendText(){
     dc.send(JSON.stringify({ type:'msg', ...enc }));
     addMsg(txt, 'me', msgId);
   } catch (e) {
-    // 실패 시 큐에 보관
     pendingOutbox.push({ payload, id: msgId });
     addMsg(txt, 'me', msgId);
     addMsg('⚠️ 전송 실패 - 대기열에 저장됨', 'system');
@@ -504,7 +524,6 @@ function onMsg(e){
     if (d.type === '__ecdhe__') { handleEcdheMessage(d); return; }
     if (d.type === 'msg') {
       if (!sessionKey) { addEncryptedMessage(d); return; }
-      // 중복 메시지 검사
       decryptPayload(d).then(inner => {
         if (inner.id && receivedMessageIds.has(inner.id)) return;
         if (inner.id) receivedMessageIds.add(inner.id);
