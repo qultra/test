@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 512+ 극강 암호화 완전판</title>
+  <title>P2P 암호 채팅 – 완전 삭제 + 블러 강제</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -48,14 +48,23 @@
       z-index: 9998; pointer-events: none; opacity: 0.03;
       mix-blend-mode: difference;
     }
+    /* 블러 요소 */
     .blur-sensitive {
-      filter: blur(12px) !important;
-      transition: filter 0.15s ease;
+      filter: blur(14px) !important;
+      transition: filter 0.2s ease;
       cursor: pointer;
+      position: relative;
     }
-    .blur-sensitive:hover { filter: blur(8px) !important; }
+    .blur-sensitive::after {
+      content: "터치하여 보기";
+      position: absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background: rgba(0,0,0,0.5); color: #fff; font-size:0.7rem;
+      pointer-events: none; z-index:10; opacity:0.8; border-radius: inherit;
+    }
     .blur-sensitive.revealed { filter: blur(0) !important; }
-    .blur-sensitive.locked { filter: blur(16px) !important; cursor: not-allowed; pointer-events: none; }
+    .blur-sensitive.revealed::after { display: none; }
+    .blur-sensitive.locked { filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto; }
+    .blur-sensitive.locked::after { content: "🔒 잠금"; background: rgba(255,0,0,0.6); font-size:0.8rem; font-weight:bold; }
 
     .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
     .header h1 { font-size:1.1rem; font-weight:700; background:linear-gradient(135deg,#90b4ff,#b794f4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
@@ -82,7 +91,7 @@
     #messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:6px 0; }
     .msg { display:flex; flex-direction:column; animation:fadeUp 0.2s ease; }
     .msg.system { align-items:center; } .msg.me { align-items:flex-end; } .msg.other { align-items:flex-start; }
-    .bubble { max-width:83%; padding:10px 16px; border-radius:20px; background:rgba(22,30,44,0.85); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); word-break:break-word; position:relative; overflow:hidden; }
+    .bubble { max-width:83%; padding:10px 16px; border-radius:20px; background:rgba(22,30,44,0.85); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); word-break:break-word; position:relative; overflow:hidden; z-index:1; }
     .bubble .noise-layer {
       position: absolute; top:0; left:0; width:100%; height:100%;
       background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px);
@@ -91,7 +100,7 @@
     .msg.system .bubble { background:rgba(255,255,255,0.04); border:none; font-size:0.78rem; color:var(--sub); }
     .msg.me .bubble { background:linear-gradient(140deg,rgba(74,130,250,0.5),rgba(124,92,240,0.5)); border-bottom-right-radius:6px; }
     .msg.other .bubble { border-bottom-left-radius:6px; }
-    .msg .time { font-size:0.65rem; color:var(--sub); margin-top:4px; display:flex; justify-content:flex-end; gap:6px; position:relative; z-index:3; }
+    .msg .time { font-size:0.65rem; color:var(--sub); margin-top:4px; display:flex; justify-content:flex-end; gap:6px; position:relative; z-index:5; pointer-events: none; }
     .encrypted-bubble { background:#0a0f18; border:1px solid var(--border); font-family:monospace; font-size:0.7rem; color:#94a3b8; white-space:pre-wrap; word-break:break-all; padding:10px; border-radius:12px; max-width:90%; }
     .typing-indicator { font-size:0.75rem; color:var(--sub); padding:4px 16px; display:none; }
     .progress { height:3px; background:#1e293b; border-radius:2px; overflow:hidden; margin-top:6px; }
@@ -120,7 +129,7 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>메시지 자동 블러·렌더링 왜곡·오프라인 폭파</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>메시지 블러·렌더링 왜곡·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
       <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
@@ -136,31 +145,15 @@
 
 <script>
 // =====================================================================
-//  극강 암호화 – ECDH P-521 + PBKDF2-SHA512(1,000,000) + HKDF-SHA512
-//                 + AES-256-GCM + Double Ratchet (완전체)
+//  완전 삭제 + 블러 강제 + 512급 암호화 – 최종 완결판
 // =====================================================================
 // base64url 인코딩/디코딩 (URL-safe)
-function toBase64url(buf) {
-  const bytes = new Uint8Array(buf);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-function fromBase64url(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  const binary = atob(str);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
-function encodeSDP(sdpObj) { return toBase64url(new TextEncoder().encode(JSON.stringify(sdpObj))); }
-function decodeSDP(str) {
-  const buf = fromBase64url(str);
-  return JSON.parse(new TextDecoder().decode(buf));
-}
+const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; return Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer; };
+const encodeSDP = obj => toBase64url(new TextEncoder().encode(JSON.stringify(obj)));
+const decodeSDP = str => JSON.parse(new TextDecoder().decode(fromBase64url(str)));
 
-// 블러 및 보안 레벨 관리
+// ==================== 블러 관리 시스템 ====================
 let securityLockLevel = 0;
 let globalBlurTimer = null;
 const revealTimers = new Map();
@@ -172,10 +165,12 @@ function applyBlurToSensitiveElements() {
     }
   });
 }
+
 function revealElement(el, duration = 3000) {
+  if (isDestroyed()) return;
   if (securityLockLevel >= 3) return;
   if (el.classList.contains('locked')) return;
-  const id = el.dataset.revealId || Math.random().toString(36);
+  const id = Math.random().toString(36);
   el.dataset.revealId = id;
   clearTimeout(revealTimers.get(id));
   el.classList.add('revealed');
@@ -183,213 +178,232 @@ function revealElement(el, duration = 3000) {
   const timer = setTimeout(() => { el.classList.remove('revealed'); revealTimers.delete(id); }, duration);
   revealTimers.set(id, timer);
 }
-function lockAllBlurs(duration = 10000) {
+
+function lockAllBlurs(duration = 15000) {
   document.querySelectorAll('.blur-sensitive').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); });
   clearTimeout(globalBlurTimer);
-  globalBlurTimer = setTimeout(() => {
-    document.querySelectorAll('.blur-sensitive').forEach(el => el.classList.remove('locked'));
-  }, duration);
+  globalBlurTimer = setTimeout(() => { document.querySelectorAll('.blur-sensitive').forEach(el => el.classList.remove('locked')); }, duration);
 }
+
 function triggerSecurityLock(level = 1) {
   securityLockLevel = Math.max(securityLockLevel, level);
-  if (securityLockLevel >= 2) lockAllBlurs(15000 + securityLockLevel * 5000);
-  else if (securityLockLevel >= 1) lockAllBlurs(5000);
+  if (securityLockLevel >= 2) lockAllBlurs(20000 + securityLockLevel * 8000);
+  else if (securityLockLevel >= 1) lockAllBlurs(8000);
   setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
 }
 
-// 렌더링 왜곡 (캡처 도구 무력화)
+// ==================== 파괴 플래그 관리 ====================
+const DESTROY_KEY = 'p2p_chat_destroyed_v2';
+const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session';
+
+function isDestroyed() {
+  return !!(localStorage.getItem(DESTROY_KEY) || sessionStorage.getItem(DESTROY_SESSION_KEY));
+}
+
+function markDestroyed() {
+  const ts = Date.now();
+  localStorage.setItem(DESTROY_KEY, ts);
+  sessionStorage.setItem(DESTROY_SESSION_KEY, ts);
+  // URL에서 해시 제거
+  if (location.hash) history.replaceState(null, '', location.pathname);
+}
+
+function clearDestroyedFlags() {
+  localStorage.removeItem(DESTROY_KEY);
+  sessionStorage.removeItem(DESTROY_SESSION_KEY);
+}
+
+// 주기적으로 파괴 플래그 확인 (오프라인에서 복귀 시 즉시 감지)
+setInterval(() => {
+  if (isDestroyed()) {
+    executeDestroy();
+  }
+}, 1000);
+
+// ==================== 렌더링 왜곡 ====================
 (function initAntiScreenshot() {
   const canvas = document.getElementById('antiScreenshotCanvas');
   const ctx = canvas.getContext('2d');
-  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-  function drawNoise() {
+  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  resize(); window.addEventListener('resize', resize);
+  const drawNoise = () => {
     if (!ctx) return;
-    const imageData = ctx.createImageData(canvas.width, canvas.height);
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.random() * 5; data[i+1] = Math.random() * 5; data[i+2] = Math.random() * 5; data[i+3] = 3;
+    const img = ctx.createImageData(canvas.width, canvas.height);
+    for (let i=0; i<img.data.length; i+=4) {
+      img.data[i]=Math.random()*5; img.data[i+1]=Math.random()*5; img.data[i+2]=Math.random()*5; img.data[i+3]=3;
     }
-    ctx.putImageData(imageData, 0, 0);
-  }
+    ctx.putImageData(img,0,0);
+  };
   setInterval(() => {
     drawNoise();
-    ctx.fillStyle = 'rgba(255,255,255,0.002)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let x = 0; x < canvas.width; x += 4) {
-      ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;
-      ctx.fillRect(x, 0, 1, canvas.height);
+    ctx.fillStyle='rgba(255,255,255,0.002)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    for (let x=0; x<canvas.width; x+=4) {
+      ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;
+      ctx.fillRect(x,0,1,canvas.height);
     }
-  }, 100);
-  let frame = 0;
-  function jitter() {
-    frame++;
-    document.body.style.transform = `translate(${Math.sin(frame/10)*0.2}px, ${Math.cos(frame/15)*0.2}px)`;
-    requestAnimationFrame(jitter);
-  }
-  requestAnimationFrame(jitter);
+  },100);
+  let frame=0;
+  (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
 })();
 
-// 모든 OS/브라우저 보안 레이어
-const ua = navigator.userAgent || '', plt = navigator.platform || '';
-const isWin = /Windows/i.test(ua) || plt === 'Win32' || plt === 'Win64';
-const isMac = /Macintosh/i.test(ua) || plt === 'MacIntel' || plt === 'MacPPC';
-const isLinux = /Linux/i.test(ua) && !/Android/i.test(ua);
+// ==================== 보안 레이어 ====================
+const ua=navigator.userAgent||'', plt=navigator.platform||'';
+const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
+const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
+const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
 
-function logViolation(reason) { triggerSecurityLock(1 + (securityLockLevel > 0 ? 1 : 0)); }
+function logViolation(r) { triggerSecurityLock(1+(securityLockLevel>0?1:0)); }
 
-window.addEventListener('beforeprint', e => { e.preventDefault(); triggerSecurityLock(3); });
-window.addEventListener('print', e => { e.preventDefault(); triggerSecurityLock(3); });
+window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
+window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
 
-document.addEventListener('keydown', e => {
-  let block = false; const k = e.key.toLowerCase();
-  if (k === 'f12' || k === 'printscreen') block = true;
-  if ((e.ctrlKey || e.metaKey) && (k === 's' || k === 'p' || k === 'u')) block = true;
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'i' || k === 'c' || k === 'j')) block = true;
-  if (e.altKey && k === 'printscreen') block = true;
-  if (isWin) {
-    if (k === 'meta' || k === 'win') block = true;
-    if (e.metaKey && (k === 'g' || k === 'r' || k === 's' || k === 't')) block = true;
-    if (e.metaKey && e.altKey && k === 'r') block = true;
-    if (e.metaKey && e.shiftKey && k === 's') block = true;
-  }
-  if (isMac) {
-    if (e.metaKey && e.shiftKey && (k === '3' || k === '4' || k === '5')) block = true;
-    if (e.metaKey && e.shiftKey && e.ctrlKey && (k === '3' || k === '4')) block = true;
-  }
-  if (isLinux) {
-    if (k === 'printscreen') block = true;
-    if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) if (k === 'printscreen') block = true;
-  }
-  if (block) { e.preventDefault(); e.stopPropagation(); logViolation('key'); }
-}, true);
+document.addEventListener('keydown',e=>{
+  let b=false; const k=e.key.toLowerCase();
+  if(k==='f12'||k==='printscreen')b=true;
+  if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;
+  if(e.altKey&&k==='printscreen')b=true;
+  if(isWin){ if(k==='meta'||k==='win')b=true; if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true; if(e.metaKey&&e.altKey&&k==='r')b=true; if(e.metaKey&&e.shiftKey&&k==='s')b=true; }
+  if(isMac){ if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true; if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true; }
+  if(isLinux){ if(k==='printscreen')b=true; if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true; }
+  if(b){e.preventDefault();e.stopPropagation();logViolation('key');}
+},true);
 
-document.addEventListener('contextmenu', e => { e.preventDefault(); logViolation('context'); });
-document.addEventListener('dragstart', e => { e.preventDefault(); logViolation('drag'); });
-document.addEventListener('selectstart', e => { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('select'); } });
-document.addEventListener('copy', e => { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('copy'); } });
-document.addEventListener('cut', e => { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('cut'); } });
+document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
+document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
+document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
+document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
+document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
 
 let tSy=0,tSx=0,tSt=0,ltE=0;
-document.addEventListener('touchstart', e => {
-  if (e.touches.length > 1) { logViolation('multi'); e.preventDefault(); }
-  if (e.touches.length === 1) { tSy=e.touches[0].clientY; tSx=e.touches[0].clientX; tSt=Date.now(); }
-},{passive:false});
-document.addEventListener('touchmove', e => { if(e.touches.length>1) e.preventDefault(); },{passive:false});
-document.addEventListener('touchend', e => {
-  const n=Date.now();
-  const dy=tSy-(e.changedTouches[0]?.clientY??0); const dx=tSx-(e.changedTouches[0]?.clientX??0);
-  if(tSy>innerHeight-40 && dy>50 && n-tSt<300) logViolation('bottom');
-  if(tSx<20 && dx<-50 && n-tSt<300) logViolation('left');
-  if(tSx>innerWidth-20 && dx>50 && n-tSt<300) logViolation('right');
-  if(n-ltE<=300){ e.preventDefault(); logViolation('dbltap'); }
-  ltE=n;
-},false);
-document.addEventListener('webkitmouseforcewillbegin', e => { e.preventDefault(); });
-document.addEventListener('webkitmouseforcedown', e => { e.preventDefault(); });
+document.addEventListener('touchstart',e=>{if(e.touches.length>1){logViolation('multi');e.preventDefault();}if(e.touches.length===1){tSy=e.touches[0].clientY;tSx=e.touches[0].clientX;tSt=Date.now();}},{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+document.addEventListener('touchend',e=>{const n=Date.now();const dy=tSy-(e.changedTouches[0]?.clientY??0);const dx=tSx-(e.changedTouches[0]?.clientX??0);if(tSy>innerHeight-40&&dy>50&&n-tSt<300)logViolation('bottom');if(tSx<20&&dx<-50&&n-tSt<300)logViolation('left');if(tSx>innerWidth-20&&dx>50&&n-tSt<300)logViolation('right');if(n-ltE<=300){e.preventDefault();logViolation('dbltap');}ltE=n;},false);
 
-document.documentElement.addEventListener('mouseleave', e => {
-  if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight) logViolation('mouseleave');
-});
-window.addEventListener('blur', () => triggerSecurityLock(2));
-window.addEventListener('focus', () => { securityLockLevel=Math.max(0,securityLockLevel-1); });
-window.addEventListener('pagehide', () => triggerSecurityLock(3));
-window.addEventListener('pageshow', () => { securityLockLevel=0; document.querySelectorAll('.blur-sensitive.locked').forEach(e=>e.classList.remove('locked')); });
-document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState==='hidden') triggerSecurityLock(2);
-  else securityLockLevel=Math.max(0,securityLockLevel-1);
-});
+document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight)logViolation('mouse');});
+window.addEventListener('blur',()=>triggerSecurityLock(2));
+window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
+window.addEventListener('pagehide',()=>triggerSecurityLock(3));
+window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-sensitive.locked').forEach(e=>e.classList.remove('locked'));});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
 
 let lW=innerWidth,lH=innerHeight;
-window.addEventListener('resize', () => { const w=innerWidth,h=innerHeight; if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){ logViolation('resize'); lW=w;lH=h; } });
-window.addEventListener('orientationchange', () => logViolation('orient'));
-if(visualViewport){ visualViewport.addEventListener('resize',()=>logViolation('vport')); visualViewport.addEventListener('scroll',()=>logViolation('vpscroll')); }
-
-document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement) logViolation('fsleave'); });
-document.addEventListener('webkitfullscreenchange', () => { if(!document.webkitFullscreenElement) logViolation('wfsleave'); });
-
-setInterval(() => { const s=performance.now(); debugger; if(performance.now()-s>100) logViolation('devtools'); if(outerWidth-innerWidth>150||outerHeight-innerHeight>150) logViolation('devsize'); },3000);
-
-new MutationObserver(m => { for(const r of m) for(const n of r.addedNodes) if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')){ n.remove(); logViolation('dom'); } }).observe(document.body,{childList:true,subtree:true,attributes:true});
-
-if(navigator.mediaDevices){ navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked')); if(navigator.mediaDevices.getDisplayMedia) navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked')); }
-if(navigator.getDisplayMedia) navigator.getDisplayMedia=()=>Promise.reject();
-
-navigator.clipboard.write = () => Promise.reject('Blocked');
-if(window.opener){ window.opener=null; }
-
-['log','warn','error','info','debug','table','trace'].forEach(m=>{ console[m]=()=>{}; Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false}); });
-
-if(typeof HTMLCanvasElement!=='undefined'){ HTMLCanvasElement.prototype.toDataURL=function(){ return ''; }; HTMLCanvasElement.prototype.toBlob=function(){}; HTMLCanvasElement.prototype.captureStream=function(){ return null; }; }
-
-Element.prototype.requestFullscreen = function(){};
-Element.prototype.webkitRequestFullscreen = function(){};
-window.open = () => { return null; };
-document.execCommand = function(){ return false; };
-
-window.addEventListener('beforeunload', e => { e.preventDefault(); e.returnValue=''; });
-
-if(navigator.keyboard?.lock) navigator.keyboard.lock=()=>Promise.reject();
-if(screen?.isExtended){ setInterval(() => { if(screen.isExtended) logViolation('extmon'); },5000); }
-if(matchMedia('(display-mode: standalone)').matches) logViolation('pwa');
-
-HTMLCanvasElement.prototype.getContext = function(type,...args){ if(type?.includes('webgl')){ return null; } return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments); };
-if(navigator.wakeLock?.request) navigator.wakeLock.request=()=>Promise.reject();
-if(navigator.serviceWorker){ navigator.serviceWorker.register=()=>Promise.reject(); navigator.serviceWorker.addEventListener=()=>{}; }
-
+window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){logViolation('resize');lW=w;lH=h;}});
+window.addEventListener('orientationchange',()=>logViolation('orient'));
+if(visualViewport){visualViewport.addEventListener('resize',()=>logViolation('vport'));visualViewport.addEventListener('scroll',()=>logViolation('vpscroll'));}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)logViolation('fs');});
+document.addEventListener('webkitfullscreenchange',()=>{if(!document.webkitFullscreenElement)logViolation('wfs');});
+setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
+new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
+if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
+if(navigator.getDisplayMedia)navigator.getDisplayMedia=()=>Promise.reject();
+navigator.clipboard.write=()=>Promise.reject('Blocked');
+if(window.opener){window.opener=null;}
+['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
+if(typeof HTMLCanvasElement!=='undefined'){HTMLCanvasElement.prototype.toDataURL=function(){return'';};HTMLCanvasElement.prototype.toBlob=function(){};HTMLCanvasElement.prototype.captureStream=function(){return null;};}
+Element.prototype.requestFullscreen=function(){};
+Element.prototype.webkitRequestFullscreen=function(){};
+window.open=()=>null;
+document.execCommand=function(){return false;};
+window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
+if(navigator.keyboard?.lock)navigator.keyboard.lock=()=>Promise.reject();
+if(screen?.isExtended){setInterval(()=>{if(screen.isExtended)logViolation('extmon');},5000);}
+if(matchMedia('(display-mode: standalone)').matches)logViolation('pwa');
+HTMLCanvasElement.prototype.getContext=function(type,...args){if(type?.includes('webgl'))return null;return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
+if(navigator.wakeLock?.request)navigator.wakeLock.request=()=>Promise.reject();
+if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject();navigator.serviceWorker.addEventListener=()=>{};}
 let rafC=0,lastR=0;
-function rafLoop(t){ if(lastR&&t-lastR>100){ rafC++; if(rafC>3){ logViolation('frame'); rafC=0; } } else rafC=0; lastR=t; requestAnimationFrame(rafLoop); }
-requestAnimationFrame(rafLoop);
-
+(function rafLoop(t){if(lastR&&t-lastR>100){rafC++;if(rafC>3){logViolation('frame');rafC=0;}}else rafC=0;lastR=t;requestAnimationFrame(rafLoop);})(performance.now());
 let inactivityTimer;
-function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(()=>{ if(document.getElementById('chatScreen').style.display!=='none') destroyChat(); },15*60*1000); }
-['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity));
-resetInactivity();
-
-window.Worker=function(){ throw new Error('Blocked'); };
-window.SharedWorker=function(){ throw new Error('Blocked'); };
+function resetInactivity(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none')destroyChat();},15*60*1000);}
+['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity));resetInactivity();
+window.Worker=function(){throw new Error('Blocked');};
+window.SharedWorker=function(){throw new Error('Blocked');};
 window.eval=()=>{};
 window.Function=()=>{};
-const _st=window.setTimeout; window.setTimeout=function(c,...a){ if(typeof c==='string') return; return _st.call(this,c,...a); };
-const _si=window.setInterval; window.setInterval=function(c,...a){ if(typeof c==='string') return; return _si.call(this,c,...a); };
-window.WebSocket=function(){ throw new Error('Blocked'); };
-window.EventSource=function(){ throw new Error('Blocked'); };
+const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
+const _si=window.setInterval;window.setInterval=function(c,...a){if(typeof c==='string')return;return _si.call(this,c,...a);};
+window.WebSocket=function(){throw new Error('Blocked');};
+window.EventSource=function(){throw new Error('Blocked');};
 navigator.sendBeacon=()=>false;
-if(navigator.permissions) navigator.permissions.query=()=>Promise.reject(new Error('Blocked'));
-if(window.Notification){ window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked')); window.Notification.permission='denied'; }
-if(navigator.geolocation){ navigator.geolocation.getCurrentPosition=()=>{}; navigator.geolocation.watchPosition=()=>{}; }
-if(window.PaymentRequest) window.PaymentRequest=function(){ throw new Error('Blocked'); };
-if(navigator.mediaDevices?.enumerateDevices) navigator.mediaDevices.enumerateDevices=()=>Promise.reject(new Error('Blocked'));
-if(navigator.bluetooth) navigator.bluetooth.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(navigator.usb) navigator.usb.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(navigator.serial) navigator.serial.requestPort=()=>Promise.reject(new Error('Blocked'));
-if(navigator.hid) navigator.hid.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(window.showOpenFilePicker) window.showOpenFilePicker=()=>Promise.reject(new Error('Blocked'));
-if(window.showSaveFilePicker) window.showSaveFilePicker=()=>Promise.reject(new Error('Blocked'));
-if(window.showDirectoryPicker) window.showDirectoryPicker=()=>Promise.reject(new Error('Blocked'));
-if(window.SpeechRecognition||window.webkitSpeechRecognition){ window.SpeechRecognition=function(){ throw new Error('Blocked'); }; window.webkitSpeechRecognition=function(){ throw new Error('Blocked'); } }
-HTMLIFrameElement.prototype.create=function(){ throw new Error('Blocked'); };
+if(navigator.permissions)navigator.permissions.query=()=>Promise.reject(new Error('Blocked'));
+if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
+if(navigator.geolocation){navigator.geolocation.getCurrentPosition=()=>{};navigator.geolocation.watchPosition=()=>{};}
+if(window.PaymentRequest)window.PaymentRequest=function(){throw new Error('Blocked');};
+if(navigator.mediaDevices?.enumerateDevices)navigator.mediaDevices.enumerateDevices=()=>Promise.reject(new Error('Blocked'));
+if(navigator.bluetooth)navigator.bluetooth.requestDevice=()=>Promise.reject(new Error('Blocked'));
+if(navigator.usb)navigator.usb.requestDevice=()=>Promise.reject(new Error('Blocked'));
+if(navigator.serial)navigator.serial.requestPort=()=>Promise.reject(new Error('Blocked'));
+if(navigator.hid)navigator.hid.requestDevice=()=>Promise.reject(new Error('Blocked'));
+if(window.showOpenFilePicker)window.showOpenFilePicker=()=>Promise.reject(new Error('Blocked'));
+if(window.showSaveFilePicker)window.showSaveFilePicker=()=>Promise.reject(new Error('Blocked'));
+if(window.showDirectoryPicker)window.showDirectoryPicker=()=>Promise.reject(new Error('Blocked'));
+if(window.SpeechRecognition||window.webkitSpeechRecognition){window.SpeechRecognition=function(){throw new Error('Blocked');};window.webkitSpeechRecognition=function(){throw new Error('Blocked');}}
+HTMLIFrameElement.prototype.create=function(){throw new Error('Blocked');};
 const _ce=document.createElement.bind(document);
-document.createElement=function(t,o){ if(t.toLowerCase()==='iframe') throw new Error('Blocked'); return _ce(t,o); };
+document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Error('Blocked');return _ce(t,o);};
 const _sa=Element.prototype.setAttribute;
-Element.prototype.setAttribute=function(n,v){ if(n==='style'&&this.closest('#chatScreen')) return; return _sa.call(this,n,v); };
+Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chatScreen'))return;return _sa.call(this,n,v);};
 
-// 블러 클릭 상호작용
+// ==================== 블러 클릭/터치 상호작용 ====================
 document.addEventListener('click', e => {
-  const b=e.target.closest('.bubble');
-  if(b&&b.classList.contains('blur-sensitive')&&!b.classList.contains('locked')) revealElement(b,3000);
-  const f=e.target.closest('.fingerprint');
-  if(f&&f.classList.contains('blur-sensitive')&&!f.classList.contains('locked')) revealElement(f,5000);
-});
+  if (isDestroyed()) return;
+  // 버블 요소를 찾을 때 closest로 정확히 찾기
+  let target = e.target.closest('.bubble');
+  if (!target) target = e.target.closest('.fingerprint');
+  if (target && target.classList.contains('blur-sensitive') && !target.classList.contains('locked')) {
+    revealElement(target, 3000);
+    e.stopPropagation();
+  }
+}, true);
 
-// =====================================================================
-//  극강 암호화 엔진 – P-521, SHA-512, HKDF, AES-256-GCM, Ratchet
-// =====================================================================
+// 터치 이벤트도 동일하게 처리
+document.addEventListener('touchend', e => {
+  if (isDestroyed()) return;
+  if (e.target.closest('#msgInput') || e.target.closest('.input-bar')) return;
+  let target = e.target.closest('.bubble');
+  if (!target) target = e.target.closest('.fingerprint');
+  if (target && target.classList.contains('blur-sensitive') && !target.classList.contains('locked')) {
+    revealElement(target, 3000);
+    e.stopPropagation();
+  }
+}, true);
+
+// ==================== 파괴 시 채팅 화면 초기화 ====================
+function executeDestroy() {
+  document.getElementById('messages').innerHTML = '';
+  receivedMessageIds.clear();
+  pendingOutbox = [];
+  markDestroyed();
+  // 채팅 화면에서 초기 화면으로 강제 전환
+  document.getElementById('simpleMode').style.display = 'block';
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('securityCard').style.display = 'none';
+  document.getElementById('sessionFingerprint').textContent = '';
+  document.getElementById('passwordPrompt').style.display = 'block';
+  document.getElementById('passwordError').style.display = 'none';
+  // 연결 종료
+  if (pc) { pc.close(); pc = null; }
+  dc = null; typingChannel = null;
+  authKey = sessionKey = null; sendChain = recvChain = null;
+  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
+  handshakeDone = false;
+  // URL 정리
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  // 추가 UI 정리
+  document.body.style.filter = '';
+  securityLockLevel = 0;
+  document.querySelectorAll('.blur-sensitive').forEach(el => { el.classList.remove('blur-sensitive','revealed','locked'); });
+  alert('💥 대화가 완전히 삭제되었습니다.');
+}
+
+// ==================== P2P 암호화 엔진 (P-521 + SHA-512 + AES-256) ====================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 const str2buf = s => textEncoder.encode(s);
 const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
 const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
-const b642buf = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0)).buffer;
+const b642buf = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
 const concatBufs = (...bufs) => { let len=bufs.reduce((a,b)=>a+b.byteLength,0), tmp=new Uint8Array(len), off=0; bufs.forEach(b=>{tmp.set(new Uint8Array(b),off);off+=b.byteLength;}); return tmp.buffer; };
 const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]%16;return(c=='x'?r:r&0x3|0x8).toString(16);});
 
@@ -398,33 +412,33 @@ let authKey, sessionKey, sendChain, recvChain;
 let ourEcdhPair = null, peerEcdhPub = null;
 let salt;
 let handshakeDone = false;
-const ECDH_ALGORITHM = { name: 'ECDH', namedCurve: 'P-521' }; // P-521: 521비트 (더 강력)
-const PBKDF2_ITERATIONS = 1000000; // 100만 회 반복
-const SALT_SIZE = 128; // 128바이트 솔트 (1024비트)
-const AES_KEY_LENGTH = 256; // AES-256
-const HMAC_HASH = 'SHA-512'; // HMAC-SHA-512
+const ECDH_ALG = { name:'ECDH', namedCurve:'P-521' };
+const PBKDF2_ITERS = 1000000;
+const SALT_SIZE = 128;
+const AES_LEN = 256;
+const HMAC_HASH = 'SHA-512';
 
 let fileReceive = null;
 let typingChannel = null;
 const TYPING_LABEL = 'typing';
-const ICE_SERVERS = ['stun:stun.services.mozilla.com:3478', 'stun:stun.nextcloud.com:443'].map(u=>({urls:u}));
+const ICE_SERVERS = ['stun:stun.services.mozilla.com:3478','stun:stun.nextcloud.com:443'].map(u=>({urls:u}));
 let pendingOutbox = [];
 const receivedMessageIds = new Set();
-const DESTROY_KEY = 'p2p_chat_destroyed';
 
 (async function init(){
-  if(localStorage.getItem(DESTROY_KEY)) showSimple();
-  document.getElementById('msgInput').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendText(); } });
-  document.getElementById('msgInput').addEventListener('input', () => { sendTyping(true); clearTimeout(window.typingTimer); window.typingTimer=setTimeout(()=>sendTyping(false),1500); });
-  document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop', async e => { e.preventDefault(); if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+  if (isDestroyed()) { executeDestroy(); return; }
+  document.getElementById('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}});
+  document.getElementById('msgInput').addEventListener('input',()=>{sendTyping(true);clearTimeout(window.typingTimer);window.typingTimer=setTimeout(()=>sendTyping(false),1500);});
+  document.addEventListener('dragover',e=>e.preventDefault());
+  document.addEventListener('drop',async e=>{e.preventDefault();if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
   checkHash(); window.addEventListener('hashchange', checkHash);
 })();
 
 async function checkHash(){
-  const h = location.hash.substring(1); if(!h) return; if(localStorage.getItem(DESTROY_KEY)) return;
+  if (isDestroyed()) { executeDestroy(); return; }
+  const h = location.hash.substring(1); if(!h) return;
   const p = new URLSearchParams(h);
-  if(p.has('offer')){
+  if (p.has('offer')){
     try{
       const offer = decodeSDP(p.get('offer')); closeConnection();
       document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
@@ -438,16 +452,8 @@ async function checkHash(){
   }else if(p.has('answer')){
     try{
       const answer = decodeSDP(p.get('answer'));
-      if(pc && isOfferer) {
-        await pc.setRemoteDescription(answer);
-      } else {
-        closeConnection(); isOfferer = true;
-        initPC(); createDataChannels();
-        await pc.setRemoteDescription(answer);
-        await pc.setLocalDescription(await pc.createAnswer());
-        await waitIce();
-        showChat();
-      }
+      if(pc && isOfferer){ await pc.setRemoteDescription(answer); }
+      else { closeConnection(); isOfferer=true; initPC(); createDataChannels(); await pc.setRemoteDescription(answer); await pc.setLocalDescription(await pc.createAnswer()); await waitIce(); showChat(); }
     }catch(e){ alert('Answer 링크 처리 실패'); }
   }
 }
@@ -460,12 +466,12 @@ function showJoinPanel(){
 }
 
 async function startNewChat(){
-  localStorage.removeItem(DESTROY_KEY); closeConnection(); isOfferer = true;
+  clearDestroyedFlags(); closeConnection(); isOfferer = true;
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('answerPanel').classList.add('hidden');
   document.getElementById('offerSpinner').style.display='inline-block';
   initPC(); createDataChannels();
-  pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => waitIce().then(() => {
+  pc.createOffer().then(o=>pc.setLocalDescription(o)).then(()=>waitIce().then(()=>{
     document.getElementById('offerSpinner').style.display='none';
     const offerB64 = encodeSDP(pc.localDescription);
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
@@ -485,11 +491,7 @@ async function createAnswerFromOffer(){
   const t = document.getElementById('remoteOfferSDP').value.trim(); if(!t) return;
   closeConnection(); isOfferer = false; initPC();
   let offerStr = t;
-  if(t.startsWith('http')){
-    const u = new URL(t); const hp = new URLSearchParams(u.hash.substring(1));
-    if(!hp.has('offer')){ alert('올바른 초대 링크가 아닙니다.'); return; }
-    offerStr = hp.get('offer');
-  }
+  if(t.startsWith('http')){ const u=new URL(t); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('offer')){ alert('올바른 초대 링크가 아닙니다.'); return; } offerStr=hp.get('offer'); }
   await pc.setRemoteDescription(decodeSDP(offerStr));
   const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
   document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
@@ -500,11 +502,7 @@ async function applyAnswerLink(){
   const l = document.getElementById('answerLinkInput').value.trim(); if(!l) return;
   try{
     let answerStr = l;
-    if(l.startsWith('http')){
-      const u = new URL(l); const hp = new URLSearchParams(u.hash.substring(1));
-      if(!hp.has('answer')){ alert('올바르지 않은 Answer 링크입니다.'); return; }
-      answerStr = hp.get('answer');
-    }
+    if(l.startsWith('http')){ const u=new URL(l); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('answer')){ alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr=hp.get('answer'); }
     if(pc && isOfferer) await pc.setRemoteDescription(decodeSDP(answerStr));
   }catch(e){ alert('올바르지 않은 Answer 링크입니다.'); }
 }
@@ -513,22 +511,15 @@ function initPC(){
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   pc.oniceconnectionstatechange = onIceState;
   pc.ondatachannel = e => {
-    if(e.channel.label === 'chat'){
-      if(dc) dc.close();
-      dc = e.channel; setupDC();
-      if(handshakeDone && sessionKey) flushOutbox();
-      checkDestroyAndPropagate();
-    }else if(e.channel.label === TYPING_LABEL){
-      if(typingChannel) typingChannel.close();
-      typingChannel = e.channel; setupTypingChannel();
-    }
+    if (isDestroyed()) return;
+    if(e.channel.label === 'chat'){ if(dc) dc.close(); dc = e.channel; setupDC(); if(handshakeDone && sessionKey) flushOutbox(); if (isDestroyed()) { executeDestroy(); return; } }
+    else if(e.channel.label === TYPING_LABEL){ if(typingChannel) typingChannel.close(); typingChannel = e.channel; setupTypingChannel(); }
   };
 }
 
 function createDataChannels(){
   if(!pc || !isOfferer) return;
-  if(dc) dc.close();
-  if(typingChannel) typingChannel.close();
+  if(dc) dc.close(); if(typingChannel) typingChannel.close();
   dc = pc.createDataChannel('chat', { ordered: true });
   typingChannel = pc.createDataChannel(TYPING_LABEL, { ordered: false, maxRetransmits: 0 });
   setupDC(); setupTypingChannel();
@@ -537,7 +528,9 @@ function createDataChannels(){
 function setupDC(){
   if(!dc) return;
   dc.onopen = () => {
-    updateConn(true); showChat(); flushOutbox(); checkDestroyAndPropagate();
+    if (isDestroyed()) { executeDestroy(); return; }
+    updateConn(true); showChat(); flushOutbox();
+    if (isDestroyed()) { executeDestroy(); return; }
     if(!handshakeDone && !sessionKey) startEcdhExchange();
   };
   dc.onmessage = onMsg;
@@ -546,98 +539,67 @@ function setupDC(){
 
 function setupTypingChannel(){
   if(!typingChannel) return;
-  typingChannel.onmessage = e => {
-    if(typeof e.data === 'string') document.getElementById('typingIndicator').style.display = e.data === '1' ? 'block' : 'none';
-  };
+  typingChannel.onmessage = e => { if(typeof e.data==='string') document.getElementById('typingIndicator').style.display = e.data==='1'?'block':'none'; };
 }
 
 function onIceState(){
   const s = pc.iceConnectionState;
-  if(s==='connected'||s==='completed'){
-    updateConn(true);
-    if((!dc || dc.readyState!=='open') && isOfferer) createDataChannels();
-    checkDestroyAndPropagate();
-  }else if(s==='disconnected'){
-    updateConn(false); pc.restartIce();
-  }else if(s==='failed'||s==='closed'){
-    updateConn(false);
-  }
+  if(s==='connected'||s==='completed'){ updateConn(true); if((!dc||dc.readyState!=='open')&&isOfferer) createDataChannels(); if(isDestroyed()) executeDestroy(); }
+  else if(s==='disconnected'){ updateConn(false); pc.restartIce(); }
+  else if(s==='failed'||s==='closed'){ updateConn(false); }
 }
 
-function waitIce(){ return new Promise(r => { if(pc.iceGatheringState==='complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if(pc.iceGatheringState==='complete') r(); }); }); }
-function updateConn(ok){ document.getElementById('connDot').className = 'dot '+(ok?'on':'off'); document.getElementById('connLabel').textContent = ok ? '연결됨' : '오프라인'; }
-function checkDestroyAndPropagate(){ if(localStorage.getItem(DESTROY_KEY)) executeDestroy(); }
+function waitIce(){ return new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')r();});}); }
+function updateConn(ok){ document.getElementById('connDot').className='dot '+(ok?'on':'off'); document.getElementById('connLabel').textContent=ok?'연결됨':'오프라인'; }
+function checkDestroyAndPropagate(){ if(isDestroyed()) executeDestroy(); }
 
 async function flushOutbox(){
-  if(!dc || dc.readyState!=='open' || pendingOutbox.length===0) return;
-  const toSend = [...pendingOutbox]; pendingOutbox = [];
-  for(const msg of toSend){
-    try{ const enc = await encryptPayload(msg.payload); dc.send(JSON.stringify({ type:'msg', ...enc })); }catch(e){}
-  }
-  addMsg('📬 대기 메시지 전송 완료', 'system');
+  if(isDestroyed()) return;
+  if(!dc||dc.readyState!=='open'||pendingOutbox.length===0) return;
+  const toSend=[...pendingOutbox]; pendingOutbox=[];
+  for(const msg of toSend){ try{ const enc=await encryptPayload(msg.payload); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){} }
+  addMsg('📬 대기 메시지 전송 완료','system');
 }
 
-function sendTyping(state){ if(typingChannel && typingChannel.readyState==='open') typingChannel.send(state ? '1' : '0'); }
+function sendTyping(state){ if(typingChannel&&typingChannel.readyState==='open') typingChannel.send(state?'1':'0'); }
 
 async function startEcdhExchange(){
   try{
-    const keyPair = await crypto.subtle.generateKey(ECDH_ALGORITHM, true, ['deriveKey','deriveBits']);
-    ourEcdhPair = { privateKey: keyPair.privateKey, publicKey: keyPair.publicKey };
+    const keyPair = await crypto.subtle.generateKey(ECDH_ALG, true, ['deriveKey','deriveBits']);
+    ourEcdhPair = { privateKey:keyPair.privateKey, publicKey:keyPair.publicKey };
     const pubRaw = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
-    if(isOfferer){
-      salt = crypto.getRandomValues(new Uint8Array(SALT_SIZE));
-      dc.send(JSON.stringify({ type:'__ecdhe__', salt:buf2b64(salt.buffer), pubKey:buf2b64(pubRaw) }));
-    }else{
-      dc.send(JSON.stringify({ type:'__ecdhe__', pubKey:buf2b64(pubRaw) }));
-    }
-  }catch(e){ addMsg('보안 오류', 'system'); }
+    if(isOfferer){ salt=crypto.getRandomValues(new Uint8Array(SALT_SIZE)); dc.send(JSON.stringify({type:'__ecdhe__',salt:buf2b64(salt.buffer),pubKey:buf2b64(pubRaw)})); }
+    else { dc.send(JSON.stringify({type:'__ecdhe__',pubKey:buf2b64(pubRaw)})); }
+  }catch(e){ addMsg('보안 오류','system'); }
 }
 
 async function handleEcdheMessage(data){
-  if(handshakeDone) return;
-  try{
-    if(data.salt) salt = new Uint8Array(b642buf(data.salt));
-    peerEcdhPub = await crypto.subtle.importKey('raw', b642buf(data.pubKey), ECDH_ALGORITHM, true, []);
-    if(password && ourEcdhPair && peerEcdhPub && salt) await deriveSessionKey();
-  }catch(e){ addMsg('키 교환 실패', 'system'); }
+  if(handshakeDone||isDestroyed()) return;
+  try{ if(data.salt) salt=new Uint8Array(b642buf(data.salt)); peerEcdhPub=await crypto.subtle.importKey('raw',b642buf(data.pubKey),ECDH_ALG,true,[]); if(password&&ourEcdhPair&&peerEcdhPub&&salt) await deriveSessionKey(); }catch(e){ addMsg('키 교환 실패','system'); }
 }
 
 async function submitPassword(){
-  const errorEl = document.getElementById('passwordError'); errorEl.style.display = 'none';
-  password = document.getElementById('chatPasswordInput').value.trim();
-  if(!password){ errorEl.textContent = '암호를 입력하세요.'; errorEl.style.display = 'block'; return; }
-  if(!salt || !ourEcdhPair || !peerEcdhPub){
-    errorEl.textContent = '상대방과의 보안 연결 준비 중...'; errorEl.style.display = 'block'; return;
-  }
+  if(isDestroyed()) return;
+  const errorEl=document.getElementById('passwordError'); errorEl.style.display='none';
+  password=document.getElementById('chatPasswordInput').value.trim();
+  if(!password){ errorEl.textContent='암호를 입력하세요.'; errorEl.style.display='block'; return; }
+  if(!salt||!ourEcdhPair||!peerEcdhPub){ errorEl.textContent='상대방과의 보안 연결 준비 중...'; errorEl.style.display='block'; return; }
   if(handshakeDone) return;
-  try{
-    await deriveAuthKey(); await deriveSessionKey(); handshakeDone = true;
-    document.getElementById('passwordPrompt').style.display = 'none';
-    document.getElementById('securityCard').style.display = 'flex';
-    addMsg('🔐 세션 활성화', 'system');
-  }catch(e){ errorEl.textContent = '세션 키 실패: ' + e.message; errorEl.style.display = 'block'; }
+  try{ await deriveAuthKey(); await deriveSessionKey(); handshakeDone=true; document.getElementById('passwordPrompt').style.display='none'; document.getElementById('securityCard').style.display='flex'; addMsg('🔐 세션 활성화','system'); }catch(e){ errorEl.textContent='세션 키 실패: '+e.message; errorEl.style.display='block'; }
 }
 
 async function deriveAuthKey(){
-  const km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
-  authKey = await crypto.subtle.deriveKey(
-    { name:'PBKDF2', salt, iterations:PBKDF2_ITERATIONS, hash:'SHA-512' },
-    km, { name:'AES-GCM', length:AES_KEY_LENGTH }, true, ['encrypt','decrypt']
-  );
+  const km = await crypto.subtle.importKey('raw',str2buf(password),'PBKDF2',false,['deriveKey']);
+  authKey = await crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:PBKDF2_ITERS, hash:'SHA-512' }, km, { name:'AES-GCM', length:AES_LEN }, true, ['encrypt','decrypt']);
 }
 
 async function deriveSessionKey(){
   const ecdhBits = await crypto.subtle.deriveBits({ name:'ECDH', public:peerEcdhPub }, ourEcdhPair.privateKey, 521);
   const authRaw = await crypto.subtle.exportKey('raw', authKey);
   const ikm = concatBufs(ecdhBits, str2buf(password));
-  // HKDF with SHA-512
   const hkdfKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveKey']);
-  sessionKey = await crypto.subtle.deriveKey(
-    { name:'HKDF', hash:'SHA-512', salt:authRaw, info:str2buf('session') },
-    hkdfKey, { name:'AES-GCM', length:AES_KEY_LENGTH }, true, ['encrypt','decrypt']
-  );
+  sessionKey = await crypto.subtle.deriveKey({ name:'HKDF', hash:'SHA-512', salt:authRaw, info:str2buf('session') }, hkdfKey, { name:'AES-GCM', length:AES_LEN }, true, ['encrypt','decrypt']);
   const sb = await crypto.subtle.exportKey('raw', sessionKey);
-  // HMAC-SHA-512를 사용한 체인 키 확장
   const chainA = await hkdfExpand(sb, str2buf('chain-a'));
   const chainB = await hkdfExpand(sb, str2buf('chain-b'));
   const ourPub = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
@@ -649,216 +611,72 @@ async function deriveSessionKey(){
   applyBlurToSensitiveElements();
 }
 
-function compareBuffers(b1,b2){ for(let i=0; i<b1.byteLength; i++){ if(b1[i]<b2[i]) return -1; if(b1[i]>b2[i]) return 1; } return 0; }
-async function hkdfExpand(prk, info){
-  // HMAC-SHA-512 사용
-  const k = await crypto.subtle.importKey('raw', prk, { name:'HMAC', hash:HMAC_HASH }, false, ['sign']);
-  const s = await crypto.subtle.sign('HMAC', k, info);
-  // 256비트 키로 줄임 (AES-256용)
-  return crypto.subtle.importKey('raw', s.slice(0,32), { name:'HMAC', hash:HMAC_HASH }, false, ['sign']);
-}
-
-async function ratchetForward(chainRef){
-  const cur = chainRef.chain;
-  const newChain = await crypto.subtle.sign('HMAC', cur, new Uint8Array([2]));
-  chainRef.chain = await crypto.subtle.importKey('raw', newChain.slice(0,32), { name:'HMAC', hash:HMAC_HASH }, false, ['sign']);
-  const msgKey = await crypto.subtle.sign('HMAC', cur, new Uint8Array([1]));
-  return crypto.subtle.importKey('raw', msgKey.slice(0,32), { name:'AES-GCM', length:AES_KEY_LENGTH }, false, ['encrypt','decrypt']);
-}
-
-async function encryptPayload(obj){
-  if(!sendChain) throw new Error('세션키 없음');
-  const mk = await ratchetForward(sendChain);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  // 평문에 무작위 패딩 추가 (길이 숨김)
-  const paddedObj = { ...obj, _pad: Math.random().toString(36).slice(2, 10) };
-  const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, mk, str2buf(JSON.stringify(paddedObj)));
-  return { seq:sendChain.seq++, iv:Array.from(new Uint8Array(iv)), ct:Array.from(new Uint8Array(ct)) };
-}
-
-async function decryptPayload(d){
-  if(!recvChain) throw new Error('세션키 없음');
-  const { seq, iv, ct } = d;
-  const prevChain = recvChain.chain, prevSeq = recvChain.seq;
-  try{
-    if(seq <= recvChain.seq) throw new Error('Invalid seq');
-    while(recvChain.seq < seq-1){ await ratchetForward(recvChain); recvChain.seq++; }
-    const mk = await ratchetForward(recvChain);
-    recvChain.seq = seq;
-    const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv:new Uint8Array(iv) }, mk, new Uint8Array(ct));
-    const obj = JSON.parse(textDecoder.decode(plain));
-    delete obj._pad; // 패딩 제거
-    return obj;
-  }catch(e){ recvChain.chain = prevChain; recvChain.seq = prevSeq; throw e; }
-}
+function compareBuffers(b1,b2){ for(let i=0;i<b1.byteLength;i++){ if(b1[i]<b2[i]) return -1; if(b1[i]>b2[i]) return 1; } return 0; }
+async function hkdfExpand(prk, info){ const k = await crypto.subtle.importKey('raw',prk,{name:'HMAC',hash:HMAC_HASH},false,['sign']); const s = await crypto.subtle.sign('HMAC',k,info); return crypto.subtle.importKey('raw',s.slice(0,32),{name:'HMAC',hash:HMAC_HASH},false,['sign']); }
+async function ratchetForward(chainRef){ const cur=chainRef.chain; const newChain=await crypto.subtle.sign('HMAC',cur,new Uint8Array([2])); chainRef.chain=await crypto.subtle.importKey('raw',newChain.slice(0,32),{name:'HMAC',hash:HMAC_HASH},false,['sign']); const msgKey=await crypto.subtle.sign('HMAC',cur,new Uint8Array([1])); return crypto.subtle.importKey('raw',msgKey.slice(0,32),{name:'AES-GCM',length:AES_LEN},false,['encrypt','decrypt']); }
+async function encryptPayload(obj){ if(!sendChain) throw new Error('세션키 없음'); const mk=await ratchetForward(sendChain); const iv=crypto.getRandomValues(new Uint8Array(12)); const padded={...obj,_pad:Math.random().toString(36).slice(2,10)}; const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},mk,str2buf(JSON.stringify(padded))); return {seq:sendChain.seq++,iv:Array.from(new Uint8Array(iv)),ct:Array.from(new Uint8Array(ct))}; }
+async function decryptPayload(d){ if(!recvChain) throw new Error('세션키 없음'); const {seq,iv,ct}=d; const prevChain=recvChain.chain,prevSeq=recvChain.seq; try{ if(seq<=recvChain.seq) throw new Error('Invalid seq'); while(recvChain.seq<seq-1){await ratchetForward(recvChain);recvChain.seq++;} const mk=await ratchetForward(recvChain); recvChain.seq=seq; const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)},mk,new Uint8Array(ct)); const obj=JSON.parse(textDecoder.decode(plain)); delete obj._pad; return obj; }catch(e){recvChain.chain=prevChain;recvChain.seq=prevSeq;throw e;} }
 
 async function sendText(){
-  const inp = document.getElementById('msgInput');
-  const txt = inp.value.trim(); if(!txt) return;
-  const msgId = genUUID();
-  const payload = { type:'text', content:txt, id:msgId };
-  if(!dc || dc.readyState!=='open' || !sessionKey){
-    if(sessionKey){ pendingOutbox.push({ payload, id:msgId }); addMsg(txt, 'me', msgId); addMsg('⏳ 오프라인 - 복구 시 전송', 'system'); }
-    else addMsg('⚠️ 암호를 설정하세요.', 'system');
-    inp.value = ''; return;
-  }
-  try{
-    const enc = await encryptPayload(payload);
-    dc.send(JSON.stringify({ type:'msg', ...enc }));
-    addMsg(txt, 'me', msgId);
-  }catch(e){ pendingOutbox.push({ payload, id:msgId }); addMsg(txt, 'me', msgId); addMsg('⚠️ 전송 실패 - 대기열 저장', 'system'); }
-  inp.value = '';
+  if(isDestroyed()) return;
+  const inp=document.getElementById('msgInput'); const txt=inp.value.trim(); if(!txt) return;
+  const msgId=genUUID(); const payload={type:'text',content:txt,id:msgId};
+  if(!dc||dc.readyState!=='open'||!sessionKey){ if(sessionKey){pendingOutbox.push({payload,id:msgId});addMsg(txt,'me',msgId);addMsg('⏳ 오프라인-복구 시 전송','system');}else addMsg('⚠️ 암호를 설정하세요.','system'); inp.value=''; return; }
+  try{ const enc=await encryptPayload(payload); dc.send(JSON.stringify({type:'msg',...enc})); addMsg(txt,'me',msgId); }catch(e){pendingOutbox.push({payload,id:msgId});addMsg(txt,'me',msgId);addMsg('⚠️ 전송 실패-대기열 저장','system');}
+  inp.value='';
 }
 
 function onMsg(e){
-  if(e.data instanceof ArrayBuffer){ handleBinaryChunk(e.data); return; }
-  try{
-    const d = JSON.parse(e.data);
-    if(d.type==='__ecdhe__'){ handleEcdheMessage(d); return; }
-    if(d.type==='msg'){
-      if(!sessionKey){ addEncryptedMessage(d); return; }
-      decryptPayload(d).then(inner => {
-        if(inner.id && receivedMessageIds.has(inner.id)) return;
-        if(inner.id) receivedMessageIds.add(inner.id);
-        if(inner.type==='text'){ addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
-        else if(inner.type==='read') markAsRead(inner.id);
-        else if(inner.type==='delete') document.getElementById('msg-'+inner.id)?.remove();
-        else if(inner.type==='file_start') handleFileStart(inner);
-        else if(inner.type==='file_end'){ if(fileReceive && fileReceive.id===inner.id) assembleFile(); }
-        else if(inner.type==='__destroy__'){ localStorage.setItem(DESTROY_KEY, Date.now()); executeDestroy(); }
-      }).catch(() => addEncryptedMessage(d));
-    }
-  }catch(e){}
+  if(isDestroyed()) return;
+  if(e.data instanceof ArrayBuffer){handleBinaryChunk(e.data);return;}
+  try{ const d=JSON.parse(e.data); if(d.type==='__ecdhe__'){handleEcdheMessage(d);return;} if(d.type==='msg'){ if(!sessionKey){addEncryptedMessage(d);return;} decryptPayload(d).then(inner=>{ if(isDestroyed()) return; if(inner.id&&receivedMessageIds.has(inner.id))return; if(inner.id)receivedMessageIds.add(inner.id); if(inner.type==='text'){addMsg(inner.content,'other',inner.id);sendReadReceipt(inner.id);}else if(inner.type==='read')markAsRead(inner.id);else if(inner.type==='delete')document.getElementById('msg-'+inner.id)?.remove();else if(inner.type==='file_start')handleFileStart(inner);else if(inner.type==='file_end'){if(fileReceive&&fileReceive.id===inner.id)assembleFile();}else if(inner.type==='__destroy__'){markDestroyed();executeDestroy();} }).catch(()=>addEncryptedMessage(d)); } }catch(e){}
 }
 
 async function destroyChat(){
-  if(!sessionKey || !dc || dc.readyState!=='open'){ localStorage.setItem(DESTROY_KEY, Date.now()); executeDestroy(); return; }
-  if(!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다. 계속하시겠습니까?')) return;
-  try{ const enc = await encryptPayload({ type:'__destroy__', timestamp:Date.now() }); dc.send(JSON.stringify({ type:'msg', ...enc })); }catch(e){}
-  localStorage.setItem(DESTROY_KEY, Date.now());
-  executeDestroy();
-}
-
-function executeDestroy(){
-  document.getElementById('messages').innerHTML = '';
-  receivedMessageIds.clear(); pendingOutbox = [];
-  addMsg('💥 대화가 완전히 삭제되었습니다.', 'system');
-  setTimeout(() => { closeConnection(); showSimple(); }, 500);
+  if(!sessionKey||!dc||dc.readyState!=='open'){ markDestroyed(); executeDestroy(); return; }
+  if(!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
+  try{ const enc=await encryptPayload({type:'__destroy__',timestamp:Date.now()}); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){}
+  markDestroyed(); executeDestroy();
 }
 
 function addEncryptedMessage(rawData){
-  if(localStorage.getItem(DESTROY_KEY)) return;
-  const c = document.getElementById('messages'), d = document.createElement('div');
-  d.className = 'msg system';
-  d.innerHTML = `<div class="encrypted-bubble blur-sensitive"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
+  if(isDestroyed()) return;
+  const c=document.getElementById('messages'), d=document.createElement('div'); d.className='msg system';
+  d.innerHTML=`<div class="encrypted-bubble blur-sensitive"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData,null,2))}</div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements();
 }
 
-async function sendReadReceipt(msgId){
-  if(!sessionKey) return;
-  try{ const enc = await encryptPayload({ type:'read', id:msgId }); dc.send(JSON.stringify({ type:'msg', ...enc })); }catch(e){}
-}
-async function deleteMessage(msgId){
-  if(!sessionKey) return;
-  try{ const enc = await encryptPayload({ type:'delete', id:msgId }); dc.send(JSON.stringify({ type:'msg', ...enc })); document.getElementById('msg-'+msgId)?.remove(); }catch(e){}
-}
+async function sendReadReceipt(msgId){ if(!sessionKey||isDestroyed()) return; try{ const enc=await encryptPayload({type:'read',id:msgId}); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){} }
+async function deleteMessage(msgId){ if(!sessionKey||isDestroyed()) return; try{ const enc=await encryptPayload({type:'delete',id:msgId}); dc.send(JSON.stringify({type:'msg',...enc})); document.getElementById('msg-'+msgId)?.remove(); }catch(e){} }
 
 function addMsg(text, who, msgId){
-  if(localStorage.getItem(DESTROY_KEY)) return;
-  const c = document.getElementById('messages'), d = document.createElement('div');
-  d.className = 'msg ' + (who==='me'?'me':who==='other'?'other':'system');
-  if(msgId) d.id = 'msg-'+msgId;
-  let bubble = escapeHtml(text);
-  let timeHtml = `<div class="time">${new Date().toLocaleTimeString()}`;
-  if(who==='me' && msgId) timeHtml += ` <button class="btn-small" style="background:none;color:var(--danger);padding:2px 6px;" onclick="deleteMessage('${msgId}')">✕</button>`;
-  timeHtml += `</div>`;
-  if(fileReceive && text.startsWith('📥')) bubble += `<div class="progress"><div class="progress-bar" id="file-progress"></div></div>`;
-  d.innerHTML = `<div class="bubble blur-sensitive">${bubble}${timeHtml}<div class="noise-layer"></div></div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
+  if(isDestroyed()) return;
+  const c=document.getElementById('messages'), d=document.createElement('div');
+  d.className='msg '+(who==='me'?'me':who==='other'?'other':'system');
+  if(msgId) d.id='msg-'+msgId;
+  let bubble=escapeHtml(text);
+  let timeHtml=`<div class="time">${new Date().toLocaleTimeString()}`;
+  if(who==='me'&&msgId) timeHtml+=` <button class="btn-small" style="background:none;color:var(--danger);padding:2px 6px;" onclick="deleteMessage('${msgId}')">✕</button>`;
+  timeHtml+=`</div>`;
+  if(fileReceive&&text.startsWith('📥')) bubble+=`<div class="progress"><div class="progress-bar" id="file-progress"></div></div>`;
+  d.innerHTML=`<div class="bubble blur-sensitive">${bubble}${timeHtml}<div class="noise-layer"></div></div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements();
 }
 
-function markAsRead(msgId){
-  const el = document.getElementById('msg-'+msgId);
-  if(el){ const t = el.querySelector('.time'); if(t && !t.querySelector('.read')) t.innerHTML += ' <span class="read" style="color:var(--success);">✓✓</span>'; }
-}
-
-function handleFileStart(inner){
-  fileReceive = { id:inner.id, name:inner.name, size:inner.size, fek:b642buf(inner.fek), chunks:[], received:0 };
-  addMsg(`📥 ${inner.name} (${formatBytes(inner.size)})`, 'other');
-}
-function handleBinaryChunk(buf){
-  if(!fileReceive) return;
-  fileReceive.chunks.push(new Uint8Array(buf));
-  fileReceive.received += buf.byteLength;
-  const pb = document.getElementById('file-progress');
-  if(pb) pb.style.width = Math.round(fileReceive.received / fileReceive.size * 100) + '%';
-  if(fileReceive.received >= fileReceive.size) document.getElementById('file-progress')?.parentElement?.remove();
-}
-async function assembleFile(){
-  if(!fileReceive) return;
-  const combined = new Uint8Array(fileReceive.size); let off = 0;
-  for(const c of fileReceive.chunks){ combined.set(c, off); off += c.length; }
-  const iv = combined.slice(0,12), ct = combined.slice(12);
-  const key = await crypto.subtle.importKey('raw', fileReceive.fek, 'AES-GCM', false, ['decrypt']);
-  const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct);
-  const blob = new Blob([plain]), url = URL.createObjectURL(blob);
-  const c = document.getElementById('messages'), d = document.createElement('div'); d.className = 'msg other';
-  let html = `<div class="bubble blur-sensitive"><div class="file-bubble"><span>📎 ${escapeHtml(fileReceive.name)}</span>`;
-  if(blob.type.startsWith('image/')) html += `<div class="file-preview"><img src="${url}"></div>`;
-  else if(blob.type.startsWith('video/')) html += `<div class="file-preview"><video controls src="${url}"></video></div>`;
-  html += `<a href="${url}" download="${escapeHtml(fileReceive.name)}" style="color:var(--accent);">다운로드</a></div><div class="time">${new Date().toLocaleTimeString()}</div><div class="noise-layer"></div></div>`;
-  d.innerHTML = html; c.appendChild(d); c.scrollTop = c.scrollHeight; fileReceive = null; applyBlurToSensitiveElements();
-}
-
+function markAsRead(msgId){ const el=document.getElementById('msg-'+msgId); if(el){ const t=el.querySelector('.time'); if(t&&!t.querySelector('.read')) t.innerHTML+=' <span class="read" style="color:var(--success);">✓✓</span>'; } }
+function handleFileStart(inner){ fileReceive={id:inner.id,name:inner.name,size:inner.size,fek:b642buf(inner.fek),chunks:[],received:0}; addMsg(`📥 ${inner.name} (${formatBytes(inner.size)})`,'other'); }
+function handleBinaryChunk(buf){ if(!fileReceive) return; fileReceive.chunks.push(new Uint8Array(buf)); fileReceive.received+=buf.byteLength; const pb=document.getElementById('file-progress'); if(pb) pb.style.width=Math.round(fileReceive.received/fileReceive.size*100)+'%'; if(fileReceive.received>=fileReceive.size) document.getElementById('file-progress')?.parentElement?.remove(); }
+async function assembleFile(){ if(!fileReceive||isDestroyed()) return; const combined=new Uint8Array(fileReceive.size); let off=0; for(const c of fileReceive.chunks){combined.set(c,off);off+=c.length;} const iv=combined.slice(0,12),ct=combined.slice(12); const key=await crypto.subtle.importKey('raw',fileReceive.fek,'AES-GCM',false,['decrypt']); const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct); const blob=new Blob([plain]),url=URL.createObjectURL(blob); const c=document.getElementById('messages'),d=document.createElement('div');d.className='msg other'; let html=`<div class="bubble blur-sensitive"><div class="file-bubble"><span>📎 ${escapeHtml(fileReceive.name)}</span>`; if(blob.type.startsWith('image/'))html+=`<div class="file-preview"><img src="${url}"></div>`;else if(blob.type.startsWith('video/'))html+=`<div class="file-preview"><video controls src="${url}"></video></div>`; html+=`<a href="${url}" download="${escapeHtml(fileReceive.name)}" style="color:var(--accent);">다운로드</a></div><div class="time">${new Date().toLocaleTimeString()}</div><div class="noise-layer"></div></div>`; d.innerHTML=html; c.appendChild(d);c.scrollTop=c.scrollHeight;fileReceive=null;applyBlurToSensitiveElements(); }
 async function handleFiles(files){ for(const f of files) await sendFile(f); }
-async function sendFile(file){
-  if(!dc || dc.readyState!=='open' || !sessionKey) return;
-  const fileId = genUUID(), fek = await crypto.subtle.generateKey({ name:'AES-GCM', length:AES_KEY_LENGTH }, true, ['encrypt']);
-  const iv = crypto.getRandomValues(new Uint8Array(12)), fekRaw = await crypto.subtle.exportKey('raw', fek);
-  const fileBuf = await file.arrayBuffer();
-  const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, fek, fileBuf);
-  const encData = new Uint8Array(iv.byteLength + ct.byteLength); encData.set(iv); encData.set(new Uint8Array(ct), iv.byteLength);
-  const metaEnc = await encryptPayload({ type:'file_start', id:fileId, name:file.name, size:encData.byteLength, fek:buf2b64(fekRaw) });
-  dc.send(JSON.stringify({ type:'msg', ...metaEnc }));
-  const chunkSize = 64 * 1024; let offset = 0;
-  while(offset < encData.byteLength){
-    const end = Math.min(offset + chunkSize, encData.byteLength);
-    dc.send(encData.slice(offset, end).buffer); offset = end; await new Promise(r => setTimeout(r, 10));
-  }
-  const endEnc = await encryptPayload({ type:'file_end', id:fileId });
-  dc.send(JSON.stringify({ type:'msg', ...endEnc }));
-  addMsg(`📤 ${file.name} 전송 완료`, 'me');
-}
+async function sendFile(file){ if(!dc||dc.readyState!=='open'||!sessionKey||isDestroyed()) return; const fileId=genUUID(),fek=await crypto.subtle.generateKey({name:'AES-GCM',length:AES_LEN},true,['encrypt']); const iv=crypto.getRandomValues(new Uint8Array(12)),fekRaw=await crypto.subtle.exportKey('raw',fek); const fileBuf=await file.arrayBuffer(); const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},fek,fileBuf); const encData=new Uint8Array(iv.byteLength+ct.byteLength);encData.set(iv);encData.set(new Uint8Array(ct),iv.byteLength); const metaEnc=await encryptPayload({type:'file_start',id:fileId,name:file.name,size:encData.byteLength,fek:buf2b64(fekRaw)}); dc.send(JSON.stringify({type:'msg',...metaEnc})); const chunkSize=64*1024;let offset=0; while(offset<encData.byteLength){const end=Math.min(offset+chunkSize,encData.byteLength);dc.send(encData.slice(offset,end).buffer);offset=end;await new Promise(r=>setTimeout(r,10));} const endEnc=await encryptPayload({type:'file_end',id:fileId});dc.send(JSON.stringify({type:'msg',...endEnc}));addMsg(`📤 ${file.name} 전송 완료`,'me'); }
 
-function showChat(){ if(localStorage.getItem(DESTROY_KEY)){ showSimple(); return; } document.getElementById('simpleMode').style.display='none'; document.getElementById('chatScreen').style.display='flex'; applyBlurToSensitiveElements(); }
-function showSimple(){ document.getElementById('simpleMode').style.display='block'; document.getElementById('chatScreen').style.display='none'; }
-function closeConnection(){
-  if(pc){ pc.close(); pc = null; } dc = null; typingChannel = null;
-  authKey = sessionKey = null; sendChain = recvChain = null;
-  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
-  handshakeDone = false; receivedMessageIds.clear(); pendingOutbox = [];
-  document.getElementById('sessionFingerprint').textContent = '';
-  document.getElementById('securityCard').style.display = 'none';
-  document.getElementById('passwordPrompt').style.display = 'block';
-  document.getElementById('passwordError').style.display = 'none';
-}
-function formatBytes(b){ return b<1024 ? b+' B' : b<1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
+function showChat(){ if(isDestroyed()){showSimple();return;} document.getElementById('simpleMode').style.display='none';document.getElementById('chatScreen').style.display='flex';applyBlurToSensitiveElements(); }
+function showSimple(){ document.getElementById('simpleMode').style.display='block';document.getElementById('chatScreen').style.display='none'; }
+function closeConnection(){ if(pc){pc.close();pc=null;}dc=null;typingChannel=null;authKey=sessionKey=null;sendChain=recvChain=null;salt=null;ourEcdhPair=null;peerEcdhPub=null;fileReceive=null;password=null;handshakeDone=false;receivedMessageIds.clear();pendingOutbox=[];document.getElementById('sessionFingerprint').textContent='';document.getElementById('securityCard').style.display='none';document.getElementById('passwordPrompt').style.display='block';document.getElementById('passwordError').style.display='none'; }
+function formatBytes(b){ return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'; }
 function toggleSecurityDetail(){ document.getElementById('securityDetail').classList.toggle('hidden'); }
-
-function copyTextById(id){
-  const el = document.getElementById(id);
-  const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
-  navigator.clipboard.writeText(text).then(() => {
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
-    document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); }catch(e){}
-    document.body.removeChild(ta);
-    alert('링크가 복사되었습니다.');
-  });
-}
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function copyTextById(id){ const el=document.getElementById(id); const text=el.tagName==='INPUT'||el.tagName==='TEXTAREA'?el.value:el.textContent; navigator.clipboard.writeText(text).then(()=>{}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);alert('링크가 복사되었습니다.');}); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 </script>
 </body>
 </html>
