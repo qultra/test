@@ -135,18 +135,20 @@
 // =====================================================================
 //  200개 ICE 서버 (STUN/TURN) – 무료·공개 리스트, 중복 없음
 // =====================================================================
-const ICE_SERVERS_LIST = (function() {
-  const servers = [];
-  function addSTUN(host, ports = [3478, 5349, 19302, 10000]) {
-    ports.forEach(p => servers.push({ urls: `stun:${host}:${p}` }));
+var ICE_SERVERS_LIST = (function() {
+  var servers = [];
+  function addSTUN(host, ports) {
+    ports = ports || [3478, 5349, 19302, 10000];
+    ports.forEach(function(p) { servers.push({ urls: 'stun:' + host + ':' + p }); });
   }
-  function addTURN(host, ports = [3478], user, cred) {
-    ports.forEach(p => {
-      servers.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
-      servers.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
+  function addTURN(host, ports, user, cred) {
+    ports = ports || [3478];
+    ports.forEach(function(p) {
+      servers.push({ urls: 'turn:' + host + ':' + p, username: user, credential: cred });
+      servers.push({ urls: 'turn:' + host + ':' + p + '?transport=tcp', username: user, credential: cred });
     });
   }
-  const stunHosts = [
+  var stunHosts = [
     'stun.l.google.com', 'stun1.l.google.com', 'stun2.l.google.com', 'stun3.l.google.com', 'stun4.l.google.com',
     'stun.cloudflare.com', 'global.stun.twilio.com',
     'stun.freeswitch.org', 'stun.nextcloud.com',
@@ -167,16 +169,16 @@ const ICE_SERVERS_LIST = (function() {
     'stun.voipcheap.com', 'stun.voipdiscount.com', 'stun.voipraider.com', 'stun.vonage.com',
     'stun.voxox.com', 'stun.zadarma.com'
   ];
-  stunHosts.forEach(h => addSTUN(h));
+  stunHosts.forEach(function(h) { addSTUN(h); });
   addTURN('openrelay.metered.ca', [80, 443], 'openrelayproject', 'openrelayproject');
   addTURN('turn.anyfirewall.com', [443], 'webrtc', 'webrtc');
   addTURN('numb.viagenie.ca', [3478, 80, 443], 'webrtc@live.com', 'muazkh');
   addTURN('turn.matrix.org', [3478], 'matrix', 'matrix');
-  const seen = new Set();
-  const unique = [];
-  for (const s of servers) {
-    const key = JSON.stringify(s);
-    if (!seen.has(key)) { seen.add(key); unique.push(s); }
+  var seen = {};
+  var unique = [];
+  for (var i = 0; i < servers.length; i++) {
+    var key = JSON.stringify(servers[i]);
+    if (!seen[key]) { seen[key] = true; unique.push(servers[i]); }
   }
   return unique.slice(0, 200);
 })();
@@ -184,50 +186,61 @@ const ICE_SERVERS_LIST = (function() {
 // =====================================================================
 //  블러 관리 – 온라인 상태일 때만 해제 가능
 // =====================================================================
-let isOnline = false;
+var isOnline = false;
 
 function applyBlurToSensitiveElements() {
-  document.querySelectorAll('.bubble').forEach(el => {
-    if (!el.classList.contains('blur-target') && !el.closest('#msgInput') && !el.closest('.input-bar')) {
-      el.classList.add('blur-target');
+  var els = document.querySelectorAll('.bubble');
+  for (var i = 0; i < els.length; i++) {
+    if (!els[i].classList.contains('blur-target') && !els[i].closest('#msgInput') && !els[i].closest('.input-bar')) {
+      els[i].classList.add('blur-target');
     }
-  });
-  document.querySelectorAll('.fingerprint, .link-box, .encrypted-bubble').forEach(el => {
-    if (!el.classList.contains('blur-target')) el.classList.add('blur-target');
-  });
+  }
+  els = document.querySelectorAll('.fingerprint, .link-box, .encrypted-bubble');
+  for (var j = 0; j < els.length; j++) {
+    if (!els[j].classList.contains('blur-target')) els[j].classList.add('blur-target');
+  }
 }
 
-document.addEventListener('click', e => {
+document.addEventListener('click', function(e) {
   if (!isOnline) return;
-  const target = e.target.closest('.blur-target');
+  var target = e.target.closest('.blur-target');
   if (target && !target.classList.contains('locked')) {
     target.classList.add('revealed');
-    setTimeout(() => target.classList.remove('revealed'), 2500);
+    setTimeout(function() { target.classList.remove('revealed'); }, 2500);
   }
 });
 
-let securityLockLevel = 0;
-let globalBlurTimer = null;
-function lockAllBlurs(duration = 10000) {
-  document.querySelectorAll('.blur-target').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); });
+var securityLockLevel = 0;
+var globalBlurTimer = null;
+function lockAllBlurs(duration) {
+  duration = duration || 10000;
+  var els = document.querySelectorAll('.blur-target');
+  for (var i = 0; i < els.length; i++) {
+    els[i].classList.add('locked');
+    els[i].classList.remove('revealed');
+  }
   clearTimeout(globalBlurTimer);
-  globalBlurTimer = setTimeout(() => document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked')), duration);
+  globalBlurTimer = setTimeout(function() {
+    var locked = document.querySelectorAll('.blur-target.locked');
+    for (var j = 0; j < locked.length; j++) locked[j].classList.remove('locked');
+  }, duration);
 }
-function triggerSecurityLock(level = 1) {
+function triggerSecurityLock(level) {
+  level = level || 1;
   securityLockLevel = Math.max(securityLockLevel, level);
   if (securityLockLevel >= 2) lockAllBlurs(15000);
   else if (securityLockLevel >= 1) lockAllBlurs(5000);
-  setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
+  setTimeout(function() { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
 }
 
 // =====================================================================
 //  완전 삭제 – 채팅방 자체 차단
 // =====================================================================
-const DESTROY_KEY = 'p2p_chat_destroyed_final';
-const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session_final';
+var DESTROY_KEY = 'p2p_chat_destroyed_final';
+var DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session_final';
 function isDestroyed() { return !!(localStorage.getItem(DESTROY_KEY) || sessionStorage.getItem(DESTROY_SESSION_KEY)); }
 function markDestroyed() {
-  const ts = Date.now();
+  var ts = Date.now();
   localStorage.setItem(DESTROY_KEY, ts);
   sessionStorage.setItem(DESTROY_SESSION_KEY, ts);
   if (location.hash) history.replaceState(null, '', location.pathname);
@@ -236,7 +249,7 @@ function clearDestroyedFlags() {
   localStorage.removeItem(DESTROY_KEY);
   sessionStorage.removeItem(DESTROY_SESSION_KEY);
 }
-setInterval(() => {
+setInterval(function() {
   if (isDestroyed()) {
     document.getElementById('simpleMode').style.display = 'block';
     document.getElementById('chatScreen').style.display = 'none';
@@ -260,440 +273,853 @@ function executeDestroy() {
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false; isOnline = false;
   updateConn(false);
-  document.querySelectorAll('.blur-target').forEach(el => el.classList.remove('blur-target','revealed','locked'));
+  var els = document.querySelectorAll('.blur-target');
+  for (var i = 0; i < els.length; i++) {
+    els[i].classList.remove('blur-target', 'revealed', 'locked');
+  }
 }
 
 // =====================================================================
-//  보안 레이어 (단축키, 복사 방지 등)
+//  보안 레이어 (단축키, 복사 방지 등) – 옵셔널 체이닝 제거
 // =====================================================================
-const ua=navigator.userAgent||'', plt=navigator.platform||'';
-const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
-const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
-const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
+var ua = navigator.userAgent || '', plt = navigator.platform || '';
+var isWin = /Windows/i.test(ua) || plt === 'Win32' || plt === 'Win64';
+var isMac = /Macintosh/i.test(ua) || plt === 'MacIntel' || plt === 'MacPPC';
+var isLinux = /Linux/i.test(ua) && !/Android/i.test(ua);
+
 function logViolation(r) { triggerSecurityLock(1); }
-window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
-window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
-document.addEventListener('keydown',e=>{let b=false;const k=e.key.toLowerCase();if(k==='f12'||k==='printscreen')b=true;if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;if(e.altKey&&k==='printscreen')b=true;if(isWin){if(k==='meta'||k==='win')b=true;if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true;if(e.metaKey&&e.altKey&&k==='r')b=true;if(e.metaKey&&e.shiftKey&&k==='s')b=true;}if(isMac){if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true;if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true;}if(isLinux){if(k==='printscreen')b=true;if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true;}if(b){e.preventDefault();e.stopPropagation();logViolation('key');}},true);
-document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
-document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
-document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
-document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
-document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
-let tSy=0,tSx=0,tSt=0;
-document.addEventListener('touchstart',e=>{if(e.touches.length>1){logViolation('multi');e.preventDefault();}if(e.touches.length===1){tSy=e.touches[0].clientY;tSx=e.touches[0].clientX;tSt=Date.now();}},{passive:false});
-document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
-document.addEventListener('touchend',e=>{const n=Date.now();const dy=tSy-(e.changedTouches[0]?.clientY??0);const dx=tSx-(e.changedTouches[0]?.clientX??0);if(tSy>innerHeight-40&&dy>50&&n-tSt<300)logViolation('bottom');if(tSx<20&&dx<-50&&n-tSt<300)logViolation('left');if(tSx>innerWidth-20&&dx>50&&n-tSt<300)logViolation('right');});
-document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight)logViolation('mouse');});
-window.addEventListener('blur',()=>triggerSecurityLock(2));
-window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
-window.addEventListener('pagehide',()=>triggerSecurityLock(3));
-window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-target.locked').forEach(e=>e.classList.remove('locked'));});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
-let lW=innerWidth,lH=innerHeight;
-window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){logViolation('resize');lW=w;lH=h;}});
-window.addEventListener('orientationchange',()=>logViolation('orient'));
-if(visualViewport){visualViewport.addEventListener('resize',()=>logViolation('vport'));visualViewport.addEventListener('scroll',()=>logViolation('vpscroll'));}
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)logViolation('fs');});
-setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
-new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
-if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
-if(navigator.getDisplayMedia)navigator.getDisplayMedia=()=>Promise.reject();
-navigator.clipboard.write=()=>Promise.reject('Blocked');
-if(window.opener){window.opener=null;}
-['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
-if(typeof HTMLCanvasElement!=='undefined'){HTMLCanvasElement.prototype.toDataURL=function(){return'';};HTMLCanvasElement.prototype.toBlob=function(){};HTMLCanvasElement.prototype.captureStream=function(){return null;};}
-Element.prototype.requestFullscreen=function(){};
-Element.prototype.webkitRequestFullscreen=function(){};
-window.open=()=>null;
-document.execCommand=function(){return false;};
-window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
-if(navigator.keyboard?.lock)navigator.keyboard.lock=()=>Promise.reject();
-if(screen?.isExtended){setInterval(()=>{if(screen.isExtended)logViolation('extmon');},5000);}
-if(matchMedia('(display-mode: standalone)').matches)logViolation('pwa');
-HTMLCanvasElement.prototype.getContext=function(type,...args){if(type?.includes('webgl'))return null;return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
-if(navigator.wakeLock?.request)navigator.wakeLock.request=()=>Promise.reject();
-if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject();navigator.serviceWorker.addEventListener=()=>{};}
-let rafC=0,lastR=0;
-(function rafLoop(t){if(lastR&&t-lastR>100){rafC++;if(rafC>3){logViolation('frame');rafC=0;}}else rafC=0;lastR=t;requestAnimationFrame(rafLoop);})(performance.now());
-let inactivityTimer;
-function resetInactivity(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none')destroyChat();},15*60*1000);}
-['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity));resetInactivity();
-window.Worker=function(){throw new Error('Blocked');};window.SharedWorker=function(){throw new Error('Blocked');};
-window.eval=()=>{};window.Function=()=>{};
-const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
-const _si=window.setInterval;window.setInterval=function(c,...a){if(typeof c==='string')return;return _si.call(this,c,...a);};
-window.WebSocket=function(){throw new Error('Blocked');};window.EventSource=function(){throw new Error('Blocked');};
-navigator.sendBeacon=()=>false;
-if(navigator.permissions)navigator.permissions.query=()=>Promise.reject(new Error('Blocked'));
-if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
-if(navigator.geolocation){navigator.geolocation.getCurrentPosition=()=>{};navigator.geolocation.watchPosition=()=>{};}
-if(window.PaymentRequest)window.PaymentRequest=function(){throw new Error('Blocked');};
-if(navigator.mediaDevices?.enumerateDevices)navigator.mediaDevices.enumerateDevices=()=>Promise.reject(new Error('Blocked'));
-if(navigator.bluetooth)navigator.bluetooth.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(navigator.usb)navigator.usb.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(navigator.serial)navigator.serial.requestPort=()=>Promise.reject(new Error('Blocked'));
-if(navigator.hid)navigator.hid.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(window.showOpenFilePicker)window.showOpenFilePicker=()=>Promise.reject(new Error('Blocked'));
-if(window.showSaveFilePicker)window.showSaveFilePicker=()=>Promise.reject(new Error('Blocked'));
-if(window.showDirectoryPicker)window.showDirectoryPicker=()=>Promise.reject(new Error('Blocked'));
-if(window.SpeechRecognition||window.webkitSpeechRecognition){window.SpeechRecognition=function(){throw new Error('Blocked');};window.webkitSpeechRecognition=function(){throw new Error('Blocked');}}
-HTMLIFrameElement.prototype.create=function(){throw new Error('Blocked');};
-const _ce=document.createElement.bind(document);
-document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Error('Blocked');return _ce(t,o);};
-const _sa=Element.prototype.setAttribute;
-Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chatScreen'))return;return _sa.call(this,n,v);};
+
+window.addEventListener('beforeprint', function(e) { e.preventDefault(); triggerSecurityLock(3); });
+window.addEventListener('print', function(e) { e.preventDefault(); triggerSecurityLock(3); });
+
+document.addEventListener('keydown', function(e) {
+  var b = false;
+  var k = e.key.toLowerCase();
+  if (k === 'f12' || k === 'printscreen') b = true;
+  if ((e.ctrlKey || e.metaKey) && (k === 's' || k === 'p' || k === 'u')) b = true;
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'i' || k === 'c' || k === 'j')) b = true;
+  if (e.altKey && k === 'printscreen') b = true;
+  if (isWin) {
+    if (k === 'meta' || k === 'win') b = true;
+    if (e.metaKey && (k === 'g' || k === 'r' || k === 's' || k === 't')) b = true;
+    if (e.metaKey && e.altKey && k === 'r') b = true;
+    if (e.metaKey && e.shiftKey && k === 's') b = true;
+  }
+  if (isMac) {
+    if (e.metaKey && e.shiftKey && (k === '3' || k === '4' || k === '5')) b = true;
+    if (e.metaKey && e.shiftKey && e.ctrlKey && (k === '3' || k === '4')) b = true;
+  }
+  if (isLinux) {
+    if (k === 'printscreen') b = true;
+    if ((e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) && k === 'printscreen') b = true;
+  }
+  if (b) { e.preventDefault(); e.stopPropagation(); logViolation('key'); }
+}, true);
+
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); logViolation('ctx'); });
+document.addEventListener('dragstart', function(e) { e.preventDefault(); logViolation('drag'); });
+document.addEventListener('selectstart', function(e) { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('sel'); } });
+document.addEventListener('copy', function(e) { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('copy'); } });
+document.addEventListener('cut', function(e) { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('cut'); } });
+
+var tSy = 0, tSx = 0, tSt = 0;
+document.addEventListener('touchstart', function(e) {
+  if (e.touches.length > 1) { logViolation('multi'); e.preventDefault(); }
+  if (e.touches.length === 1) { tSy = e.touches[0].clientY; tSx = e.touches[0].clientX; tSt = Date.now(); }
+}, {passive: false});
+document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) e.preventDefault(); }, {passive: false});
+document.addEventListener('touchend', function(e) {
+  var n = Date.now();
+  var dy = tSy - (e.changedTouches[0] ? e.changedTouches[0].clientY : 0);
+  var dx = tSx - (e.changedTouches[0] ? e.changedTouches[0].clientX : 0);
+  if (tSy > innerHeight - 40 && dy > 50 && n - tSt < 300) logViolation('bottom');
+  if (tSx < 20 && dx < -50 && n - tSt < 300) logViolation('left');
+  if (tSx > innerWidth - 20 && dx > 50 && n - tSt < 300) logViolation('right');
+});
+
+document.documentElement.addEventListener('mouseleave', function(e) {
+  if (e.clientY <= 0 || e.clientX <= 0 || e.clientX >= innerWidth || e.clientY >= innerHeight) logViolation('mouse');
+});
+window.addEventListener('blur', function() { triggerSecurityLock(2); });
+window.addEventListener('focus', function() { securityLockLevel = Math.max(0, securityLockLevel - 1); });
+window.addEventListener('pagehide', function() { triggerSecurityLock(3); });
+window.addEventListener('pageshow', function() { securityLockLevel = 0; var locked = document.querySelectorAll('.blur-target.locked'); for (var i = 0; i < locked.length; i++) locked[i].classList.remove('locked'); });
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden') triggerSecurityLock(2);
+  else securityLockLevel = Math.max(0, securityLockLevel - 1);
+});
+
+var lW = innerWidth, lH = innerHeight;
+window.addEventListener('resize', function() {
+  var w = innerWidth, h = innerHeight;
+  if (Math.abs(w - lW) > 1 || Math.abs(h - lH) > 1) { logViolation('resize'); lW = w; lH = h; }
+});
+window.addEventListener('orientationchange', function() { logViolation('orient'); });
+if (visualViewport) {
+  visualViewport.addEventListener('resize', function() { logViolation('vport'); });
+  visualViewport.addEventListener('scroll', function() { logViolation('vpscroll'); });
+}
+document.addEventListener('fullscreenchange', function() { if (!document.fullscreenElement) logViolation('fs'); });
+setInterval(function() {
+  var s = performance && performance.now ? performance.now() : Date.now();
+  debugger;
+  if ((performance && performance.now ? performance.now() : Date.now()) - s > 100) logViolation('dev');
+  if (outerWidth - innerWidth > 150 || outerHeight - innerHeight > 150) logViolation('devsize');
+}, 3000);
+new MutationObserver(function(m) {
+  for (var i = 0; i < m.length; i++) {
+    for (var j = 0; j < m[i].addedNodes.length; j++) {
+      var n = m[i].addedNodes[j];
+      if (n.nodeType === 1 && !n.closest('#messages') && !n.closest('#antiScreenshotCanvas')) { n.remove(); logViolation('dom'); }
+    }
+  }
+}).observe(document.body, {childList: true, subtree: true, attributes: true});
+
+if (navigator.mediaDevices) {
+  navigator.mediaDevices.getUserMedia = function() { return Promise.reject(new Error('Blocked')); };
+  if (navigator.mediaDevices.getDisplayMedia) navigator.mediaDevices.getDisplayMedia = function() { return Promise.reject(new Error('Blocked')); };
+}
+if (navigator.getDisplayMedia) navigator.getDisplayMedia = function() { return Promise.reject(new Error('Blocked')); };
+
+navigator.clipboard.write = function() { return Promise.reject('Blocked'); };
+if (window.opener) { window.opener = null; }
+
+['log','warn','error','info','debug','table','trace'].forEach(function(m) {
+  console[m] = function() {};
+  Object.defineProperty(console, m, { value: function() {}, writable: false, configurable: false });
+});
+
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.toDataURL = function() { return ''; };
+  HTMLCanvasElement.prototype.toBlob = function() {};
+  HTMLCanvasElement.prototype.captureStream = function() { return null; };
+}
+Element.prototype.requestFullscreen = function() {};
+Element.prototype.webkitRequestFullscreen = function() {};
+window.open = function() { return null; };
+document.execCommand = function() { return false; };
+
+window.addEventListener('beforeunload', function(e) { e.preventDefault(); e.returnValue = ''; });
+if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock = function() { return Promise.reject(); };
+if (screen && screen.isExtended) {
+  setInterval(function() { if (screen.isExtended) logViolation('extmon'); }, 5000);
+}
+if (matchMedia('(display-mode: standalone)').matches) logViolation('pwa');
+
+HTMLCanvasElement.prototype.getContext = function(type) {
+  if (type && type.indexOf('webgl') !== -1) return null;
+  return CanvasRenderingContext2D.prototype.getContext.apply(this, arguments);
+};
+if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request = function() { return Promise.reject(); };
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.register = function() { return Promise.reject(); };
+  navigator.serviceWorker.addEventListener = function() {};
+}
+
+var rafC = 0, lastR = 0;
+(function rafLoop(t) {
+  if (lastR && t - lastR > 100) { rafC++; if (rafC > 3) { logViolation('frame'); rafC = 0; } }
+  else rafC = 0;
+  lastR = t;
+  requestAnimationFrame(rafLoop);
+})(performance && performance.now ? performance.now() : Date.now());
+
+var inactivityTimer;
+function resetInactivity() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(function() {
+    if (document.getElementById('chatScreen').style.display !== 'none') destroyChat();
+  }, 15 * 60 * 1000);
+}
+['mousemove','keydown','scroll','click'].forEach(function(e) { document.addEventListener(e, resetInactivity); });
+resetInactivity();
+
+window.Worker = function() { throw new Error('Blocked'); };
+window.SharedWorker = function() { throw new Error('Blocked'); };
+window.eval = function() {};
+window.Function = function() {};
+
+var _st = window.setTimeout;
+window.setTimeout = function(c) {
+  if (typeof c === 'string') return;
+  return _st.apply(this, arguments);
+};
+var _si = window.setInterval;
+window.setInterval = function(c) {
+  if (typeof c === 'string') return;
+  return _si.apply(this, arguments);
+};
+window.WebSocket = function() { throw new Error('Blocked'); };
+window.EventSource = function() { throw new Error('Blocked'); };
+navigator.sendBeacon = function() { return false; };
+
+if (navigator.permissions) navigator.permissions.query = function() { return Promise.reject(new Error('Blocked')); };
+if (window.Notification) {
+  window.Notification.requestPermission = function() { return Promise.reject(new Error('Blocked')); };
+  window.Notification.permission = 'denied';
+}
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition = function() {};
+  navigator.geolocation.watchPosition = function() {};
+}
+if (window.PaymentRequest) window.PaymentRequest = function() { throw new Error('Blocked'); };
+if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) navigator.mediaDevices.enumerateDevices = function() { return Promise.reject(new Error('Blocked')); };
+if (navigator.bluetooth) navigator.bluetooth.requestDevice = function() { return Promise.reject(new Error('Blocked')); };
+if (navigator.usb) navigator.usb.requestDevice = function() { return Promise.reject(new Error('Blocked')); };
+if (navigator.serial) navigator.serial.requestPort = function() { return Promise.reject(new Error('Blocked')); };
+if (navigator.hid) navigator.hid.requestDevice = function() { return Promise.reject(new Error('Blocked')); };
+if (window.showOpenFilePicker) window.showOpenFilePicker = function() { return Promise.reject(new Error('Blocked')); };
+if (window.showSaveFilePicker) window.showSaveFilePicker = function() { return Promise.reject(new Error('Blocked')); };
+if (window.showDirectoryPicker) window.showDirectoryPicker = function() { return Promise.reject(new Error('Blocked')); };
+if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+  window.SpeechRecognition = function() { throw new Error('Blocked'); };
+  window.webkitSpeechRecognition = function() { throw new Error('Blocked'); };
+}
+
+HTMLIFrameElement.prototype.create = function() { throw new Error('Blocked'); };
+var _ce = document.createElement.bind(document);
+document.createElement = function(t, o) {
+  if (t.toLowerCase() === 'iframe') throw new Error('Blocked');
+  return _ce(t, o);
+};
+var _sa = Element.prototype.setAttribute;
+Element.prototype.setAttribute = function(n, v) {
+  if (n === 'style' && this.closest('#chatScreen')) return;
+  return _sa.call(this, n, v);
+};
 
 // =====================================================================
 //  렌더링 왜곡 (캡처 방해)
 // =====================================================================
 (function initAntiScreenshot() {
-  const canvas = document.getElementById('antiScreenshotCanvas');
-  const ctx = canvas.getContext('2d');
-  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  var canvas = document.getElementById('antiScreenshotCanvas');
+  var ctx = canvas.getContext('2d');
+  function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
   resize(); window.addEventListener('resize', resize);
-  const drawNoise = () => {
+  function drawNoise() {
     if (!ctx) return;
-    const img = ctx.createImageData(canvas.width, canvas.height);
-    for (let i=0; i<img.data.length; i+=4) {
-      img.data[i]=Math.random()*5; img.data[i+1]=Math.random()*5; img.data[i+2]=Math.random()*5; img.data[i+3]=3;
+    var img = ctx.createImageData(canvas.width, canvas.height);
+    for (var i = 0; i < img.data.length; i += 4) {
+      img.data[i] = Math.random() * 5;
+      img.data[i+1] = Math.random() * 5;
+      img.data[i+2] = Math.random() * 5;
+      img.data[i+3] = 3;
     }
-    ctx.putImageData(img,0,0);
-  };
-  setInterval(() => {
+    ctx.putImageData(img, 0, 0);
+  }
+  setInterval(function() {
     drawNoise();
-    ctx.fillStyle='rgba(255,255,255,0.002)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    for (let x=0; x<canvas.width; x+=4) {
-      ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;
-      ctx.fillRect(x,0,1,canvas.height);
+    ctx.fillStyle = 'rgba(255,255,255,0.002)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (var x = 0; x < canvas.width; x += 4) {
+      ctx.fillStyle = 'rgba(' + Math.random()*255 + ',' + Math.random()*255 + ',' + Math.random()*255 + ',0.01)';
+      ctx.fillRect(x, 0, 1, canvas.height);
     }
-  },100);
-  let frame=0;
-  (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
+  }, 100);
+  var frame = 0;
+  (function jitter() {
+    frame++;
+    document.body.style.transform = 'translate(' + Math.sin(frame/10)*0.2 + 'px,' + Math.cos(frame/15)*0.2 + 'px)';
+    requestAnimationFrame(jitter);
+  })();
 })();
 
 // =====================================================================
 //  궁극 암호화 엔진 (P-521 + SHA-512 + AES-256 + 100만 PBKDF2)
 // =====================================================================
-const textEncoder = new TextEncoder(); const textDecoder = new TextDecoder();
-const str2buf = s => textEncoder.encode(s);
-const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
-const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
-const b642buf = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
-const concatBufs = (...bufs) => { let len=bufs.reduce((a,b)=>a+b.byteLength,0), tmp=new Uint8Array(len), off=0; bufs.forEach(b=>{tmp.set(new Uint8Array(b),off);off+=b.byteLength;}); return tmp.buffer; };
-const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]%16;return(c=='x'?r:r&0x3|0x8).toString(16);});
+var textEncoder = new TextEncoder();
+var textDecoder = new TextDecoder();
+function str2buf(s) { return textEncoder.encode(s); }
+function buf2hex(b) { return Array.prototype.map.call(new Uint8Array(b), function(x) { return x.toString(16).padStart(2, '0'); }).join(''); }
+function buf2b64(b) { return btoa(String.fromCharCode.apply(null, new Uint8Array(b))); }
+function b642buf(s) { return Uint8Array.from(atob(s), function(c) { return c.charCodeAt(0); }).buffer; }
+function concatBufs() {
+  var len = 0, i;
+  for (i = 0; i < arguments.length; i++) len += arguments[i].byteLength;
+  var tmp = new Uint8Array(len), off = 0;
+  for (i = 0; i < arguments.length; i++) {
+    tmp.set(new Uint8Array(arguments[i]), off);
+    off += arguments[i].byteLength;
+  }
+  return tmp.buffer;
+}
+function genUUID() {
+  return crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
+    var r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
 
-let pc, dc, isOfferer = false, password = null;
-let authKey, sessionKey, sendChain, recvChain;
-let ourEcdhPair = null, peerEcdhPub = null;
-let salt;
-let handshakeDone = false;
-const ECDH_ALG = { name:'ECDH', namedCurve:'P-521' };
-const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+var pc, dc, isOfferer = false, password = null;
+var authKey, sessionKey, sendChain, recvChain;
+var ourEcdhPair = null, peerEcdhPub = null;
+var salt;
+var handshakeDone = false;
+var ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
+var PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
-let fileReceive = null;
-let typingChannel = null;
-let pendingOutbox = [];
-const receivedMessageIds = new Set();
+var fileReceive = null;
+var typingChannel = null;
+var pendingOutbox = [];
+var receivedMessageIds = new Set();
 
-(async function init(){
+(function init() {
   if (isDestroyed()) { executeDestroy(); return; }
-  document.getElementById('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}});
-  document.addEventListener('dragover',e=>e.preventDefault());
-  document.addEventListener('drop',async e=>{e.preventDefault();if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
-  checkHash(); window.addEventListener('hashchange', checkHash);
+  document.getElementById('msgInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+  });
+  document.addEventListener('dragover', function(e) { e.preventDefault(); });
+  document.addEventListener('drop', function(e) {
+    e.preventDefault();
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+  checkHash();
+  window.addEventListener('hashchange', checkHash);
 })();
 
-async function checkHash(){
+async function checkHash() {
   if (isDestroyed()) { executeDestroy(); return; }
-  const h = location.hash.substring(1); if(!h) return;
-  const p = new URLSearchParams(h);
-  if (p.has('offer')){
-    try{
-      const offer = decodeSDP(p.get('offer')); closeConnection();
+  var h = location.hash.substring(1);
+  if (!h) return;
+  var p = new URLSearchParams(h);
+  if (p.has('offer')) {
+    try {
+      var offer = decodeSDP(p.get('offer'));
+      closeConnection();
       document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
       document.getElementById('answerPanel').classList.remove('hidden');
       document.getElementById('autoAnswerContent').classList.remove('hidden');
       document.getElementById('manualJoinContent').classList.add('hidden');
-      document.getElementById('answerSpinner').style.display='inline-block';
+      document.getElementById('answerSpinner').style.display = 'inline-block';
       document.getElementById('answerReadyPanel').classList.add('hidden');
       await initiateAnswer(offer);
-    }catch(e){ alert('잘못된 초대 링크입니다.'); }
-  }else if(p.has('answer')){
+    } catch (e) { alert('잘못된 초대 링크입니다.'); }
+  } else if (p.has('answer')) {
     if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
-    try{
-      const answer = decodeSDP(p.get('answer'));
+    try {
+      var answer = decodeSDP(p.get('answer'));
       await pc.setRemoteDescription(answer);
-    }catch(e){ alert('잘못된 Answer 링크입니다.'); }
+    } catch (e) { alert('잘못된 Answer 링크입니다.'); }
   }
 }
 
-function showJoinPanel(){
+function showJoinPanel() {
   document.getElementById('offerPanel').classList.add('hidden');
   document.getElementById('answerPanel').classList.remove('hidden');
   document.getElementById('autoAnswerContent').classList.add('hidden');
   document.getElementById('manualJoinContent').classList.remove('hidden');
 }
 
-async function startNewChat(){
-  clearDestroyedFlags(); closeConnection(); isOfferer = true;
+async function startNewChat() {
+  clearDestroyedFlags();
+  closeConnection();
+  isOfferer = true;
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('answerPanel').classList.add('hidden');
-  document.getElementById('offerSpinner').style.display='inline-block';
-  initPC(); createDataChannels();
-  pc.createOffer().then(o=>pc.setLocalDescription(o)).then(()=>waitIce().then(()=>{
-    document.getElementById('offerSpinner').style.display='none';
-    const offerB64 = encodeSDP(pc.localDescription);
+  document.getElementById('offerSpinner').style.display = 'inline-block';
+  initPC();
+  createDataChannels();
+  pc.createOffer().then(function(o) { return pc.setLocalDescription(o); }).then(function() {
+    return waitIce();
+  }).then(function() {
+    document.getElementById('offerSpinner').style.display = 'none';
+    var offerB64 = encodeSDP(pc.localDescription);
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
-  }));
+  }).catch(function(e) { console.error(e); });
 }
 
-async function initiateAnswer(offer){
-  isOfferer = false; initPC();
+async function initiateAnswer(offer) {
+  isOfferer = false;
+  initPC();
   await pc.setRemoteDescription(offer);
-  const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
-  document.getElementById('answerSpinner').style.display='none';
+  var ans = await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  await waitIce();
+  document.getElementById('answerSpinner').style.display = 'none';
   document.getElementById('answerReadyPanel').classList.remove('hidden');
   document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
 }
 
-async function createAnswerFromOffer(){
-  const t = document.getElementById('remoteOfferSDP').value.trim(); if(!t) return;
-  closeConnection(); isOfferer = false; initPC();
-  let offerStr = t;
-  if(t.startsWith('http')){ const u=new URL(t); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('offer')){ alert('올바른 초대 링크가 아닙니다.'); return; } offerStr=hp.get('offer'); }
+async function createAnswerFromOffer() {
+  var t = document.getElementById('remoteOfferSDP').value.trim();
+  if (!t) return;
+  closeConnection();
+  isOfferer = false;
+  initPC();
+  var offerStr = t;
+  if (t.indexOf('http') === 0) {
+    var u = new URL(t);
+    var hp = new URLSearchParams(u.hash.substring(1));
+    if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
+    offerStr = hp.get('offer');
+  }
   await pc.setRemoteDescription(decodeSDP(offerStr));
-  const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
+  var ans = await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  await waitIce();
   document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
   document.getElementById('answerResultPanel').classList.remove('hidden');
 }
 
-async function applyAnswerLink(){
-  const l = document.getElementById('answerLinkInput').value.trim(); if(!l) return;
+async function applyAnswerLink() {
+  var l = document.getElementById('answerLinkInput').value.trim();
+  if (!l) return;
   if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
-  try{
-    let answerStr = l;
-    if(l.startsWith('http')){ const u=new URL(l); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('answer')){ alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr=hp.get('answer'); }
+  try {
+    var answerStr = l;
+    if (l.indexOf('http') === 0) {
+      var u = new URL(l);
+      var hp = new URLSearchParams(u.hash.substring(1));
+      if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
+      answerStr = hp.get('answer');
+    }
     await pc.setRemoteDescription(decodeSDP(answerStr));
-  }catch(e){ alert('올바르지 않은 Answer 링크입니다.'); }
+  } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
-function initPC(){
+function initPC() {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS_LIST });
   pc.oniceconnectionstatechange = onIceState;
-  pc.ondatachannel = e => {
+  pc.ondatachannel = function(e) {
     if (isDestroyed()) return;
-    if(e.channel.label === 'chat'){ if(dc) dc.close(); dc = e.channel; setupDC(); if(handshakeDone && sessionKey) flushOutbox(); if (isDestroyed()) { executeDestroy(); return; } }
-    else if(e.channel.label === TYPING_LABEL){ if(typingChannel) typingChannel.close(); typingChannel = e.channel; }
+    if (e.channel.label === 'chat') {
+      if (dc) dc.close();
+      dc = e.channel;
+      setupDC();
+      if (handshakeDone && sessionKey) flushOutbox();
+      if (isDestroyed()) { executeDestroy(); return; }
+    } else if (e.channel.label === TYPING_LABEL) {
+      if (typingChannel) typingChannel.close();
+      typingChannel = e.channel;
+    }
   };
 }
 
-function createDataChannels(){
-  if(!pc || !isOfferer) return;
-  if(dc) dc.close(); if(typingChannel) typingChannel.close();
+function createDataChannels() {
+  if (!pc || !isOfferer) return;
+  if (dc) dc.close();
+  if (typingChannel) typingChannel.close();
   dc = pc.createDataChannel('chat', { ordered: true });
   typingChannel = pc.createDataChannel(TYPING_LABEL, { ordered: false, maxRetransmits: 0 });
   setupDC();
 }
 
-function setupDC(){
-  if(!dc) return;
-  dc.onopen = () => {
+function setupDC() {
+  if (!dc) return;
+  dc.onopen = function() {
     if (isDestroyed()) { executeDestroy(); return; }
-    isOnline = true; updateConn(true);
-    showChat(); flushOutbox();
+    isOnline = true;
+    updateConn(true);
+    showChat();
+    flushOutbox();
     if (isDestroyed()) { executeDestroy(); return; }
-    if(!handshakeDone && !sessionKey) startEcdhExchange();
+    if (!handshakeDone && !sessionKey) startEcdhExchange();
   };
   dc.onmessage = onMsg;
-  dc.onclose = () => { isOnline = false; updateConn(false); };
+  dc.onclose = function() { isOnline = false; updateConn(false); };
 }
 
-function onIceState(){
-  const s = pc.iceConnectionState;
-  if(s==='connected'||s==='completed'){ isOnline = true; updateConn(true); if((!dc||dc.readyState!=='open')&&isOfferer) createDataChannels(); if(isDestroyed()) executeDestroy(); }
-  else if(s==='disconnected'){ isOnline = false; updateConn(false); pc.restartIce(); }
-  else if(s==='failed'||s==='closed'){ isOnline = false; updateConn(false); }
+function onIceState() {
+  var s = pc.iceConnectionState;
+  if (s === 'connected' || s === 'completed') {
+    isOnline = true;
+    updateConn(true);
+    if ((!dc || dc.readyState !== 'open') && isOfferer) createDataChannels();
+    if (isDestroyed()) executeDestroy();
+  } else if (s === 'disconnected') {
+    isOnline = false;
+    updateConn(false);
+    pc.restartIce();
+  } else if (s === 'failed' || s === 'closed') {
+    isOnline = false;
+    updateConn(false);
+  }
 }
 
-function waitIce(){ return new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')r();});}); }
-function updateConn(ok){ document.getElementById('connDot').className='dot '+(ok?'on':'off'); document.getElementById('connLabel').textContent=ok?'연결됨':'오프라인'; }
-function checkDestroyAndPropagate(){ if(isDestroyed()) executeDestroy(); }
+function waitIce() {
+  return new Promise(function(r) {
+    if (pc.iceGatheringState === 'complete') r();
+    else pc.addEventListener('icegatheringstatechange', function() { if (pc.iceGatheringState === 'complete') r(); });
+  });
+}
+function updateConn(ok) {
+  document.getElementById('connDot').className = 'dot ' + (ok ? 'on' : 'off');
+  document.getElementById('connLabel').textContent = ok ? '연결됨' : '오프라인';
+}
+function checkDestroyAndPropagate() { if (isDestroyed()) executeDestroy(); }
 
-async function flushOutbox(){
-  if(isDestroyed()) return;
-  if(!dc||dc.readyState!=='open'||pendingOutbox.length===0) return;
-  const toSend=[...pendingOutbox]; pendingOutbox=[];
-  for(const msg of toSend){ try{ const enc=await encryptPayload(msg.payload); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){} }
-  addMsg('📬 대기 메시지 전송 완료','system');
+async function flushOutbox() {
+  if (isDestroyed()) return;
+  if (!dc || dc.readyState !== 'open' || pendingOutbox.length === 0) return;
+  var toSend = pendingOutbox.slice();
+  pendingOutbox = [];
+  for (var i = 0; i < toSend.length; i++) {
+    try {
+      var enc = await encryptPayload(toSend[i].payload);
+      dc.send(JSON.stringify({ type: 'msg' }));
+    } catch (e) {}
+  }
+  addMsg('📬 대기 메시지 전송 완료', 'system');
 }
 
-async function startEcdhExchange(){
-  try{
-    const keyPair = await crypto.subtle.generateKey(ECDH_ALG, true, ['deriveKey','deriveBits']);
-    ourEcdhPair = { privateKey:keyPair.privateKey, publicKey:keyPair.publicKey };
-    const pubRaw = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
-    if(isOfferer){ salt=crypto.getRandomValues(new Uint8Array(SALT_SIZE)); dc.send(JSON.stringify({type:'__ecdhe__',salt:buf2b64(salt.buffer),pubKey:buf2b64(pubRaw)})); }
-    else { dc.send(JSON.stringify({type:'__ecdhe__',pubKey:buf2b64(pubRaw)})); }
-  }catch(e){ addMsg('보안 오류','system'); }
+async function startEcdhExchange() {
+  try {
+    var keyPair = await crypto.subtle.generateKey(ECDH_ALG, true, ['deriveKey', 'deriveBits']);
+    ourEcdhPair = { privateKey: keyPair.privateKey, publicKey: keyPair.publicKey };
+    var pubRaw = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
+    if (isOfferer) {
+      salt = crypto.getRandomValues(new Uint8Array(SALT_SIZE));
+      dc.send(JSON.stringify({ type: '__ecdhe__', salt: buf2b64(salt.buffer), pubKey: buf2b64(pubRaw) }));
+    } else {
+      dc.send(JSON.stringify({ type: '__ecdhe__', pubKey: buf2b64(pubRaw) }));
+    }
+  } catch (e) { addMsg('보안 오류', 'system'); }
 }
 
-async function handleEcdheMessage(data){
-  if(handshakeDone||isDestroyed()) return;
-  try{ if(data.salt) salt=new Uint8Array(b642buf(data.salt)); peerEcdhPub=await crypto.subtle.importKey('raw',b642buf(data.pubKey),ECDH_ALG,true,[]); if(password&&ourEcdhPair&&peerEcdhPub&&salt) await deriveSessionKey(); }catch(e){ addMsg('키 교환 실패','system'); }
+async function handleEcdheMessage(data) {
+  if (handshakeDone || isDestroyed()) return;
+  try {
+    if (data.salt) salt = new Uint8Array(b642buf(data.salt));
+    peerEcdhPub = await crypto.subtle.importKey('raw', b642buf(data.pubKey), ECDH_ALG, true, []);
+    if (password && ourEcdhPair && peerEcdhPub && salt) await deriveSessionKey();
+  } catch (e) { addMsg('키 교환 실패', 'system'); }
 }
 
-async function submitPassword(){
-  if(isDestroyed()) return;
-  const errorEl=document.getElementById('passwordError'); errorEl.style.display='none';
-  password=document.getElementById('chatPasswordInput').value.trim();
-  if(!password){ errorEl.textContent='암호를 입력하세요.'; errorEl.style.display='block'; return; }
-  if(!salt||!ourEcdhPair||!peerEcdhPub){ errorEl.textContent='상대방과의 보안 연결 준비 중...'; errorEl.style.display='block'; return; }
-  if(handshakeDone) return;
-  try{ await deriveAuthKey(); await deriveSessionKey(); handshakeDone=true; document.getElementById('passwordPrompt').style.display='none'; document.getElementById('securityCard').style.display='flex'; addMsg('🔐 세션 활성화','system'); }catch(e){ errorEl.textContent='세션 키 실패: '+e.message; errorEl.style.display='block'; }
+async function submitPassword() {
+  if (isDestroyed()) return;
+  var errorEl = document.getElementById('passwordError');
+  errorEl.style.display = 'none';
+  password = document.getElementById('chatPasswordInput').value.trim();
+  if (!password) { errorEl.textContent = '암호를 입력하세요.'; errorEl.style.display = 'block'; return; }
+  if (!salt || !ourEcdhPair || !peerEcdhPub) { errorEl.textContent = '상대방과의 보안 연결 준비 중...'; errorEl.style.display = 'block'; return; }
+  if (handshakeDone) return;
+  try {
+    await deriveAuthKey();
+    await deriveSessionKey();
+    handshakeDone = true;
+    document.getElementById('passwordPrompt').style.display = 'none';
+    document.getElementById('securityCard').style.display = 'flex';
+    addMsg('🔐 세션 활성화', 'system');
+  } catch (e) { errorEl.textContent = '세션 키 실패: ' + e.message; errorEl.style.display = 'block'; }
 }
 
-async function deriveAuthKey(){
-  const km = await crypto.subtle.importKey('raw',str2buf(password),'PBKDF2',false,['deriveKey']);
-  authKey = await crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:PBKDF2_ITERS, hash:'SHA-512' }, km, { name:'AES-GCM', length:AES_LEN }, true, ['encrypt','decrypt']);
+async function deriveAuthKey() {
+  var km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
+  authKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: salt, iterations: PBKDF2_ITERS, hash: 'SHA-512' },
+    km,
+    { name: 'AES-GCM', length: AES_LEN },
+    true,
+    ['encrypt', 'decrypt']
+  );
 }
 
-async function deriveSessionKey(){
-  const ecdhBits = await crypto.subtle.deriveBits({ name:'ECDH', public:peerEcdhPub }, ourEcdhPair.privateKey, 521);
-  const authRaw = await crypto.subtle.exportKey('raw', authKey);
-  const ikm = concatBufs(ecdhBits, str2buf(password));
-  const hkdfKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveKey']);
-  sessionKey = await crypto.subtle.deriveKey({ name:'HKDF', hash:'SHA-512', salt:authRaw, info:str2buf('session') }, hkdfKey, { name:'AES-GCM', length:AES_LEN }, true, ['encrypt','decrypt']);
-  const sb = await crypto.subtle.exportKey('raw', sessionKey);
-  const chainA = await hkdfExpand(sb, str2buf('chain-a'));
-  const chainB = await hkdfExpand(sb, str2buf('chain-b'));
-  const ourPub = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
-  const peerPub = await crypto.subtle.exportKey('raw', peerEcdhPub);
-  const weAreSmaller = compareBuffers(new Uint8Array(ourPub), new Uint8Array(peerPub)) < 0;
-  sendChain = weAreSmaller ? { chain:chainA, seq:0 } : { chain:chainB, seq:0 };
-  recvChain = weAreSmaller ? { chain:chainB, seq:-1 } : { chain:chainA, seq:-1 };
-  document.getElementById('sessionFingerprint').textContent = buf2hex(await crypto.subtle.digest('SHA-256', sb)).slice(0,32);
+async function deriveSessionKey() {
+  var ecdhBits = await crypto.subtle.deriveBits({ name: 'ECDH', public: peerEcdhPub }, ourEcdhPair.privateKey, 521);
+  var authRaw = await crypto.subtle.exportKey('raw', authKey);
+  var ikm = concatBufs(ecdhBits, str2buf(password));
+  var hkdfKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveKey']);
+  sessionKey = await crypto.subtle.deriveKey(
+    { name: 'HKDF', hash: 'SHA-512', salt: authRaw, info: str2buf('session') },
+    hkdfKey,
+    { name: 'AES-GCM', length: AES_LEN },
+    true,
+    ['encrypt', 'decrypt']
+  );
+  var sb = await crypto.subtle.exportKey('raw', sessionKey);
+  var chainA = await hkdfExpand(sb, str2buf('chain-a'));
+  var chainB = await hkdfExpand(sb, str2buf('chain-b'));
+  var ourPub = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
+  var peerPub = await crypto.subtle.exportKey('raw', peerEcdhPub);
+  var weAreSmaller = compareBuffers(new Uint8Array(ourPub), new Uint8Array(peerPub)) < 0;
+  sendChain = weAreSmaller ? { chain: chainA, seq: 0 } : { chain: chainB, seq: 0 };
+  recvChain = weAreSmaller ? { chain: chainB, seq: -1 } : { chain: chainA, seq: -1 };
+  document.getElementById('sessionFingerprint').textContent = buf2hex(await crypto.subtle.digest('SHA-256', sb)).slice(0, 32);
   applyBlurToSensitiveElements();
 }
 
-function compareBuffers(b1,b2){ for(let i=0;i<b1.byteLength;i++){ if(b1[i]<b2[i]) return -1; if(b1[i]>b2[i]) return 1; } return 0; }
-async function hkdfExpand(prk, info){ const k = await crypto.subtle.importKey('raw',prk,{name:'HMAC',hash:HMAC_HASH},false,['sign']); const s = await crypto.subtle.sign('HMAC',k,info); return crypto.subtle.importKey('raw',s.slice(0,32),{name:'HMAC',hash:HMAC_HASH},false,['sign']); }
-async function ratchetForward(chainRef){ const cur=chainRef.chain; const newChain=await crypto.subtle.sign('HMAC',cur,new Uint8Array([2])); chainRef.chain=await crypto.subtle.importKey('raw',newChain.slice(0,32),{name:'HMAC',hash:HMAC_HASH},false,['sign']); const msgKey=await crypto.subtle.sign('HMAC',cur,new Uint8Array([1])); return crypto.subtle.importKey('raw',msgKey.slice(0,32),{name:'AES-GCM',length:AES_LEN},false,['encrypt','decrypt']); }
-async function encryptPayload(obj){ if(!sendChain) throw new Error('세션키 없음'); const mk=await ratchetForward(sendChain); const iv=crypto.getRandomValues(new Uint8Array(12)); const padded={...obj,_pad:Math.random().toString(36).slice(2,10)}; const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},mk,str2buf(JSON.stringify(padded))); return {seq:sendChain.seq++,iv:Array.from(new Uint8Array(iv)),ct:Array.from(new Uint8Array(ct))}; }
-async function decryptPayload(d){ if(!recvChain) throw new Error('세션키 없음'); const {seq,iv,ct}=d; const prevChain=recvChain.chain,prevSeq=recvChain.seq; try{ if(seq<=recvChain.seq) throw new Error('Invalid seq'); while(recvChain.seq<seq-1){await ratchetForward(recvChain);recvChain.seq++;} const mk=await ratchetForward(recvChain); recvChain.seq=seq; const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)},mk,new Uint8Array(ct)); const obj=JSON.parse(textDecoder.decode(plain)); delete obj._pad; return obj; }catch(e){recvChain.chain=prevChain;recvChain.seq=prevSeq;throw e;} }
-
-async function sendText(){
-  if(isDestroyed()) return;
-  const inp=document.getElementById('msgInput'); const txt=inp.value.trim(); if(!txt) return;
-  const msgId=genUUID(); const payload={type:'text',content:txt,id:msgId};
-  if(!dc||dc.readyState!=='open'||!sessionKey){ if(sessionKey){pendingOutbox.push({payload,id:msgId});addMsg(txt,'me',msgId);addMsg('⏳ 오프라인-복구 시 전송','system');}else addMsg('⚠️ 암호를 설정하세요.','system'); inp.value=''; return; }
-  try{ const enc=await encryptPayload(payload); dc.send(JSON.stringify({type:'msg',...enc})); addMsg(txt,'me',msgId); }catch(e){pendingOutbox.push({payload,id:msgId});addMsg(txt,'me',msgId);addMsg('⚠️ 전송 실패-대기열 저장','system');}
-  inp.value='';
+function compareBuffers(b1, b2) {
+  for (var i = 0; i < b1.byteLength; i++) {
+    if (b1[i] < b2[i]) return -1;
+    if (b1[i] > b2[i]) return 1;
+  }
+  return 0;
+}
+async function hkdfExpand(prk, info) {
+  var k = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
+  var s = await crypto.subtle.sign('HMAC', k, info);
+  return crypto.subtle.importKey('raw', s.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
+}
+async function ratchetForward(chainRef) {
+  var cur = chainRef.chain;
+  var newChain = await crypto.subtle.sign('HMAC', cur, new Uint8Array([2]));
+  chainRef.chain = await crypto.subtle.importKey('raw', newChain.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
+  var msgKey = await crypto.subtle.sign('HMAC', cur, new Uint8Array([1]));
+  return crypto.subtle.importKey('raw', msgKey.slice(0, 32), { name: 'AES-GCM', length: AES_LEN }, false, ['encrypt', 'decrypt']);
+}
+async function encryptPayload(obj) {
+  if (!sendChain) throw new Error('세션키 없음');
+  var mk = await ratchetForward(sendChain);
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var padded = Object.assign({}, obj, { _pad: Math.random().toString(36).slice(2, 10) });
+  var ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, mk, str2buf(JSON.stringify(padded)));
+  return { seq: sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
+}
+async function decryptPayload(d) {
+  if (!recvChain) throw new Error('세션키 없음');
+  var seq = d.seq, iv = d.iv, ct = d.ct;
+  var prevChain = recvChain.chain, prevSeq = recvChain.seq;
+  try {
+    if (seq <= recvChain.seq) throw new Error('Invalid seq');
+    while (recvChain.seq < seq - 1) { await ratchetForward(recvChain); recvChain.seq++; }
+    var mk = await ratchetForward(recvChain);
+    recvChain.seq = seq;
+    var plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, mk, new Uint8Array(ct));
+    var obj = JSON.parse(textDecoder.decode(plain));
+    delete obj._pad;
+    return obj;
+  } catch (e) { recvChain.chain = prevChain; recvChain.seq = prevSeq; throw e; }
 }
 
-function onMsg(e){
-  if(isDestroyed()) return;
-  if(e.data instanceof ArrayBuffer){handleBinaryChunk(e.data);return;}
-  try{ const d=JSON.parse(e.data); if(d.type==='__ecdhe__'){handleEcdheMessage(d);return;} if(d.type==='msg'){ if(!sessionKey){addEncryptedMessage(d);return;} decryptPayload(d).then(inner=>{ if(isDestroyed()) return; if(inner.id&&receivedMessageIds.has(inner.id))return; if(inner.id)receivedMessageIds.add(inner.id); if(inner.type==='text'){addMsg(inner.content,'other',inner.id);sendReadReceipt(inner.id);}else if(inner.type==='read')markAsRead(inner.id);else if(inner.type==='delete')document.getElementById('msg-'+inner.id)?.remove();else if(inner.type==='file_start')handleFileStart(inner);else if(inner.type==='file_end'){if(fileReceive&&fileReceive.id===inner.id)assembleFile();}else if(inner.type==='__destroy__'){markDestroyed();executeDestroy();} }).catch(()=>addEncryptedMessage(d)); } }catch(e){}
+async function sendText() {
+  if (isDestroyed()) return;
+  var inp = document.getElementById('msgInput');
+  var txt = inp.value.trim();
+  if (!txt) return;
+  var msgId = genUUID();
+  var payload = { type: 'text', content: txt, id: msgId };
+  if (!dc || dc.readyState !== 'open' || !sessionKey) {
+    if (sessionKey) {
+      pendingOutbox.push({ payload: payload, id: msgId });
+      addMsg(txt, 'me', msgId);
+      addMsg('⏳ 오프라인-복구 시 전송', 'system');
+    } else addMsg('⚠️ 암호를 설정하세요.', 'system');
+    inp.value = '';
+    return;
+  }
+  try {
+    var enc = await encryptPayload(payload);
+    dc.send(JSON.stringify({ type: 'msg', seq: enc.seq, iv: enc.iv, ct: enc.ct }));
+    addMsg(txt, 'me', msgId);
+  } catch (e) {
+    pendingOutbox.push({ payload: payload, id: msgId });
+    addMsg(txt, 'me', msgId);
+    addMsg('⚠️ 전송 실패-대기열 저장', 'system');
+  }
+  inp.value = '';
 }
 
-async function destroyChat(){
-  if(!sessionKey||!dc||dc.readyState!=='open'){ markDestroyed(); executeDestroy(); return; }
-  if(!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
-  try{ const enc=await encryptPayload({type:'__destroy__',timestamp:Date.now()}); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){}
-  markDestroyed(); executeDestroy();
+function onMsg(e) {
+  if (isDestroyed()) return;
+  if (e.data instanceof ArrayBuffer) { handleBinaryChunk(e.data); return; }
+  try {
+    var d = JSON.parse(e.data);
+    if (d.type === '__ecdhe__') { handleEcdheMessage(d); return; }
+    if (d.type === 'msg') {
+      if (!sessionKey) { addEncryptedMessage(d); return; }
+      decryptPayload(d).then(function(inner) {
+        if (isDestroyed()) return;
+        if (inner.id && receivedMessageIds.has(inner.id)) return;
+        if (inner.id) receivedMessageIds.add(inner.id);
+        if (inner.type === 'text') { addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
+        else if (inner.type === 'read') markAsRead(inner.id);
+        else if (inner.type === 'delete') { var delEl = document.getElementById('msg-' + inner.id); if (delEl) delEl.remove(); }
+        else if (inner.type === 'file_start') handleFileStart(inner);
+        else if (inner.type === 'file_end') { if (fileReceive && fileReceive.id === inner.id) assembleFile(); }
+        else if (inner.type === '__destroy__') { markDestroyed(); executeDestroy(); }
+      }).catch(function() { addEncryptedMessage(d); });
+    }
+  } catch (e) {}
 }
 
-function addEncryptedMessage(rawData){
-  if(isDestroyed()) return;
-  const c=document.getElementById('messages'), d=document.createElement('div'); d.className='msg system';
-  d.innerHTML=`<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData,null,2))}</div>`;
-  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements();
+async function destroyChat() {
+  if (!sessionKey || !dc || dc.readyState !== 'open') { markDestroyed(); executeDestroy(); return; }
+  if (!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
+  try {
+    var enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() });
+    dc.send(JSON.stringify({ type: 'msg', seq: enc.seq, iv: enc.iv, ct: enc.ct }));
+  } catch (e) {}
+  markDestroyed();
+  executeDestroy();
 }
 
-async function sendReadReceipt(msgId){ if(!sessionKey||isDestroyed()) return; try{ const enc=await encryptPayload({type:'read',id:msgId}); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){} }
-async function deleteMessage(msgId){ if(!sessionKey||isDestroyed()) return; try{ const enc=await encryptPayload({type:'delete',id:msgId}); dc.send(JSON.stringify({type:'msg',...enc})); document.getElementById('msg-'+msgId)?.remove(); }catch(e){} }
-
-function addMsg(text, who, msgId){
-  if(isDestroyed()) return;
-  const c=document.getElementById('messages'), d=document.createElement('div');
-  d.className='msg '+(who==='me'?'me':who==='other'?'other':'system');
-  if(msgId) d.id='msg-'+msgId;
-  let bubble=escapeHtml(text);
-  let timeHtml=`<div class="time">${new Date().toLocaleTimeString()}`;
-  if(who==='me'&&msgId) timeHtml+=` <button class="btn-small" style="background:none;color:var(--danger);padding:2px 6px;" onclick="deleteMessage('${msgId}')">✕</button>`;
-  timeHtml+=`</div>`;
-  if(fileReceive&&text.startsWith('📥')) bubble+=`<div class="progress"><div class="progress-bar" id="file-progress"></div></div>`;
-  d.innerHTML=`<div class="bubble blur-target">${bubble}${timeHtml}<div class="noise-layer"></div></div>`;
-  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements();
+function addEncryptedMessage(rawData) {
+  if (isDestroyed()) return;
+  var c = document.getElementById('messages');
+  var d = document.createElement('div');
+  d.className = 'msg system';
+  d.innerHTML = '<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>' + escapeHtml(JSON.stringify(rawData, null, 2)) + '</div>';
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+  applyBlurToSensitiveElements();
 }
 
-function markAsRead(msgId){ const el=document.getElementById('msg-'+msgId); if(el){ const t=el.querySelector('.time'); if(t&&!t.querySelector('.read')) t.innerHTML+=' <span class="read" style="color:var(--success);">✓✓</span>'; } }
+async function sendReadReceipt(msgId) {
+  if (!sessionKey || isDestroyed()) return;
+  try {
+    var enc = await encryptPayload({ type: 'read', id: msgId });
+    dc.send(JSON.stringify({ type: 'msg', seq: enc.seq, iv: enc.iv, ct: enc.ct }));
+  } catch (e) {}
+}
+async function deleteMessage(msgId) {
+  if (!sessionKey || isDestroyed()) return;
+  try {
+    var enc = await encryptPayload({ type: 'delete', id: msgId });
+    dc.send(JSON.stringify({ type: 'msg', seq: enc.seq, iv: enc.iv, ct: enc.ct }));
+    var el = document.getElementById('msg-' + msgId);
+    if (el) el.remove();
+  } catch (e) {}
+}
+
+function addMsg(text, who, msgId) {
+  if (isDestroyed()) return;
+  var c = document.getElementById('messages');
+  var d = document.createElement('div');
+  d.className = 'msg ' + (who === 'me' ? 'me' : (who === 'other' ? 'other' : 'system'));
+  if (msgId) d.id = 'msg-' + msgId;
+  var bubble = escapeHtml(text);
+  var timeHtml = '<div class="time">' + new Date().toLocaleTimeString();
+  if (who === 'me' && msgId) timeHtml += ' <button class="btn-small" style="background:none;color:var(--danger);padding:2px 6px;" onclick="deleteMessage(\'' + msgId + '\')">✕</button>';
+  timeHtml += '</div>';
+  if (fileReceive && text.indexOf('📥') === 0) bubble += '<div class="progress"><div class="progress-bar" id="file-progress"></div></div>';
+  d.innerHTML = '<div class="bubble blur-target">' + bubble + timeHtml + '<div class="noise-layer"></div></div>';
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+  applyBlurToSensitiveElements();
+}
+
+function markAsRead(msgId) {
+  var el = document.getElementById('msg-' + msgId);
+  if (el) {
+    var t = el.querySelector('.time');
+    if (t && !t.querySelector('.read')) t.innerHTML += ' <span class="read" style="color:var(--success);">✓✓</span>';
+  }
+}
 
 // =====================================================================
 //  대용량 파일 전송 (Blob 기반)
 // =====================================================================
-function handleFileStart(inner){
-  fileReceive = { id:inner.id, name:inner.name, size:inner.size, fek:b642buf(inner.fek), chunks:[], received:0 };
-  addMsg(`📥 ${inner.name} (${formatBytes(inner.size)})`,'other');
+function handleFileStart(inner) {
+  fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 };
+  addMsg('📥 ' + inner.name + ' (' + formatBytes(inner.size) + ')', 'other');
 }
-function handleBinaryChunk(buf){
-  if(!fileReceive) return;
+function handleBinaryChunk(buf) {
+  if (!fileReceive) return;
   fileReceive.chunks.push(new Uint8Array(buf));
   fileReceive.received += buf.byteLength;
-  const pb = document.getElementById('file-progress');
-  if(pb) pb.style.width = Math.min(100, Math.round(fileReceive.received / fileReceive.size * 100)) + '%';
+  var pb = document.getElementById('file-progress');
+  if (pb) pb.style.width = Math.min(100, Math.round(fileReceive.received / fileReceive.size * 100)) + '%';
 }
-async function assembleFile(){
-  if(!fileReceive||isDestroyed()) return;
-  const blob = new Blob(fileReceive.chunks);
-  const iv = blob.slice(0, 12);
-  const ct = blob.slice(12);
-  const key = await crypto.subtle.importKey('raw', fileReceive.fek, 'AES-GCM', false, ['decrypt']);
-  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv: await iv.arrayBuffer()}, key, await ct.arrayBuffer());
-  const decBlob = new Blob([plain]);
-  const url = URL.createObjectURL(decBlob);
-  const c = document.getElementById('messages'), d = document.createElement('div'); d.className='msg other';
-  let html = `<div class="bubble blur-target"><div class="file-bubble"><span>📎 ${escapeHtml(fileReceive.name)}</span>`;
-  if(decBlob.type.startsWith('image/')) html += `<div class="file-preview"><img src="${url}"></div>`;
-  else if(decBlob.type.startsWith('video/')) html += `<div class="file-preview"><video controls src="${url}"></video></div>`;
-  html += `<a href="${url}" download="${escapeHtml(fileReceive.name)}" style="color:var(--accent);">다운로드</a></div><div class="time">${new Date().toLocaleTimeString()}</div><div class="noise-layer"></div></div>`;
-  d.innerHTML = html; c.appendChild(d); c.scrollTop = c.scrollHeight;
+async function assembleFile() {
+  if (!fileReceive || isDestroyed()) return;
+  var blob = new Blob(fileReceive.chunks);
+  var iv = blob.slice(0, 12);
+  var ct = blob.slice(12);
+  var key = await crypto.subtle.importKey('raw', fileReceive.fek, 'AES-GCM', false, ['decrypt']);
+  var plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: await iv.arrayBuffer() }, key, await ct.arrayBuffer());
+  var decBlob = new Blob([plain]);
+  var url = URL.createObjectURL(decBlob);
+  var c = document.getElementById('messages');
+  var d = document.createElement('div');
+  d.className = 'msg other';
+  var html = '<div class="bubble blur-target"><div class="file-bubble"><span>📎 ' + escapeHtml(fileReceive.name) + '</span>';
+  if (decBlob.type.startsWith('image/')) html += '<div class="file-preview"><img src="' + url + '"></div>';
+  else if (decBlob.type.startsWith('video/')) html += '<div class="file-preview"><video controls src="' + url + '"></video></div>';
+  html += '<a href="' + url + '" download="' + escapeHtml(fileReceive.name) + '" style="color:var(--accent);">다운로드</a></div><div class="time">' + new Date().toLocaleTimeString() + '</div><div class="noise-layer"></div></div>';
+  d.innerHTML = html;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
   fileReceive = null;
 }
-async function handleFiles(files){ for(const f of files) await sendFile(f); }
-async function sendFile(file){
-  if(!dc||dc.readyState!=='open'||!sessionKey||isDestroyed()) return;
-  const fileId = genUUID();
-  const fek = await crypto.subtle.generateKey({name:'AES-GCM', length:AES_LEN}, true, ['encrypt']);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const fekRaw = await crypto.subtle.exportKey('raw', fek);
-  const fileBuf = await file.arrayBuffer();
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, fek, fileBuf);
-  const encData = new Uint8Array(iv.byteLength + ct.byteLength);
-  encData.set(iv); encData.set(new Uint8Array(ct), iv.byteLength);
-  const metaEnc = await encryptPayload({type:'file_start', id:fileId, name:file.name, size:encData.byteLength, fek:buf2b64(fekRaw)});
-  dc.send(JSON.stringify({type:'msg', ...metaEnc}));
-  addMsg(`📤 ${file.name} 전송 중...`, 'me');
-  const chunkSize = 256 * 1024;
-  let offset = 0;
-  while(offset < encData.byteLength){
-    const end = Math.min(offset + chunkSize, encData.byteLength);
+async function handleFiles(files) { for (var i = 0; i < files.length; i++) await sendFile(files[i]); }
+async function sendFile(file) {
+  if (!dc || dc.readyState !== 'open' || !sessionKey || isDestroyed()) return;
+  var fileId = genUUID();
+  var fek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: AES_LEN }, true, ['encrypt']);
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var fekRaw = await crypto.subtle.exportKey('raw', fek);
+  var fileBuf = await file.arrayBuffer();
+  var ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, fek, fileBuf);
+  var encData = new Uint8Array(iv.byteLength + ct.byteLength);
+  encData.set(iv);
+  encData.set(new Uint8Array(ct), iv.byteLength);
+  var metaEnc = await encryptPayload({ type: 'file_start', id: fileId, name: file.name, size: encData.byteLength, fek: buf2b64(fekRaw) });
+  dc.send(JSON.stringify({ type: 'msg', seq: metaEnc.seq, iv: metaEnc.iv, ct: metaEnc.ct }));
+  addMsg('📤 ' + file.name + ' 전송 중...', 'me');
+  var chunkSize = 256 * 1024;
+  var offset = 0;
+  while (offset < encData.byteLength) {
+    var end = Math.min(offset + chunkSize, encData.byteLength);
     dc.send(encData.slice(offset, end).buffer);
     offset = end;
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise(function(r) { setTimeout(r, 10); });
   }
-  const endEnc = await encryptPayload({type:'file_end', id:fileId});
-  dc.send(JSON.stringify({type:'msg', ...endEnc}));
-  addMsg(`📤 ${file.name} 전송 완료`, 'me');
+  var endEnc = await encryptPayload({ type: 'file_end', id: fileId });
+  dc.send(JSON.stringify({ type: 'msg', seq: endEnc.seq, iv: endEnc.iv, ct: endEnc.ct }));
+  addMsg('📤 ' + file.name + ' 전송 완료', 'me');
 }
 
-function showChat(){ if(isDestroyed()){showSimple();return;} document.getElementById('simpleMode').style.display='none';document.getElementById('chatScreen').style.display='flex';applyBlurToSensitiveElements(); }
-function showSimple(){ document.getElementById('simpleMode').style.display='block';document.getElementById('chatScreen').style.display='none'; }
-function closeConnection(){ if(pc){pc.close();pc=null;}dc=null;typingChannel=null;authKey=sessionKey=null;sendChain=recvChain=null;salt=null;ourEcdhPair=null;peerEcdhPub=null;fileReceive=null;password=null;handshakeDone=false;receivedMessageIds.clear();pendingOutbox=[];document.getElementById('sessionFingerprint').textContent='';document.getElementById('securityCard').style.display='none';document.getElementById('passwordPrompt').style.display='block';document.getElementById('passwordError').style.display='none';isOnline = false; updateConn(false); }
-function formatBytes(b){ return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(1)+' GB'; }
-function toggleSecurityDetail(){ document.getElementById('securityDetail').classList.toggle('hidden'); }
-function copyTextById(id){ const el=document.getElementById(id); const text=el.tagName==='INPUT'||el.tagName==='TEXTAREA'?el.value:el.textContent; navigator.clipboard.writeText(text).then(()=>{}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);alert('링크가 복사되었습니다.');}); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function showChat() {
+  if (isDestroyed()) { showSimple(); return; }
+  document.getElementById('simpleMode').style.display = 'none';
+  document.getElementById('chatScreen').style.display = 'flex';
+  applyBlurToSensitiveElements();
+}
+function showSimple() {
+  document.getElementById('simpleMode').style.display = 'block';
+  document.getElementById('chatScreen').style.display = 'none';
+}
+function closeConnection() {
+  if (pc) { pc.close(); pc = null; }
+  dc = null; typingChannel = null;
+  authKey = sessionKey = null; sendChain = recvChain = null;
+  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
+  handshakeDone = false;
+  receivedMessageIds.clear();
+  pendingOutbox = [];
+  document.getElementById('sessionFingerprint').textContent = '';
+  document.getElementById('securityCard').style.display = 'none';
+  document.getElementById('passwordPrompt').style.display = 'block';
+  document.getElementById('passwordError').style.display = 'none';
+  isOnline = false;
+  updateConn(false);
+}
+function formatBytes(b) {
+  return b < 1024 ? b + ' B' : (b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b < 1073741824 ? (b / 1048576).toFixed(1) + ' MB' : (b / 1073741824).toFixed(1) + ' GB'));
+}
+function toggleSecurityDetail() { document.getElementById('securityDetail').classList.toggle('hidden'); }
+function copyTextById(id) {
+  var el = document.getElementById(id);
+  var text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
+  navigator.clipboard.writeText(text).then(function() {}).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    alert('링크가 복사되었습니다.');
+  });
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(m) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+  });
+}
+
+// base64url 헬퍼
+function toBase64url(buf) {
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+function fromBase64url(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return Uint8Array.from(atob(str), function(c) { return c.charCodeAt(0); }).buffer;
+}
+function encodeSDP(obj) { return toBase64url(new TextEncoder().encode(JSON.stringify(obj))); }
+function decodeSDP(str) { return JSON.parse(new TextDecoder().decode(fromBase64url(str))); }
 </script>
 </body>
 </html>
