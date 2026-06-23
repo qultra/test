@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 200개 서버·완전 호환·궁극 보안</title>
+  <title>P2P 암호 채팅 – 완전 호환·궁극 보안</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -133,7 +133,7 @@
 
 <script>
 // =====================================================================
-//  완벽 호환성 보장 + textEncoder 오류 근본 해결
+//  완벽 호환성: async/await 완전 제거, TextEncoder/Decoder 안전 초기화
 // =====================================================================
 
 // ----- TextEncoder / TextDecoder 폴백 -----
@@ -597,7 +597,7 @@ var typingChannel = null;
 var pendingOutbox = [];
 var receivedMessageIds = {};  // Set 대신 Object (전역으로 확실히 선언)
 
-(async function init() {
+(function init() {
   if (isDestroyed()) { executeDestroy(); return; }
   document.getElementById('msgInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
@@ -607,11 +607,11 @@ var receivedMessageIds = {};  // Set 대신 Object (전역으로 확실히 선�
     e.preventDefault();
     if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
   });
-  await checkHash();
-  window.addEventListener('hashchange', async function() { await checkHash(); });
+  checkHash();
+  window.addEventListener('hashchange', checkHash);
 })();
 
-async function checkHash() {
+function checkHash() {
   if (isDestroyed()) { executeDestroy(); return; }
   var h = location.hash.substring(1);
   if (!h) return;
@@ -626,13 +626,13 @@ async function checkHash() {
       document.getElementById('manualJoinContent').classList.add('hidden');
       document.getElementById('answerSpinner').style.display = 'inline-block';
       document.getElementById('answerReadyPanel').classList.add('hidden');
-      await initiateAnswer(offer);
+      initiateAnswer(offer);
     } catch (e) { alert('잘못된 초대 링크입니다.'); }
   } else if (p.has('answer')) {
     if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
     try {
       var answer = decodeSDP(p.get('answer'));
-      await pc.setRemoteDescription(answer);
+      pc.setRemoteDescription(answer);
     } catch (e) { alert('잘못된 Answer 링크입니다.'); }
   }
 }
@@ -671,19 +671,22 @@ function startNewChat() {
   }
 }
 
-async function initiateAnswer(offer) {
+function initiateAnswer(offer) {
   isOfferer = false;
   initPC();
-  await pc.setRemoteDescription(offer);
-  var ans = await pc.createAnswer();
-  await pc.setLocalDescription(ans);
-  await waitIce();
-  document.getElementById('answerSpinner').style.display = 'none';
-  document.getElementById('answerReadyPanel').classList.remove('hidden');
-  document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+  pc.setRemoteDescription(offer)
+    .then(function() { return pc.createAnswer(); })
+    .then(function(ans) { return pc.setLocalDescription(ans); })
+    .then(function() { return waitIce(); })
+    .then(function() {
+      document.getElementById('answerSpinner').style.display = 'none';
+      document.getElementById('answerReadyPanel').classList.remove('hidden');
+      document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+    })
+    .catch(function(e) { alert('Answer 생성 오류: ' + e.message); });
 }
 
-async function createAnswerFromOffer() {
+function createAnswerFromOffer() {
   var t = document.getElementById('remoteOfferSDP').value.trim();
   if (!t) return;
   closeConnection();
@@ -696,15 +699,18 @@ async function createAnswerFromOffer() {
     if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
     offerStr = hp.get('offer');
   }
-  await pc.setRemoteDescription(decodeSDP(offerStr));
-  var ans = await pc.createAnswer();
-  await pc.setLocalDescription(ans);
-  await waitIce();
-  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
-  document.getElementById('answerResultPanel').classList.remove('hidden');
+  pc.setRemoteDescription(decodeSDP(offerStr))
+    .then(function() { return pc.createAnswer(); })
+    .then(function(ans) { return pc.setLocalDescription(ans); })
+    .then(function() { return waitIce(); })
+    .then(function() {
+      document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+      document.getElementById('answerResultPanel').classList.remove('hidden');
+    })
+    .catch(function(e) { alert('Answer 생성 오류: ' + e.message); });
 }
 
-async function applyAnswerLink() {
+function applyAnswerLink() {
   var l = document.getElementById('answerLinkInput').value.trim();
   if (!l) return;
   if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
@@ -716,7 +722,8 @@ async function applyAnswerLink() {
       if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
       answerStr = hp.get('answer');
     }
-    await pc.setRemoteDescription(decodeSDP(answerStr));
+    pc.setRemoteDescription(decodeSDP(answerStr))
+      .catch(function(e) { alert('올바르지 않은 Answer 링크입니다.'); });
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
