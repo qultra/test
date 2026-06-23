@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 스마트 블러 + 완전 삭제</title>
+  <title>P2P 암호 채팅 – 정밀 블러 + 연결 완벽</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -47,33 +47,29 @@
       z-index: 9998; pointer-events: none; opacity: 0.03;
       mix-blend-mode: difference;
     }
-    /* 중요 정보만 블러 처리 – 메시지 버블, 세션 지문, 링크 상자 */
-    .bubble, .fingerprint, .link-box, .encrypted-bubble {
-      transition: filter 0.2s ease;
-    }
+
+    /* 중요 정보만 블러 – bubble(메시지), fingerprint, link-box, encrypted-bubble */
     .blur-sensitive {
       filter: blur(12px) !important;
       cursor: pointer;
       position: relative;
     }
     .blur-sensitive::after {
-      content: "두 번 터치 후 길게 누르기";
+      content: "길게 눌러 보기";
       position: absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,0.45); color: #fff; font-size:0.7rem;
+      background: rgba(0,0,0,0.5); color: #fff; font-size:0.7rem;
       pointer-events: none; z-index:10; border-radius: inherit;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .blur-sensitive.revealed {
       filter: blur(0) !important;
     }
-    .blur-sensitive.revealed::after {
-      display: none;
-    }
+    .blur-sensitive.revealed::after { display: none; }
     .blur-sensitive.locked {
       filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto;
     }
     .blur-sensitive.locked::after {
-      content: "🔒 보안 잠금"; background: rgba(255,0,0,0.5); font-weight:bold; font-size:0.75rem;
+      content: "🔒 잠금"; background: rgba(255,0,0,0.5); font-weight:bold; font-size:0.75rem;
     }
 
     .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
@@ -139,7 +135,7 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>스마트 블러·렌더링 왜곡·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>정밀 블러·렌더링 왜곡·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
       <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
@@ -155,24 +151,17 @@
 
 <script>
 // =====================================================================
-//  스마트 블러 + 완전 삭제 + 512+급 암호화 – 최종 완성판
+//  정밀 블러 + 올바른 연결 + 512급 암호화 – 완벽 수정판
 // =====================================================================
 const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; return Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer; };
 const encodeSDP = obj => toBase64url(new TextEncoder().encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(new TextDecoder().decode(fromBase64url(str)));
 
-// ----- 스마트 블러 시스템 (더블탭+길게누르기) -----
+// ----- 블러 관리 (bubble, fingerprint, link-box, encrypted-bubble 만 대상) -----
 let securityLockLevel = 0;
 let globalBlurTimer = null;
 const revealTimers = new Map();
-// 더블탭 감지용 변수
-let lastTapTime = 0;
-let lastTapElement = null;
-let longPressTimer = null;
-const DOUBLE_TAP_DELAY = 400; // 더블탭 간 최대 간격 (ms)
-const LONG_PRESS_DURATION = 400; // 길게 누르기 필요 시간 (ms)
-const REVEAL_DURATION = 4000; // 블러 해제 지속 시간 (4초)
 
 function applyBlurToSensitiveElements() {
   document.querySelectorAll('.bubble, .fingerprint, .link-box, .encrypted-bubble').forEach(el => {
@@ -182,7 +171,7 @@ function applyBlurToSensitiveElements() {
   });
 }
 
-function revealElement(el, duration = REVEAL_DURATION) {
+function revealElement(el, duration = 4000) {
   if (isDestroyed() || securityLockLevel >= 3 || el.classList.contains('locked')) return;
   const id = Math.random().toString(36);
   el.dataset.revealId = id;
@@ -206,8 +195,12 @@ function triggerSecurityLock(level = 1) {
   setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
 }
 
-// ----- 더블탭 + 길게누르기 처리 -----
-function handlePointerDown(e) {
+// ----- 간단한 길게 누르기(롱프레스)로 블러 해제 -----
+let longPressTimer = null;
+let longPressTarget = null;
+const LONG_PRESS_DURATION = 500; // 0.5초 꾹
+
+function startLongPress(e) {
   if (e.target.closest('#msgInput') || e.target.closest('.input-bar') || e.target.closest('button')) return;
   let target = e.target.closest('.bubble');
   if (!target) target = e.target.closest('.fingerprint');
@@ -215,41 +208,29 @@ function handlePointerDown(e) {
   if (!target) target = e.target.closest('.encrypted-bubble');
   if (!target || !target.classList.contains('blur-sensitive') || target.classList.contains('locked')) return;
 
-  const now = Date.now();
-  if (now - lastTapTime < DOUBLE_TAP_DELAY && lastTapElement === target) {
-    // 더블탭 감지 → 길게 누르기 대기 시작
-    clearTimeout(longPressTimer);
-    longPressTimer = setTimeout(() => {
-      revealElement(target, REVEAL_DURATION);
-      lastTapTime = 0;
-      lastTapElement = null;
-      longPressTimer = null;
-    }, LONG_PRESS_DURATION);
-    e.preventDefault();
-  } else {
-    // 첫 탭
-    clearTimeout(longPressTimer);
-    lastTapTime = now;
-    lastTapElement = target;
+  longPressTarget = target;
+  longPressTimer = setTimeout(() => {
+    revealElement(target, 4000);
     longPressTimer = null;
-  }
+    longPressTarget = null;
+  }, LONG_PRESS_DURATION);
+  e.preventDefault();
 }
 
-function handlePointerUp(e) {
+function cancelLongPress() {
   if (longPressTimer) {
     clearTimeout(longPressTimer);
     longPressTimer = null;
+    longPressTarget = null;
   }
 }
 
-// 마우스/터치 이벤트 등록
-document.addEventListener('mousedown', handlePointerDown);
-document.addEventListener('mouseup', handlePointerUp);
-document.addEventListener('touchstart', handlePointerDown, {passive: false});
-document.addEventListener('touchend', handlePointerUp);
-document.addEventListener('touchcancel', handlePointerUp);
-
-// 클릭 이벤트로 블러 해제는 더 이상 사용하지 않음 (오직 더블탭+길게누르기만)
+document.addEventListener('mousedown', startLongPress);
+document.addEventListener('mouseup', cancelLongPress);
+document.addEventListener('mouseleave', cancelLongPress);
+document.addEventListener('touchstart', startLongPress, { passive: false });
+document.addEventListener('touchend', cancelLongPress);
+document.addEventListener('touchcancel', cancelLongPress);
 
 // ----- 완전 삭제 플래그 관리 -----
 const DESTROY_KEY = 'p2p_chat_destroyed_v2';
@@ -322,7 +303,7 @@ function executeDestroy() {
   (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
 })();
 
-// ----- 보안 레이어 (단축키, 복사, 드래그 등 완전 차단) -----
+// ----- 보안 레이어 -----
 const ua=navigator.userAgent||'', plt=navigator.platform||'';
 const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
 const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
@@ -453,11 +434,15 @@ async function checkHash(){
       await initiateAnswer(offer);
     }catch(e){ alert('잘못된 초대 링크입니다.'); }
   }else if(p.has('answer')){
+    // answer 링크는 offerer만 사용 가능
+    if (!pc || !isOfferer) {
+      alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.');
+      return;
+    }
     try{
       const answer = decodeSDP(p.get('answer'));
-      if(pc && isOfferer){ await pc.setRemoteDescription(answer); }
-      else { closeConnection(); isOfferer=true; initPC(); createDataChannels(); await pc.setRemoteDescription(answer); await pc.setLocalDescription(await pc.createAnswer()); await waitIce(); showChat(); }
-    }catch(e){ alert('Answer 링크 처리 실패'); }
+      await pc.setRemoteDescription(answer);
+    }catch(e){ alert('잘못된 Answer 링크입니다.'); }
   }
 }
 
@@ -503,10 +488,11 @@ async function createAnswerFromOffer(){
 
 async function applyAnswerLink(){
   const l = document.getElementById('answerLinkInput').value.trim(); if(!l) return;
+  if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
   try{
     let answerStr = l;
     if(l.startsWith('http')){ const u=new URL(l); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('answer')){ alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr=hp.get('answer'); }
-    if(pc && isOfferer) await pc.setRemoteDescription(decodeSDP(answerStr));
+    await pc.setRemoteDescription(decodeSDP(answerStr));
   }catch(e){ alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
