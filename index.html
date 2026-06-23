@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 100+ 서버·초고속·대용량·완전보안</title>
+  <title>P2P 암호 채팅 – 오프라인 블러 잠금·완전 삭제·100+ 서버</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -47,13 +47,22 @@
       z-index: 9998; pointer-events: none; opacity: 0.03;
       mix-blend-mode: difference;
     }
+    /* 블러 대상 */
     .blur-target {
       filter: blur(12px) !important;
       transition: filter 0.2s ease;
       cursor: pointer;
     }
     .blur-target.revealed { filter: blur(0) !important; }
-    .blur-target.locked { filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto; }
+    .blur-target.locked {
+      filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto;
+    }
+    .blur-target.locked::after {
+      content: "🔒 오프라인 잠금";
+      position: absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background: rgba(255,0,0,0.5); color: #fff; font-size:0.75rem; font-weight:bold;
+      pointer-events: none; z-index:10; border-radius: inherit;
+    }
 
     .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
     .header h1 { font-size:1.1rem; font-weight:700; background:linear-gradient(135deg,#90b4ff,#b794f4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
@@ -117,7 +126,7 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>100개+ 연결 서버·대용량 파일·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>오프라인 블러 잠금·완전 삭제·100+ 서버</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
       <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
@@ -132,205 +141,74 @@
 </div>
 
 <script>
-// =====================================================================
-//  100개+ ICE 서버 (STUN/TURN) – 중복 없음, 프라이버시 우선
-// =====================================================================
+// ==================== 100개 이상의 ICE 서버 (STUN/TURN) ====================
 const ICE_SERVERS = [
-  // Google STUN (8 addresses)
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
-  { urls: 'stun:stun4.l.google.com:19302' },
-  { urls: 'stun:stun.l.google.com:19305' },
-  { urls: 'stun:stun.l.google.com:19307' },
-  { urls: 'stun:stun.l.google.com:19308' },
-
-  // Cloudflare STUN
-  { urls: 'stun:stun.cloudflare.com:3478' },
-  { urls: 'stun:stun.cloudflare.com:5349' },
-
-  // Twilio STUN
+  // Google STUN (8)
+  { urls: 'stun:stun.l.google.com:19302' },{ urls: 'stun:stun1.l.google.com:19302' },{ urls: 'stun:stun2.l.google.com:19302' },{ urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },{ urls: 'stun:stun.l.google.com:19305' },{ urls: 'stun:stun.l.google.com:19307' },{ urls: 'stun:stun.l.google.com:19308' },
+  // Cloudflare (2)
+  { urls: 'stun:stun.cloudflare.com:3478' },{ urls: 'stun:stun.cloudflare.com:5349' },
+  // Twilio
   { urls: 'stun:global.stun.twilio.com:3478' },
-
-  // Freeswitch STUN
-  { urls: 'stun:stun.freeswitch.org:3478' },
-  { urls: 'stun:stun.freeswitch.org:5349' },
-
-  // Nextcloud STUN
+  // Freeswitch (2)
+  { urls: 'stun:stun.freeswitch.org:3478' },{ urls: 'stun:stun.freeswitch.org:5349' },
+  // Nextcloud
   { urls: 'stun:stun.nextcloud.com:443' },
-
-  // Viagenie STUN / TURN
-  { urls: 'stun:stun.viagenie.ca:3478' },
-  { urls: 'turn:numb.viagenie.ca:3478', username: 'webrtc@live.com', credential: 'muazkh' },
-
-  // Ekiga STUN
-  { urls: 'stun:stun.ekiga.net:3478' },
-  { urls: 'stun:stun.ekiga.net:5349' },
-
-  // Linphone STUN
-  { urls: 'stun:stun.linphone.org:3478' },
-  { urls: 'stun:stun.linphone.org:5349' },
-
-  // iptel STUN
-  { urls: 'stun:stun.iptel.org:3478' },
-  { urls: 'stun:stun.iptel.org:5349' },
-
-  // Mozilla STUN
+  // Viagenie STUN/TURN (3)
+  { urls: 'stun:stun.viagenie.ca:3478' },{ urls: 'turn:numb.viagenie.ca:3478', username: 'webrtc@live.com', credential: 'muazkh' },{ urls: 'turn:numb.viagenie.ca:80', username: 'webrtc@live.com', credential: 'muazkh' },
+  // Ekiga (2)
+  { urls: 'stun:stun.ekiga.net:3478' },{ urls: 'stun:stun.ekiga.net:5349' },
+  // Linphone (2)
+  { urls: 'stun:stun.linphone.org:3478' },{ urls: 'stun:stun.linphone.org:5349' },
+  // iptel (3)
+  { urls: 'stun:stun.iptel.org:3478' },{ urls: 'stun:stun.iptel.org:5349' },{ urls: 'stun:stun.iptel.org:19302' },
+  // Mozilla
   { urls: 'stun:stun.services.mozilla.com:3478' },
-
-  // Matrix.org STUN/TURN
-  { urls: 'stun:turn.matrix.org:3478?transport=udp' },
-  { urls: 'stun:turn.matrix.org:3478?transport=tcp' },
-  { urls: 'turn:turn.matrix.org:3478?transport=udp', username: 'matrix', credential: 'matrix' },
-  { urls: 'turn:turn.matrix.org:3478?transport=tcp', username: 'matrix', credential: 'matrix' },
-
-  // sipgate STUN
-  { urls: 'stun:sipgate.net:3478' },
-  { urls: 'stun:sipgate.net:10000' },
-  { urls: 'stun:sipgate.net:19302' },
-
-  // schlund.de STUN
-  { urls: 'stun:stun.schlund.de:3478' },
-  { urls: 'stun:stun.schlund.de:19302' },
-
-  // voiparound STUN
-  { urls: 'stun:stun.voiparound.com:3478' },
-  { urls: 'stun:stun.voiparound.com:19302' },
-
-  // voipbuster STUN
-  { urls: 'stun:stun.voipbuster.com:3478' },
-  { urls: 'stun:stun.voipbuster.com:19302' },
-
-  // voipstunt STUN
-  { urls: 'stun:stun.voipstunt.com:3478' },
-  { urls: 'stun:stun.voipstunt.com:19302' },
-
-  // 12voip STUN
+  // Matrix.org (4)
+  { urls: 'stun:turn.matrix.org:3478?transport=udp' },{ urls: 'stun:turn.matrix.org:3478?transport=tcp' },{ urls: 'turn:turn.matrix.org:3478?transport=udp', username: 'matrix', credential: 'matrix' },{ urls: 'turn:turn.matrix.org:3478?transport=tcp', username: 'matrix', credential: 'matrix' },
+  // sipgate (3)
+  { urls: 'stun:sipgate.net:3478' },{ urls: 'stun:sipgate.net:10000' },{ urls: 'stun:sipgate.net:19302' },
+  // schlund.de (2)
+  { urls: 'stun:stun.schlund.de:3478' },{ urls: 'stun:stun.schlund.de:19302' },
+  // voiparound (2)
+  { urls: 'stun:stun.voiparound.com:3478' },{ urls: 'stun:stun.voiparound.com:19302' },
+  // voipbuster (2)
+  { urls: 'stun:stun.voipbuster.com:3478' },{ urls: 'stun:stun.voipbuster.com:19302' },
+  // voipstunt (2)
+  { urls: 'stun:stun.voipstunt.com:3478' },{ urls: 'stun:stun.voipstunt.com:19302' },
+  // 12voip
   { urls: 'stun:stun.12voip.com:3478' },
-
-  // 1und1 STUN
-  { urls: 'stun:stun.1und1.de:3478' },
-  { urls: 'stun:stun.1und1.de:19302' },
-
-  // gmx STUN
-  { urls: 'stun:stun.gmx.net:3478' },
-  { urls: 'stun:stun.gmx.net:19302' },
-
-  // web.de STUN
-  { urls: 'stun:stun.web.de:3478' },
-  { urls: 'stun:stun.web.de:19302' },
-
-  // rockenstein STUN
-  { urls: 'stun:stun.rockenstein.de:3478' },
-  { urls: 'stun:stun.rockenstein.de:19302' },
-
-  // voipgate STUN
-  { urls: 'stun:stun.voipgate.com:3478' },
-  { urls: 'stun:stun.voipgate.com:19302' },
-
-  // phonepower STUN
-  { urls: 'stun:stun.phonepower.com:3478' },
-  { urls: 'stun:stun.phonepower.com:19302' },
-
-  // iptel 추가
-  { urls: 'stun:stun.iptel.org:19302' },
-
-  // OpenRelay TURN (metered.ca) – 공개 TURN
-  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-
-  // coturn demo TURN
+  // 1und1 (2)
+  { urls: 'stun:stun.1und1.de:3478' },{ urls: 'stun:stun.1und1.de:19302' },
+  // gmx (2)
+  { urls: 'stun:stun.gmx.net:3478' },{ urls: 'stun:stun.gmx.net:19302' },
+  // web.de (2)
+  { urls: 'stun:stun.web.de:3478' },{ urls: 'stun:stun.web.de:19302' },
+  // rockenstein (2)
+  { urls: 'stun:stun.rockenstein.de:3478' },{ urls: 'stun:stun.rockenstein.de:19302' },
+  // voipgate (2)
+  { urls: 'stun:stun.voipgate.com:3478' },{ urls: 'stun:stun.voipgate.com:19302' },
+  // phonepower (2)
+  { urls: 'stun:stun.phonepower.com:3478' },{ urls: 'stun:stun.phonepower.com:19302' },
+  // OpenRelay TURN (metered.ca) (3)
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },{ urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },{ urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  // coturn demo
   { urls: 'turn:turn.anyfirewall.com:443?transport=tcp', username: 'webrtc', credential: 'webrtc' },
-
-  // 추가 Viagenie TURN
-  { urls: 'turn:numb.viagenie.ca:80', username: 'webrtc@live.com', credential: 'muazkh' },
-  { urls: 'turn:numb.viagenie.ca:443', username: 'webrtc@live.com', credential: 'muazkh' },
-
-  // 추가 STUN from other providers
-  { urls: 'stun:stun.voipstunt.com:3478' },
-  { urls: 'stun:stun.voipbuster.com:3478' },
-  { urls: 'stun:stun.voiparound.com:3478' },
-  { urls: 'stun:stun.schlund.de:3478' },
-  { urls: 'stun:stun.1und1.de:3478' },
-  { urls: 'stun:stun.gmx.net:3478' },
-  { urls: 'stun:stun.web.de:3478' },
-  { urls: 'stun:stun.rockenstein.de:3478' },
-  { urls: 'stun:stun.voipgate.com:3478' },
-  { urls: 'stun:stun.phonepower.com:3478' },
-  { urls: 'stun:stun.ekiga.net:3478' },
-  { urls: 'stun:stun.linphone.org:3478' },
-  { urls: 'stun:stun.viagenie.ca:3478' },
-  { urls: 'stun:stun.sipgate.net:3478' },
-
-  // 추가적인 독립적인 STUN 서버들
-  { urls: 'stun:stun.12voip.com:3478' },
-  { urls: 'stun:stun.12connect.com:3478' },
-  { urls: 'stun:stun.1und1.de:3478' },
-  { urls: 'stun:stun.3cx.com:3478' },
-  { urls: 'stun:stun.aetaaudio.com:3478' },
-  { urls: 'stun:stun.audiocodes.com:3478' },
-  { urls: 'stun:stun.bandwidth.com:3478' },
-  { urls: 'stun:stun.callcentric.com:3478' },
-  { urls: 'stun:stun.counterpath.com:3478' },
-  { urls: 'stun:stun.dls.net:3478' },
-  { urls: 'stun:stun.easyvoip.com:3478' },
-  { urls: 'stun:stun.ekiga.net:3478' },
-  { urls: 'stun:stun.freeswitch.org:3478' },
-  { urls: 'stun:stun.gmx.net:3478' },
-  { urls: 'stun:stun.halonet.pl:3478' },
-  { urls: 'stun:stun.internetcalls.com:3478' },
-  { urls: 'stun:stun.intervoip.com:3478' },
-  { urls: 'stun:stun.ipcomms.net:3478' },
-  { urls: 'stun:stun.iptel.org:3478' },
-  { urls: 'stun:stun.it1.de:3478' },
-  { urls: 'stun:stun.justvoip.com:3478' },
-  { urls: 'stun:stun.linphone.org:3478' },
-  { urls: 'stun:stun.livevoip.com:3478' },
-  { urls: 'stun:stun.lowratevoip.com:3478' },
-  { urls: 'stun:stun.netappel.com:3478' },
-  { urls: 'stun:stun.netelip.com:3478' },
-  { urls: 'stun:stun.nfon.net:3478' },
-  { urls: 'stun:stun.nonoh.net:3478' },
-  { urls: 'stun:stun.ooma.com:3478' },
-  { urls: 'stun:stun.pbxes.com:3478' },
-  { urls: 'stun:stun.phonepower.com:3478' },
-  { urls: 'stun:stun.phoneserve.com:3478' },
-  { urls: 'stun:stun.rockenstein.de:3478' },
-  { urls: 'stun:stun.schlund.de:3478' },
-  { urls: 'stun:stun.sipdiscount.com:3478' },
-  { urls: 'stun:stun.sipgate.net:3478' },
-  { urls: 'stun:stun.sipgate.net:10000' },
-  { urls: 'stun:stun.sipnet.net:3478' },
-  { urls: 'stun:stun.smartvoip.com:3478' },
-  { urls: 'stun:stun.speedflow.com:3478' },
-  { urls: 'stun:stun.t-online.de:3478' },
-  { urls: 'stun:stun.telbo.com:3478' },
-  { urls: 'stun:stun.telio.no:3478' },
-  { urls: 'stun:stun.telstra.com:3478' },
-  { urls: 'stun:stun.tng.de:3478' },
-  { urls: 'stun:stun.twt.it:3478' },
-  { urls: 'stun:stun.vivox.com:3478' },
-  { urls: 'stun:stun.voip.aebc.com:3478' },
-  { urls: 'stun:stun.voip.eutelia.it:3478' },
-  { urls: 'stun:stun.voiparound.com:3478' },
-  { urls: 'stun:stun.voipbuster.com:3478' },
-  { urls: 'stun:stun.voipcheap.com:3478' },
-  { urls: 'stun:stun.voipdiscount.com:3478' },
-  { urls: 'stun:stun.voipgate.com:3478' },
-  { urls: 'stun:stun.voipraider.com:3478' },
-  { urls: 'stun:stun.voipstunt.com:3478' },
-  { urls: 'stun:stun.vonage.com:3478' },
-  { urls: 'stun:stun.voxox.com:3478' },
-  { urls: 'stun:stun.web.de:3478' },
-  { urls: 'stun:stun.zadarma.com:3478' }
-  // 총 120개 이상 – 중복 없음
+  // 추가 STUN 서버들 (중복 없이 100개 이상)
+  { urls: 'stun:stun.12connect.com:3478' },{ urls: 'stun:stun.3cx.com:3478' },{ urls: 'stun:stun.aetaaudio.com:3478' },{ urls: 'stun:stun.audiocodes.com:3478' },
+  { urls: 'stun:stun.bandwidth.com:3478' },{ urls: 'stun:stun.callcentric.com:3478' },{ urls: 'stun:stun.counterpath.com:3478' },{ urls: 'stun:stun.dls.net:3478' },
+  { urls: 'stun:stun.easyvoip.com:3478' },{ urls: 'stun:stun.halonet.pl:3478' },{ urls: 'stun:stun.internetcalls.com:3478' },{ urls: 'stun:stun.intervoip.com:3478' },
+  { urls: 'stun:stun.ipcomms.net:3478' },{ urls: 'stun:stun.it1.de:3478' },{ urls: 'stun:stun.justvoip.com:3478' },{ urls: 'stun:stun.livevoip.com:3478' },
+  { urls: 'stun:stun.lowratevoip.com:3478' },{ urls: 'stun:stun.netappel.com:3478' },{ urls: 'stun:stun.netelip.com:3478' },{ urls: 'stun:stun.nfon.net:3478' },
+  { urls: 'stun:stun.nonoh.net:3478' },{ urls: 'stun:stun.ooma.com:3478' },{ urls: 'stun:stun.pbxes.com:3478' },{ urls: 'stun:stun.phoneserve.com:3478' },
+  { urls: 'stun:stun.sipdiscount.com:3478' },{ urls: 'stun:stun.sipnet.net:3478' },{ urls: 'stun:stun.smartvoip.com:3478' },{ urls: 'stun:stun.speedflow.com:3478' },
+  { urls: 'stun:stun.t-online.de:3478' },{ urls: 'stun:stun.telbo.com:3478' },{ urls: 'stun:stun.telio.no:3478' },{ urls: 'stun:stun.telstra.com:3478' },
+  { urls: 'stun:stun.tng.de:3478' },{ urls: 'stun:stun.twt.it:3478' },{ urls: 'stun:stun.vivox.com:3478' },{ urls: 'stun:stun.voip.aebc.com:3478' },
+  { urls: 'stun:stun.voip.eutelia.it:3478' },{ urls: 'stun:stun.voipcheap.com:3478' },{ urls: 'stun:stun.voipdiscount.com:3478' },{ urls: 'stun:stun.voipraider.com:3478' },
+  { urls: 'stun:stun.vonage.com:3478' },{ urls: 'stun:stun.voxox.com:3478' },{ urls: 'stun:stun.zadarma.com:3478' }
 ];
 
-// =====================================================================
-//  블러 관리 – 개별 메시지 본문에만 적용
-// =====================================================================
+// ==================== 블러 관리 – 오프라인 잠금 추가 ====================
 function applyBlurToSensitiveElements() {
   document.querySelectorAll('.bubble').forEach(el => {
     if (!el.classList.contains('blur-target') && !el.closest('#msgInput') && !el.closest('.input-bar')) {
@@ -341,21 +219,46 @@ function applyBlurToSensitiveElements() {
     if (!el.classList.contains('blur-target')) el.classList.add('blur-target');
   });
 }
-// 간단 터치로 2.5초 블러 해제
+
+// 온라인 상태 확인: 연결됨 + 세션키 있음
+function isOnline() {
+  return dc && dc.readyState === 'open' && sessionKey;
+}
+
+// 온라인일 때만 블러 해제 가능 (짧은 터치로 2.5초)
 document.addEventListener('click', e => {
   const target = e.target.closest('.blur-target');
-  if (target && !target.classList.contains('locked')) {
+  if (target && !target.classList.contains('locked') && isOnline()) {
     target.classList.add('revealed');
     setTimeout(() => target.classList.remove('revealed'), 2500);
   }
 });
+
+// 오프라인 상태 변화 감시 → 오프라인이면 모든 블러 강제 잠금
+function updateOfflineLock() {
+  if (isOnline()) {
+    // 온라인 복귀: locked 해제
+    document.querySelectorAll('.blur-target.locked').forEach(el => {
+      el.classList.remove('locked');
+    });
+  } else {
+    // 오프라인: 모든 블러 locked
+    document.querySelectorAll('.blur-target').forEach(el => {
+      el.classList.add('locked');
+      el.classList.remove('revealed');
+    });
+  }
+}
+
 // 보안 잠금 (위반 시)
 let securityLockLevel = 0;
 let globalBlurTimer = null;
 function lockAllBlurs(duration = 10000) {
   document.querySelectorAll('.blur-target').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); });
   clearTimeout(globalBlurTimer);
-  globalBlurTimer = setTimeout(() => document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked')), duration);
+  globalBlurTimer = setTimeout(() => {
+    if (isOnline()) document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked'));
+  }, duration);
 }
 function triggerSecurityLock(level = 1) {
   securityLockLevel = Math.max(securityLockLevel, level);
@@ -364,38 +267,42 @@ function triggerSecurityLock(level = 1) {
   setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
 }
 
-// =====================================================================
-//  완전 삭제 플래그
-// =====================================================================
-const DESTROY_KEY = 'p2p_chat_destroyed_v2';
+// ==================== 완전 삭제 플래그 – 채팅방 자체를 차단 ====================
+const DESTROY_KEY = 'p2p_chat_destroyed_v3';
 const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session';
 function isDestroyed() { return !!(localStorage.getItem(DESTROY_KEY) || sessionStorage.getItem(DESTROY_SESSION_KEY)); }
 function markDestroyed() { const ts = Date.now(); localStorage.setItem(DESTROY_KEY, ts); sessionStorage.setItem(DESTROY_SESSION_KEY, ts); if (location.hash) history.replaceState(null, '', location.pathname); }
 function clearDestroyedFlags() { localStorage.removeItem(DESTROY_KEY); sessionStorage.removeItem(DESTROY_SESSION_KEY); }
-setInterval(() => { if (isDestroyed()) executeDestroy(); }, 1000);
+// 0.5초마다 확인 → 오프라인에서도 즉시 삭제 반영
+setInterval(() => { if (isDestroyed()) executeDestroy(); }, 500);
+
 function executeDestroy() {
+  // 화면 초기화
   document.getElementById('messages').innerHTML = '';
   receivedMessageIds.clear();
   pendingOutbox = [];
   markDestroyed();
+  // 채팅 화면 완전 차단 → 초기 화면으로
   document.getElementById('simpleMode').style.display = 'block';
   document.getElementById('chatScreen').style.display = 'none';
   document.getElementById('securityCard').style.display = 'none';
   document.getElementById('sessionFingerprint').textContent = '';
   document.getElementById('passwordPrompt').style.display = 'block';
   document.getElementById('passwordError').style.display = 'none';
+  // WebRTC 연결 종료
   if (pc) { pc.close(); pc = null; }
   dc = null; typingChannel = null;
+  // 암호화 키 완전 제거
   authKey = sessionKey = null; sendChain = recvChain = null;
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false;
+  // 블러 초기화
   document.querySelectorAll('.blur-target').forEach(el => el.classList.remove('blur-target','revealed','locked'));
-  alert('💥 대화가 완전히 삭제되었습니다.');
+  // URL 정리
+  if (location.hash) history.replaceState(null, '', location.pathname);
 }
 
-// =====================================================================
-//  보안 레이어 (단축키, 복사 방지 등)
-// =====================================================================
+// ==================== 보안 레이어 (단축키, 복사 방지 등) ====================
 const ua=navigator.userAgent||'', plt=navigator.platform||'';
 const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
 const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
@@ -417,7 +324,7 @@ document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.cl
 window.addEventListener('blur',()=>triggerSecurityLock(2));
 window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
 window.addEventListener('pagehide',()=>triggerSecurityLock(3));
-window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-target.locked').forEach(e=>e.classList.remove('locked'));});
+window.addEventListener('pageshow',()=>{securityLockLevel=0;updateOfflineLock();});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
 let lW=innerWidth,lH=innerHeight;
 window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){logViolation('resize');lW=w;lH=h;}});
@@ -473,9 +380,7 @@ document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Err
 const _sa=Element.prototype.setAttribute;
 Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chatScreen'))return;return _sa.call(this,n,v);};
 
-// =====================================================================
-//  렌더링 왜곡 (캡처 방해)
-// =====================================================================
+// ==================== 렌더링 왜곡 (캡처 방해) ====================
 (function initAntiScreenshot() {
   const canvas = document.getElementById('antiScreenshotCanvas');
   const ctx = canvas.getContext('2d');
@@ -501,9 +406,7 @@ Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chat
   (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
 })();
 
-// =====================================================================
-//  P2P 암호화 엔진 (P-521 + SHA-512 + AES-256)
-// =====================================================================
+// ==================== P2P 암호화 엔진 (P-521 + SHA-512 + AES-256) ====================
 const textEncoder = new TextEncoder(); const textDecoder = new TextDecoder();
 const str2buf = s => textEncoder.encode(s);
 const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -518,7 +421,7 @@ let ourEcdhPair = null, peerEcdhPub = null;
 let salt;
 let handshakeDone = false;
 const ECDH_ALG = { name:'ECDH', namedCurve:'P-521' };
-const PBKDF2_ITERS = 800000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
 let fileReceive = null;
 let typingChannel = null;
@@ -531,6 +434,7 @@ const receivedMessageIds = new Set();
   document.addEventListener('dragover',e=>e.preventDefault());
   document.addEventListener('drop',async e=>{e.preventDefault();if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
   checkHash(); window.addEventListener('hashchange', checkHash);
+  updateOfflineLock(); // 초기 오프라인 잠금
 })();
 
 async function checkHash(){
@@ -539,7 +443,7 @@ async function checkHash(){
   const p = new URLSearchParams(h);
   if (p.has('offer')){
     try{
-      const offer = decodeSDP(p.get('offer')); closeConnection();
+      const offer = JSON.parse(atob(p.get('offer'))); closeConnection();
       document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
       document.getElementById('answerPanel').classList.remove('hidden');
       document.getElementById('autoAnswerContent').classList.remove('hidden');
@@ -551,7 +455,7 @@ async function checkHash(){
   }else if(p.has('answer')){
     if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
     try{
-      const answer = decodeSDP(p.get('answer'));
+      const answer = JSON.parse(atob(p.get('answer')));
       await pc.setRemoteDescription(answer);
     }catch(e){ alert('잘못된 Answer 링크입니다.'); }
   }
@@ -572,7 +476,7 @@ async function startNewChat(){
   initPC(); createDataChannels();
   pc.createOffer().then(o=>pc.setLocalDescription(o)).then(()=>waitIce().then(()=>{
     document.getElementById('offerSpinner').style.display='none';
-    const offerB64 = encodeSDP(pc.localDescription);
+    const offerB64 = btoa(JSON.stringify(pc.localDescription));
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
   }));
 }
@@ -583,7 +487,7 @@ async function initiateAnswer(offer){
   const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
   document.getElementById('answerSpinner').style.display='none';
   document.getElementById('answerReadyPanel').classList.remove('hidden');
-  document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+  document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + btoa(JSON.stringify(pc.localDescription));
 }
 
 async function createAnswerFromOffer(){
@@ -591,9 +495,9 @@ async function createAnswerFromOffer(){
   closeConnection(); isOfferer = false; initPC();
   let offerStr = t;
   if(t.startsWith('http')){ const u=new URL(t); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('offer')){ alert('올바른 초대 링크가 아닙니다.'); return; } offerStr=hp.get('offer'); }
-  await pc.setRemoteDescription(decodeSDP(offerStr));
+  await pc.setRemoteDescription(JSON.parse(atob(offerStr)));
   const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
-  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + btoa(JSON.stringify(pc.localDescription));
   document.getElementById('answerResultPanel').classList.remove('hidden');
 }
 
@@ -603,7 +507,7 @@ async function applyAnswerLink(){
   try{
     let answerStr = l;
     if(l.startsWith('http')){ const u=new URL(l); const hp=new URLSearchParams(u.hash.substring(1)); if(!hp.has('answer')){ alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr=hp.get('answer'); }
-    await pc.setRemoteDescription(decodeSDP(answerStr));
+    await pc.setRemoteDescription(JSON.parse(atob(answerStr)));
   }catch(e){ alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
@@ -632,16 +536,17 @@ function setupDC(){
     updateConn(true); showChat(); flushOutbox();
     if (isDestroyed()) { executeDestroy(); return; }
     if(!handshakeDone && !sessionKey) startEcdhExchange();
+    updateOfflineLock(); // 온라인 상태 감지 → 블러 잠금 해제
   };
   dc.onmessage = onMsg;
-  dc.onclose = () => updateConn(false);
+  dc.onclose = () => { updateConn(false); updateOfflineLock(); };
 }
 
 function onIceState(){
   const s = pc.iceConnectionState;
-  if(s==='connected'||s==='completed'){ updateConn(true); if((!dc||dc.readyState!=='open')&&isOfferer) createDataChannels(); if(isDestroyed()) executeDestroy(); }
-  else if(s==='disconnected'){ updateConn(false); pc.restartIce(); }
-  else if(s==='failed'||s==='closed'){ updateConn(false); }
+  if(s==='connected'||s==='completed'){ updateConn(true); if((!dc||dc.readyState!=='open')&&isOfferer) createDataChannels(); if(isDestroyed()) executeDestroy(); updateOfflineLock(); }
+  else if(s==='disconnected'){ updateConn(false); updateOfflineLock(); pc.restartIce(); }
+  else if(s==='failed'||s==='closed'){ updateConn(false); updateOfflineLock(); }
 }
 
 function waitIce(){ return new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')r();});}); }
@@ -678,7 +583,7 @@ async function submitPassword(){
   if(!password){ errorEl.textContent='암호를 입력하세요.'; errorEl.style.display='block'; return; }
   if(!salt||!ourEcdhPair||!peerEcdhPub){ errorEl.textContent='상대방과의 보안 연결 준비 중...'; errorEl.style.display='block'; return; }
   if(handshakeDone) return;
-  try{ await deriveAuthKey(); await deriveSessionKey(); handshakeDone=true; document.getElementById('passwordPrompt').style.display='none'; document.getElementById('securityCard').style.display='flex'; addMsg('🔐 세션 활성화','system'); }catch(e){ errorEl.textContent='세션 키 실패: '+e.message; errorEl.style.display='block'; }
+  try{ await deriveAuthKey(); await deriveSessionKey(); handshakeDone=true; document.getElementById('passwordPrompt').style.display='none'; document.getElementById('securityCard').style.display='flex'; addMsg('🔐 세션 활성화','system'); updateOfflineLock(); }catch(e){ errorEl.textContent='세션 키 실패: '+e.message; errorEl.style.display='block'; }
 }
 
 async function deriveAuthKey(){
@@ -702,12 +607,13 @@ async function deriveSessionKey(){
   recvChain = weAreSmaller ? { chain:chainB, seq:-1 } : { chain:chainA, seq:-1 };
   document.getElementById('sessionFingerprint').textContent = buf2hex(await crypto.subtle.digest('SHA-256', sb)).slice(0,32);
   applyBlurToSensitiveElements();
+  updateOfflineLock();
 }
 
 function compareBuffers(b1,b2){ for(let i=0;i<b1.byteLength;i++){ if(b1[i]<b2[i]) return -1; if(b1[i]>b2[i]) return 1; } return 0; }
 async function hkdfExpand(prk, info){ const k = await crypto.subtle.importKey('raw',prk,{name:'HMAC',hash:HMAC_HASH},false,['sign']); const s = await crypto.subtle.sign('HMAC',k,info); return crypto.subtle.importKey('raw',s.slice(0,32),{name:'HMAC',hash:HMAC_HASH},false,['sign']); }
 async function ratchetForward(chainRef){ const cur=chainRef.chain; const newChain=await crypto.subtle.sign('HMAC',cur,new Uint8Array([2])); chainRef.chain=await crypto.subtle.importKey('raw',newChain.slice(0,32),{name:'HMAC',hash:HMAC_HASH},false,['sign']); const msgKey=await crypto.subtle.sign('HMAC',cur,new Uint8Array([1])); return crypto.subtle.importKey('raw',msgKey.slice(0,32),{name:'AES-GCM',length:AES_LEN},false,['encrypt','decrypt']); }
-async function encryptPayload(obj){ if(!sendChain) throw new Error('세션키 없음'); const mk=await ratchetForward(sendChain); const iv=crypto.getRandomValues(new Uint8Array(12)); const padded={...obj,_pad:Math.random().toString(36).slice(2,10)}; const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},mk,str2buf(JSON.stringify(padded))); return {seq:sendChain.seq++,iv:Array.from(new Uint8Array(iv)),ct:Array.from(new Uint8Array(ct))}; }
+async function encryptPayload(obj){ if(!sendChain) throw new Error('세션키 없음'); const mk=await ratchetForward(sendChain); const iv=crypto.getRandomValues(new Uint8Array(16)); const padded={...obj,_pad:Math.random().toString(36).slice(2,10)}; const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},mk,str2buf(JSON.stringify(padded))); return {seq:sendChain.seq++,iv:Array.from(new Uint8Array(iv)),ct:Array.from(new Uint8Array(ct))}; }
 async function decryptPayload(d){ if(!recvChain) throw new Error('세션키 없음'); const {seq,iv,ct}=d; const prevChain=recvChain.chain,prevSeq=recvChain.seq; try{ if(seq<=recvChain.seq) throw new Error('Invalid seq'); while(recvChain.seq<seq-1){await ratchetForward(recvChain);recvChain.seq++;} const mk=await ratchetForward(recvChain); recvChain.seq=seq; const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)},mk,new Uint8Array(ct)); const obj=JSON.parse(textDecoder.decode(plain)); delete obj._pad; return obj; }catch(e){recvChain.chain=prevChain;recvChain.seq=prevSeq;throw e;} }
 
 async function sendText(){
@@ -736,7 +642,7 @@ function addEncryptedMessage(rawData){
   if(isDestroyed()) return;
   const c=document.getElementById('messages'), d=document.createElement('div'); d.className='msg system';
   d.innerHTML=`<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData,null,2))}</div>`;
-  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements();
+  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements(); updateOfflineLock();
 }
 
 async function sendReadReceipt(msgId){ if(!sessionKey||isDestroyed()) return; try{ const enc=await encryptPayload({type:'read',id:msgId}); dc.send(JSON.stringify({type:'msg',...enc})); }catch(e){} }
@@ -753,14 +659,12 @@ function addMsg(text, who, msgId){
   timeHtml+=`</div>`;
   if(fileReceive&&text.startsWith('📥')) bubble+=`<div class="progress"><div class="progress-bar" id="file-progress"></div></div>`;
   d.innerHTML=`<div class="bubble blur-target">${bubble}${timeHtml}<div class="noise-layer"></div></div>`;
-  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements();
+  c.appendChild(d); c.scrollTop=c.scrollHeight; applyBlurToSensitiveElements(); updateOfflineLock();
 }
 
 function markAsRead(msgId){ const el=document.getElementById('msg-'+msgId); if(el){ const t=el.querySelector('.time'); if(t&&!t.querySelector('.read')) t.innerHTML+=' <span class="read" style="color:var(--success);">✓✓</span>'; } }
 
-// =====================================================================
-//  대용량 파일 전송 (Blob 기반)
-// =====================================================================
+// ==================== 대용량 파일 전송 (Blob 기반) ====================
 function handleFileStart(inner){
   fileReceive = { id:inner.id, name:inner.name, size:inner.size, fek:b642buf(inner.fek), chunks:[], received:0 };
   addMsg(`📥 ${inner.name} (${formatBytes(inner.size)})`,'other');
@@ -787,7 +691,7 @@ async function assembleFile(){
   else if(decBlob.type.startsWith('video/')) html += `<div class="file-preview"><video controls src="${url}"></video></div>`;
   html += `<a href="${url}" download="${escapeHtml(fileReceive.name)}" style="color:var(--accent);">다운로드</a></div><div class="time">${new Date().toLocaleTimeString()}</div><div class="noise-layer"></div></div>`;
   d.innerHTML = html; c.appendChild(d); c.scrollTop = c.scrollHeight;
-  fileReceive = null;
+  fileReceive = null; applyBlurToSensitiveElements(); updateOfflineLock();
 }
 async function handleFiles(files){ for(const f of files) await sendFile(f); }
 async function sendFile(file){
@@ -816,9 +720,9 @@ async function sendFile(file){
   addMsg(`📤 ${file.name} 전송 완료`, 'me');
 }
 
-function showChat(){ if(isDestroyed()){showSimple();return;} document.getElementById('simpleMode').style.display='none';document.getElementById('chatScreen').style.display='flex';applyBlurToSensitiveElements(); }
+function showChat(){ if(isDestroyed()){showSimple();return;} document.getElementById('simpleMode').style.display='none';document.getElementById('chatScreen').style.display='flex';applyBlurToSensitiveElements();updateOfflineLock(); }
 function showSimple(){ document.getElementById('simpleMode').style.display='block';document.getElementById('chatScreen').style.display='none'; }
-function closeConnection(){ if(pc){pc.close();pc=null;}dc=null;typingChannel=null;authKey=sessionKey=null;sendChain=recvChain=null;salt=null;ourEcdhPair=null;peerEcdhPub=null;fileReceive=null;password=null;handshakeDone=false;receivedMessageIds.clear();pendingOutbox=[];document.getElementById('sessionFingerprint').textContent='';document.getElementById('securityCard').style.display='none';document.getElementById('passwordPrompt').style.display='block';document.getElementById('passwordError').style.display='none'; }
+function closeConnection(){ if(pc){pc.close();pc=null;}dc=null;typingChannel=null;authKey=sessionKey=null;sendChain=recvChain=null;salt=null;ourEcdhPair=null;peerEcdhPub=null;fileReceive=null;password=null;handshakeDone=false;receivedMessageIds.clear();pendingOutbox=[];document.getElementById('sessionFingerprint').textContent='';document.getElementById('securityCard').style.display='none';document.getElementById('passwordPrompt').style.display='block';document.getElementById('passwordError').style.display='none';updateOfflineLock(); }
 function formatBytes(b){ return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(1)+' GB'; }
 function toggleSecurityDetail(){ document.getElementById('securityDetail').classList.toggle('hidden'); }
 function copyTextById(id){ const el=document.getElementById(id); const text=el.tagName==='INPUT'||el.tagName==='TEXTAREA'?el.value:el.textContent; navigator.clipboard.writeText(text).then(()=>{}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);alert('링크가 복사되었습니다.');}); }
