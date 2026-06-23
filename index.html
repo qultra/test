@@ -133,10 +133,10 @@
 
 <script>
 // =====================================================================
-//  완벽 호환성 보장 + 연결·암호 오류 완전 수정
+//  완벽 호환성 보장 + textEncoder 오류 근본 해결
 // =====================================================================
 
-// ----- TextEncoder / TextDecoder 폴백 (디코딩 오류 수정) -----
+// ----- TextEncoder / TextDecoder 폴백 -----
 if (typeof TextEncoder === 'undefined') {
   window.TextEncoder = function() {};
   TextEncoder.prototype.encode = function(str) {
@@ -560,9 +560,7 @@ Element.prototype.setAttribute = function(n, v) {
 // =====================================================================
 //  궁극 암호화 엔진 (P-521 + SHA-512 + AES-256 + 100만 PBKDF2)
 // =====================================================================
-var textEncoder = new TextEncoder();
-var textDecoder = new TextDecoder();
-function str2buf(s) { return textEncoder.encode(s); }
+function str2buf(s) { return (new TextEncoder()).encode(s); }
 function buf2hex(b) { return Array.prototype.map.call(new Uint8Array(b), function(x) { return x.toString(16).padStart(2, '0'); }).join(''); }
 function buf2b64(b) { return btoa(String.fromCharCode.apply(null, new Uint8Array(b))); }
 function b642buf(s) { return Uint8Array.from(atob(s), function(c) { return c.charCodeAt(0); }).buffer; }
@@ -972,7 +970,7 @@ function decryptPayload(d) {
     });
   }
   return step().then(function(plain) {
-    var obj = JSON.parse(textDecoder.decode(plain));
+    var obj = JSON.parse((new TextDecoder()).decode(plain));
     delete obj._pad;
     return obj;
   }).catch(function(e) {
@@ -1245,8 +1243,14 @@ function fromBase64url(str) {
   while (str.length % 4) str += '=';
   return Uint8Array.from(atob(str), function(c) { return c.charCodeAt(0); }).buffer;
 }
-function encodeSDP(obj) { return toBase64url(textEncoder.encode(JSON.stringify(obj))); }
-function decodeSDP(str) { return JSON.parse(textDecoder.decode(fromBase64url(str))); }
+function encodeSDP(obj) {
+  var encoder = new TextEncoder();
+  return toBase64url(encoder.encode(JSON.stringify(obj)));
+}
+function decodeSDP(str) {
+  var decoder = new TextDecoder();
+  return JSON.parse(decoder.decode(fromBase64url(str)));
+}
 </script>
 </body>
 </html>
