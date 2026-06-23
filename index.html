@@ -290,7 +290,6 @@ setInterval(function() {
 
 function executeDestroy() {
   document.getElementById('messages').innerHTML = '';
-  // receivedMessageIds를 빈 객체로 초기화
   receivedMessageIds = {};
   pendingOutbox = [];
   markDestroyed();
@@ -584,6 +583,8 @@ function genUUID() {
   });
 }
 
+var TYPING_LABEL = 'typing';  // ★ 필수 변수 정의
+
 var pc, dc, isOfferer = false, password = null;
 var authKey, sessionKey, sendChain, recvChain;
 var ourEcdhPair = null, peerEcdhPub = null;
@@ -595,7 +596,7 @@ var PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512
 var fileReceive = null;
 var typingChannel = null;
 var pendingOutbox = [];
-var receivedMessageIds = {};  // ★ Set 대신 Object 사용
+var receivedMessageIds = {};  // Set 대신 Object 사용
 
 (function init() {
   if (isDestroyed()) { executeDestroy(); return; }
@@ -1024,8 +1025,8 @@ function onMsg(e) {
       if (!sessionKey) { addEncryptedMessage(d); return; }
       decryptPayload(d).then(function(inner) {
         if (isDestroyed()) return;
-        if (inner.id && receivedMessageIds[inner.id]) return;  // ★ 객체로 확인
-        if (inner.id) receivedMessageIds[inner.id] = true;      // ★ 표시
+        if (inner.id && receivedMessageIds[inner.id]) return;
+        if (inner.id) receivedMessageIds[inner.id] = true;
         if (inner.type === 'text') { addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
         else if (inner.type === 'read') markAsRead(inner.id);
         else if (inner.type === 'delete') { var delEl = document.getElementById('msg-' + inner.id); if (delEl) delEl.remove(); }
@@ -1207,7 +1208,7 @@ function closeConnection() {
   authKey = sessionKey = null; sendChain = recvChain = null;
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false;
-  receivedMessageIds = {};  // ★ 객체 초기화
+  receivedMessageIds = {};
   pendingOutbox = [];
   document.getElementById('sessionFingerprint').textContent = '';
   document.getElementById('securityCard').style.display = 'none';
