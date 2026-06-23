@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 완전 파괴판</title>
+  <title>P2P 암호 채팅 – 오프라인 복원</title>
   <style>
     :root {
       --bg: #06090f; --surface: #0f141e; --card: rgba(15,20,30,0.9);
@@ -121,7 +121,7 @@
     <div id="simpleMode">
       <div class="card text-center">
         <h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3>
-        <p class="text-sub mb">Signal 수준 종단간 암호화<br>비밀번호는 URL에 절대 노출되지 않음</p>
+        <p class="text-sub mb">Signal 수준 종단간 암호화<br>오프라인에서도 메시지 큐잉</p>
         <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
         <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
       </div>
@@ -204,6 +204,10 @@ let fileReceive=null;
 let typingChannel = null;
 const TYPING_LABEL = 'typing';
 const ICE_SERVERS = ['stun:stun.services.mozilla.com:3478','stun:stun.nextcloud.com:443'].map(u=>({urls:u}));
+
+// 오프라인 큐 및 중복 방지
+let pendingOutbox = [];
+const receivedMessageIds = new Set();
 
 (async function init(){
   document.getElementById('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}});
@@ -299,12 +303,14 @@ function setupDC(){
   if(!dc)return;
   dc.onopen=()=>{
     updateConn(true); showChat();
+    // 연결 복구 시 큐 전송
+    flushOutbox();
     if (!handshakeDone && !sessionKey) {
       startEcdhExchange();
     }
   };
   dc.onmessage=onMsg;
-  dc.onclose=()=>{ updateConn(false); /* 채팅방은 유지 */ };
+  dc.onclose=()=>{ updateConn(false); };
 }
 function setupTypingChannel(){
   if(!typingChannel)return;
@@ -319,16 +325,28 @@ function onIceState(){
   if(s==='connected' || s==='completed') updateConn(true);
   else if(s==='disconnected') {
     updateConn(false);
-    // ICE 재시작 시도
     pc.restartIce();
   }
   else if(s==='failed' || s==='closed') {
     updateConn(false);
-    // 여기서 완전 초기화하지 않고 대기
   }
 }
 function waitIce(){return new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')r();});});}
 function updateConn(ok){document.getElementById('connDot').className='dot '+(ok?'on':'off');document.getElementById('connLabel').textContent=ok?'연결됨':'오프라인';}
+
+// 오프라인 큐 처리
+async function flushOutbox(){
+  if (!dc || dc.readyState !== 'open' || pendingOutbox.length === 0) return;
+  const toSend = [...pendingOutbox];
+  pendingOutbox = [];
+  for (const msg of toSend) {
+    try {
+      const enc = await encryptPayload(msg.payload);
+      dc.send(JSON.stringify({ type:'msg', ...enc }));
+    } catch(e) { /* 실패해도 무시 */ }
+  }
+  addMsg('📬 대기 중인 메시지 전송 완료', 'system');
+}
 
 function sendTyping(state) {
   if (typingChannel && typingChannel.readyState === 'open') {
@@ -449,14 +467,34 @@ async function decryptPayload(d){
 async function sendText(){
   const inp = document.getElementById('msgInput');
   const txt = inp.value.trim();
-  if (!txt || !dc || dc.readyState !== 'open') return;
-  if (!sessionKey) { addMsg('⚠️ 암호를 설정하세요.', 'system'); return; }
-  try {
-    const enc = await encryptPayload({ type:'text', content: txt, id: genUUID() });
-    dc.send(JSON.stringify({ type:'msg', ...enc }));
-    addMsg(txt, 'me', enc.id);
+  if (!txt) return;
+  const msgId = genUUID();
+  const payload = { type:'text', content: txt, id: msgId };
+
+  // 연결이 열려 있지 않으면 큐에 추가
+  if (!dc || dc.readyState !== 'open' || !sessionKey) {
+    if (sessionKey) {
+      pendingOutbox.push({ payload, id: msgId });
+      addMsg(txt, 'me', msgId);
+      addMsg('⏳ 오프라인 상태 - 연결 복구 시 전송됩니다', 'system');
+    } else {
+      addMsg('⚠️ 암호를 설정하세요.', 'system');
+    }
     inp.value = '';
-  } catch (e) { addMsg('전송 실패', 'system'); }
+    return;
+  }
+
+  try {
+    const enc = await encryptPayload(payload);
+    dc.send(JSON.stringify({ type:'msg', ...enc }));
+    addMsg(txt, 'me', msgId);
+  } catch (e) {
+    // 실패 시 큐에 보관
+    pendingOutbox.push({ payload, id: msgId });
+    addMsg(txt, 'me', msgId);
+    addMsg('⚠️ 전송 실패 - 대기열에 저장됨', 'system');
+  }
+  inp.value = '';
 }
 
 function onMsg(e){
@@ -466,7 +504,10 @@ function onMsg(e){
     if (d.type === '__ecdhe__') { handleEcdheMessage(d); return; }
     if (d.type === 'msg') {
       if (!sessionKey) { addEncryptedMessage(d); return; }
+      // 중복 메시지 검사
       decryptPayload(d).then(inner => {
+        if (inner.id && receivedMessageIds.has(inner.id)) return;
+        if (inner.id) receivedMessageIds.add(inner.id);
         if (inner.type === 'text') { addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
         else if (inner.type === 'read') { markAsRead(inner.id); }
         else if (inner.type === 'delete') { document.getElementById('msg-'+inner.id)?.remove(); }
@@ -478,7 +519,6 @@ function onMsg(e){
   } catch (e) {}
 }
 
-// ===================== 대화 완전 삭제 =====================
 async function destroyChat(){
   if (!sessionKey || !dc || dc.readyState !== 'open') return;
   if (!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다. 계속하시겠습니까?')) return;
@@ -491,6 +531,8 @@ async function destroyChat(){
 
 function executeDestroy(){
   document.getElementById('messages').innerHTML = '';
+  receivedMessageIds.clear();
+  pendingOutbox = [];
   addMsg('💥 대화가 완전히 삭제되었습니다.', 'system');
   closeConnection();
   showSimple();
@@ -585,6 +627,8 @@ function closeConnection(){
   authKey=sessionKey=null; sendChain=recvChain=null;
   salt=null; ourEcdhPair=null; peerEcdhPub=null; fileReceive=null; password=null;
   handshakeDone=false;
+  receivedMessageIds.clear();
+  pendingOutbox = [];
   document.getElementById('sessionFingerprint').textContent='';
   document.getElementById('securityCard').style.display='none';
   document.getElementById('passwordPrompt').style.display='block';
