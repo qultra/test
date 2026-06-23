@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 링크·연결 완벽 수정</title>
+  <title>P2P 암호 채팅 – 링크·연결 완전 수정</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -135,14 +135,9 @@
 // =====================================================================
 //  기본 유틸리티 (Base64url 인코딩)
 // =====================================================================
-const te = new TextEncoder();
-const td = new TextDecoder();
+const te = new TextEncoder(), td = new TextDecoder();
 const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-const fromBase64url = str => {
-  str = str.replace(/-/g,'+').replace(/_/g,'/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0)).buffer;
-};
+const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while (str.length % 4) str += '='; return Uint8Array.from(atob(str), c => c.charCodeAt(0)).buffer; };
 const encodeSDP = obj => toBase64url(te.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(td.decode(fromBase64url(str)));
 
@@ -176,7 +171,6 @@ const ICE_SERVERS = (() => {
   addTURN('turn.anyfirewall.com', [443], 'webrtc', 'webrtc');
   addTURN('numb.viagenie.ca', [3478, 80, 443], 'webrtc@live.com', 'muazkh');
   addTURN('turn.matrix.org', [3478], 'matrix', 'matrix');
-  // 중복 제거 및 200개로 제한
   const seen = new Set();
   return list.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
 })();
@@ -337,11 +331,8 @@ function onIceState() {
 async function waitIce() {
   if (pc.iceGatheringState === 'complete') return;
   return new Promise(r => {
-    pc.addEventListener('icegatheringstatechange', () => {
-      if (pc.iceGatheringState === 'complete') r();
-    });
-    // 10초 타임아웃
-    setTimeout(() => { if (pc.iceGatheringState !== 'complete') r(); }, 10000);
+    pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); });
+    setTimeout(() => { if (pc.iceGatheringState !== 'complete') r(); }, 15000);
   });
 }
 
