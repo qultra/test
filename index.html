@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 완전 수정판</title>
+  <title>P2P 암호 채팅 – 링크·연결 완벽 수정</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -133,32 +133,30 @@
 
 <script>
 // =====================================================================
-//  기본 인코딩 유틸리티
+//  기본 유틸리티 (Base64url 인코딩)
 // =====================================================================
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const te = new TextEncoder();
+const td = new TextDecoder();
 const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; return Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer; };
-const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
-const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
-const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
-const str2buf = s => textEncoder.encode(s);
-const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
-const b642buf = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
-const concatBufs = (...bufs) => { let len=bufs.reduce((a,b)=>a+b.byteLength,0), tmp=new Uint8Array(len), off=0; bufs.forEach(b=>{tmp.set(new Uint8Array(b),off);off+=b.byteLength;}); return tmp.buffer; };
-const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]%16;return(c=='x'?r:r&0x3|0x8).toString(16);});
+const fromBase64url = str => {
+  str = str.replace(/-/g,'+').replace(/_/g,'/');
+  while (str.length % 4) str += '=';
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0)).buffer;
+};
+const encodeSDP = obj => toBase64url(te.encode(JSON.stringify(obj)));
+const decodeSDP = str => JSON.parse(td.decode(fromBase64url(str)));
 
 // =====================================================================
-//  ICE 서버 목록 (200개 준비)
+//  200개 ICE 서버 (무료 공개 STUN/TURN)
 // =====================================================================
 const ICE_SERVERS = (() => {
-  const servers = [];
-  const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => servers.push({ urls: `stun:${host}:${p}` }));
-  const addTURN = (host, ports = [3478], user, cred) => ports.forEach(p => {
-    servers.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
-    servers.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
+  const list = [];
+  const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => list.push({ urls: `stun:${host}:${p}` }));
+  const addTURN = (host, ports, user, cred) => ports.forEach(p => {
+    list.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
+    list.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
   });
-  const hosts = [
+  [
     'stun.l.google.com','stun1.l.google.com','stun2.l.google.com','stun3.l.google.com','stun4.l.google.com',
     'stun.cloudflare.com','global.stun.twilio.com','stun.freeswitch.org','stun.nextcloud.com',
     'stun.viagenie.ca','stun.ekiga.net','stun.linphone.org','stun.iptel.org','stun.services.mozilla.com',
@@ -173,18 +171,18 @@ const ICE_SERVERS = (() => {
     'stun.telbo.com','stun.telio.no','stun.telstra.com','stun.tng.de','stun.twt.it','stun.vivox.com',
     'stun.voip.aebc.com','stun.voip.eutelia.it','stun.voipcheap.com','stun.voipdiscount.com',
     'stun.voipraider.com','stun.vonage.com','stun.voxox.com','stun.zadarma.com'
-  ];
-  hosts.forEach(h => addSTUN(h));
+  ].forEach(h => addSTUN(h));
   addTURN('openrelay.metered.ca', [80, 443], 'openrelayproject', 'openrelayproject');
   addTURN('turn.anyfirewall.com', [443], 'webrtc', 'webrtc');
   addTURN('numb.viagenie.ca', [3478, 80, 443], 'webrtc@live.com', 'muazkh');
   addTURN('turn.matrix.org', [3478], 'matrix', 'matrix');
+  // 중복 제거 및 200개로 제한
   const seen = new Set();
-  return servers.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
+  return list.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
 })();
 
 // =====================================================================
-//  전역 상태 변수
+//  전역 변수
 // =====================================================================
 let pc, dc, isOfferer = false, password = null;
 let authKey, sessionKey, sendChain, recvChain;
@@ -197,7 +195,7 @@ const DESTROY_KEY = 'p2p_chat_destroyed_v2';
 const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session';
 
 // =====================================================================
-//  블러 관리
+//  블러 관리 (오프라인 시 해제 불가)
 // =====================================================================
 let securityLockLevel = 0, globalBlurTimer = null;
 function applyBlurToSensitiveElements() {
@@ -336,15 +334,19 @@ function onIceState() {
     isOnline = false; updateConn(false);
   }
 }
-function waitIce() {
+async function waitIce() {
+  if (pc.iceGatheringState === 'complete') return;
   return new Promise(r => {
-    if (pc.iceGatheringState === 'complete') r();
-    else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); });
+    pc.addEventListener('icegatheringstatechange', () => {
+      if (pc.iceGatheringState === 'complete') r();
+    });
+    // 10초 타임아웃
+    setTimeout(() => { if (pc.iceGatheringState !== 'complete') r(); }, 10000);
   });
 }
 
 // =====================================================================
-//  해시 링크를 통한 연결
+//  해시 링크를 통한 연결 (문제 해결)
 // =====================================================================
 async function checkHash() {
   if (isDestroyed()) { executeDestroy(); return; }
@@ -380,16 +382,24 @@ async function startNewChat() {
   clearDestroyedFlags();
   closeConnection();
   isOfferer = true;
+  document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('answerPanel').classList.add('hidden');
   document.getElementById('offerSpinner').style.display = 'inline-block';
+  document.getElementById('offerLinkDisplay').textContent = '생성 중...';
   initPC();
   createDataChannels();
-  pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => waitIce().then(() => {
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await waitIce();
     document.getElementById('offerSpinner').style.display = 'none';
     const offerB64 = encodeSDP(pc.localDescription);
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
-  }));
+  } catch (e) {
+    document.getElementById('offerSpinner').style.display = 'none';
+    alert('연결 생성 실패: ' + e.message);
+  }
 }
 
 async function initiateAnswer(offer) {
@@ -405,6 +415,7 @@ async function initiateAnswer(offer) {
 }
 
 function showJoinPanel() {
+  document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
   document.getElementById('offerPanel').classList.add('hidden');
   document.getElementById('answerPanel').classList.remove('hidden');
   document.getElementById('autoAnswerContent').classList.add('hidden');
@@ -424,12 +435,16 @@ async function createAnswerFromOffer() {
     if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
     offerStr = hp.get('offer');
   }
-  await pc.setRemoteDescription(decodeSDP(offerStr));
-  const ans = await pc.createAnswer();
-  await pc.setLocalDescription(ans);
-  await waitIce();
-  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
-  document.getElementById('answerResultPanel').classList.remove('hidden');
+  try {
+    const offerObj = decodeSDP(offerStr);
+    await pc.setRemoteDescription(offerObj);
+    const ans = await pc.createAnswer();
+    await pc.setLocalDescription(ans);
+    await waitIce();
+    document.getElementById('manualJoinContent').classList.add('hidden');
+    document.getElementById('answerResultPanel').classList.remove('hidden');
+    document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+  } catch (e) { alert('Answer 생성 실패: ' + e.message); }
 }
 
 async function applyAnswerLink() {
@@ -444,7 +459,8 @@ async function applyAnswerLink() {
       if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
       answerStr = hp.get('answer');
     }
-    await pc.setRemoteDescription(decodeSDP(answerStr));
+    const answerObj = decodeSDP(answerStr);
+    await pc.setRemoteDescription(answerObj);
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
@@ -543,13 +559,11 @@ async function deriveSessionKey() {
 }
 
 function compareBuffers(b1, b2) { for (let i = 0; i < b1.byteLength; i++) { if (b1[i] < b2[i]) return -1; if (b1[i] > b2[i]) return 1; } return 0; }
-
 async function hkdfExpand(prk, info) {
   const k = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
   const s = await crypto.subtle.sign('HMAC', k, info);
   return crypto.subtle.importKey('raw', s.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
 }
-
 async function ratchetForward(chainRef) {
   const cur = chainRef.chain;
   const newChain = await crypto.subtle.sign('HMAC', cur, new Uint8Array([2]));
@@ -557,7 +571,6 @@ async function ratchetForward(chainRef) {
   const msgKey = await crypto.subtle.sign('HMAC', cur, new Uint8Array([1]));
   return crypto.subtle.importKey('raw', msgKey.slice(0, 32), { name: 'AES-GCM', length: AES_LEN }, false, ['encrypt', 'decrypt']);
 }
-
 async function encryptPayload(obj) {
   if (!sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sendChain);
@@ -566,7 +579,6 @@ async function encryptPayload(obj) {
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, mk, str2buf(JSON.stringify(padded)));
   return { seq: sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
 }
-
 async function decryptPayload(d) {
   if (!recvChain) throw new Error('세션키 없음');
   const { seq, iv, ct } = d;
@@ -577,7 +589,7 @@ async function decryptPayload(d) {
     const mk = await ratchetForward(recvChain);
     recvChain.seq = seq;
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, mk, new Uint8Array(ct));
-    const obj = JSON.parse(textDecoder.decode(plain));
+    const obj = JSON.parse(td.decode(plain));
     delete obj._pad;
     return obj;
   } catch (e) { recvChain.chain = prevChain; recvChain.seq = prevSeq; throw e; }
@@ -586,8 +598,7 @@ async function decryptPayload(d) {
 async function flushOutbox() {
   if (isDestroyed()) return;
   if (!dc || dc.readyState !== 'open' || pendingOutbox.length === 0) return;
-  const toSend = [...pendingOutbox];
-  pendingOutbox = [];
+  const toSend = [...pendingOutbox]; pendingOutbox = [];
   for (const msg of toSend) {
     try { const enc = await encryptPayload(msg.payload); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
   }
@@ -642,8 +653,7 @@ async function destroyChat() {
   if (!sessionKey || !dc || dc.readyState !== 'open') { markDestroyed(); executeDestroy(); return; }
   if (!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
   try { const enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
-  markDestroyed();
-  executeDestroy();
+  markDestroyed(); executeDestroy();
 }
 
 function addMsg(text, who, msgId) {
@@ -673,7 +683,7 @@ async function deleteMessage(msgId) { if (!sessionKey || isDestroyed()) return; 
 function markAsRead(msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read')) t.innerHTML += ' <span class="read" style="color:var(--success);">✓✓</span>'; } }
 
 // =====================================================================
-//  파일 전송 (Blob 기반, 대용량)
+//  파일 전송
 // =====================================================================
 function handleFileStart(inner) {
   fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 };
@@ -733,8 +743,14 @@ async function sendFile(file) {
 // =====================================================================
 //  유틸리티
 // =====================================================================
+const buf2hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('');
+const str2buf = s => te.encode(s);
+const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+const b642buf = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
+const concatBufs = (...bufs) => { let len = bufs.reduce((a,b) => a + b.byteLength, 0), tmp = new Uint8Array(len), off = 0; bufs.forEach(b => { tmp.set(new Uint8Array(b), off); off += b.byteLength; }); return tmp.buffer; };
+const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => { const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16; return (c == 'x' ? r : r & 0x3 | 0x8).toString(16); });
+
 function formatBytes(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : b < 1073741824 ? (b / 1048576).toFixed(1) + ' MB' : (b / 1073741824).toFixed(1) + ' GB'; }
-function toggleSecurityDetail() { document.getElementById('securityDetail').classList.toggle('hidden'); }
 function copyTextById(id) {
   const el = document.getElementById(id);
   const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
@@ -750,7 +766,31 @@ function copyTextById(id) {
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]); }
 
 // =====================================================================
-//  초기 실행
+//  렌더링 왜곡 (캡처 방해)
+// =====================================================================
+(function() {
+  const canvas = document.getElementById('antiScreenshotCanvas');
+  const ctx = canvas.getContext('2d');
+  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  resize(); window.addEventListener('resize', resize);
+  setInterval(() => {
+    const img = ctx.createImageData(canvas.width, canvas.height);
+    for (let i = 0; i < img.data.length; i += 4) {
+      img.data[i] = Math.random() * 5; img.data[i+1] = Math.random() * 5; img.data[i+2] = Math.random() * 5; img.data[i+3] = 3;
+    }
+    ctx.putImageData(img, 0, 0);
+    ctx.fillStyle = 'rgba(255,255,255,0.002)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, 100);
+  let frame = 0;
+  (function jitter() {
+    frame++;
+    document.body.style.transform = `translate(${Math.sin(frame/10)*0.2}px, ${Math.cos(frame/15)*0.2}px)`;
+    requestAnimationFrame(jitter);
+  })();
+})();
+
+// =====================================================================
+//  시작
 // =====================================================================
 checkHash();
 </script>
