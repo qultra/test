@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 렌더링 왜곡 + 완전 보안</title>
+  <title>P2P 암호 채팅 – 링크 복사·연결 완전 수정 + 극한 보안</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -35,21 +35,7 @@
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
       overscroll-behavior: none;
-      /* 미세한 색상 변화 애니메이션 – 캡처 시 왜곡 */
-      animation: hueShift 0.5s infinite alternate;
     }
-    @keyframes hueShift {
-      0% { filter: hue-rotate(0deg) brightness(1.0); }
-      100% { filter: hue-rotate(0.5deg) brightness(1.01); }
-    }
-
-    /* 전체 화면 노이즈 캔버스 */
-    #antiScreenshotCanvas {
-      position: fixed; top:0; left:0; width:100%; height:100%;
-      z-index: 9998; pointer-events: none; opacity: 0.03;
-      mix-blend-mode: difference;
-    }
-
     .container {
       width: 100%; max-width: 520px; height: 95dvh;
       background: var(--surface); border-radius: 30px;
@@ -92,7 +78,6 @@
     .msg { display:flex; flex-direction:column; animation:fadeUp 0.2s ease; }
     .msg.system { align-items:center; } .msg.me { align-items:flex-end; } .msg.other { align-items:flex-start; }
     .bubble { max-width:83%; padding:10px 16px; border-radius:20px; background:rgba(22,30,44,0.85); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); word-break:break-word; position:relative; overflow:hidden; }
-    /* 추가적인 미세 노이즈 레이어 */
     .bubble .noise-layer {
       position: absolute; top:0; left:0; width:100%; height:100%;
       background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px);
@@ -146,8 +131,41 @@
 
 <script>
 // =====================================================================
-//  렌더링 왜곡 + 모든 기능 100% – 완전 최종판
+//  링크 문제 해결 + 렌더링 왜곡 + 모든 기능
 // =====================================================================
+// ----- base64url 인코딩/디코딩 함수 (URL 안전) -----
+function toBase64url(buf) {
+  // buf: ArrayBuffer 또는 Uint8Array
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  // btoa -> base64, 그 후 URL-safe 변환
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+function fromBase64url(str) {
+  // base64url -> base64 -> ArrayBuffer
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  const binary = atob(str);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+// SDP 객체를 JSON 문자열로 직렬화 후 base64url 인코딩
+function encodeSDP(sdpObj) {
+  return toBase64url(str2buf(JSON.stringify(sdpObj)));
+}
+// base64url 문자열을 SDP 객체로 복원
+function decodeSDP(str) {
+  const buf = fromBase64url(str);
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+
 let securityLockLevel = 0;
 let globalBlurTimer = null;
 const revealTimers = new Map();
@@ -186,51 +204,41 @@ function triggerSecurityLock(level = 1) {
 }
 
 // =====================================================================
-//  렌더링 왜곡 엔진 – 캡처 도구 무력화
+//  렌더링 왜곡 엔진 (변경 없음)
 // =====================================================================
 (function initAntiScreenshot() {
   const canvas = document.getElementById('antiScreenshotCanvas');
   const ctx = canvas.getContext('2d');
-  
   function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
-
-  // 고주파 노이즈 패턴 생성 (모아레 유도)
   function drawNoise() {
     if (!ctx) return;
     const imageData = ctx.createImageData(canvas.width, canvas.height);
     const data = imageData.data;
     for (let i = 0; i < data.length; i += 4) {
-      // 매우 미세한 랜덤 노이즈 (R,G,B 채널에만)
-      data[i] = Math.random() * 5;       // R
-      data[i+1] = Math.random() * 5;     // G
-      data[i+2] = Math.random() * 5;     // B
-      data[i+3] = 3;                     // Alpha (거의 투명)
+      data[i] = Math.random() * 5;
+      data[i+1] = Math.random() * 5;
+      data[i+2] = Math.random() * 5;
+      data[i+3] = 3;
     }
     ctx.putImageData(imageData, 0, 0);
   }
-
-  // 주기적으로 노이즈 패턴 변경 (깜빡임 + 모아레)
   setInterval(() => {
     drawNoise();
-    // 추가로 격자 패턴을 변형하여 모아레 효과를 강화
     ctx.fillStyle = 'rgba(255,255,255,0.002)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (let x = 0; x < canvas.width; x += 4) {
       ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;
       ctx.fillRect(x, 0, 1, canvas.height);
     }
-  }, 100); // 10fps – 캡처 타이밍과 엇갈리도록
-
-  // requestAnimationFrame으로 연속적인 미세 떨림 효과
+  }, 100);
   let frame = 0;
   function jitter() {
     frame++;
-    // 미세한 위치 이동으로 캡처된 이미지에 블러 유사 효과
     document.body.style.transform = `translate(${Math.sin(frame/10)*0.2}px, ${Math.cos(frame/15)*0.2}px)`;
     requestAnimationFrame(jitter);
   }
@@ -238,14 +246,12 @@ function triggerSecurityLock(level = 1) {
 })();
 
 // =====================================================================
-//  모든 OS·브라우저 극한 보안 + API/권한 완전 차단
+//  모든 OS·브라우저 보안 (클립보드 쓰기 제외한 복사 차단)
 // =====================================================================
 const ua = navigator.userAgent || '', plt = navigator.platform || '';
 const isWin = /Windows/i.test(ua) || plt === 'Win32' || plt === 'Win64';
 const isMac = /Macintosh/i.test(ua) || plt === 'MacIntel' || plt === 'MacPPC';
 const isLinux = /Linux/i.test(ua) && !/Android/i.test(ua);
-const isAndroid = /Android/i.test(ua);
-const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
 function logViolation(reason) {
   console.warn('SEC:', reason, ' Lv:', securityLockLevel);
@@ -281,12 +287,13 @@ document.addEventListener('keydown', e => {
   if (block) { e.preventDefault(); e.stopPropagation(); logViolation('키:'+k); }
 }, true);
 
-// 3. 마우스/터치
+// 3. 마우스/터치 (복사/붙여넣기는 입력 필드에서만 허용)
 document.addEventListener('contextmenu', e => { e.preventDefault(); logViolation('우클릭'); });
 document.addEventListener('dragstart', e => { e.preventDefault(); logViolation('드래그'); });
 document.addEventListener('selectstart', e => { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('선택'); } });
 document.addEventListener('copy', e => { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('복사'); } });
 document.addEventListener('cut', e => { if (!e.target.matches('input,textarea')) { e.preventDefault(); logViolation('잘라내기'); } });
+// 붙여넣기는 차단하지 않음 (입력 필드에서 필요)
 
 let touchStartY=0, touchStartX=0, touchStartTime=0, lastTouchEnd=0;
 document.addEventListener('touchstart', e => {
@@ -343,9 +350,9 @@ if (navigator.mediaDevices) {
 }
 if (navigator.getDisplayMedia) navigator.getDisplayMedia = () => Promise.reject();
 
-// 10. 클립보드
+// 10. 클립보드 쓰기 차단 (writeText는 복사 버튼용으로 남겨둠)
 navigator.clipboard.write = () => Promise.reject('Blocked');
-navigator.clipboard.writeText = () => Promise.reject('Blocked');
+// navigator.clipboard.writeText는 막지 않음 → copyTextById에서 사용
 
 // 11. opener
 if (window.opener) { window.opener = null; logViolation('opener'); }
@@ -403,7 +410,7 @@ function resetInactivity() { clearTimeout(inactivityTimer); inactivityTimer = se
 resetInactivity();
 
 // =====================================================================
-//  Web API 완전 차단
+//  Web API 차단
 // =====================================================================
 window.Worker = function() { throw new Error('Blocked'); };
 window.SharedWorker = function() { throw new Error('Blocked'); };
@@ -448,11 +455,11 @@ document.addEventListener('click', e => {
 });
 
 // =====================================================================
-//  P2P 암호 채팅 핵심 (변경 없음)
+//  P2P 암호 채팅 핵심 (base64url 적용)
 // =====================================================================
 const buf2hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('');
 const str2buf = s => new TextEncoder().encode(s);
-const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b))); // 내부용
 const b642buf = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
 const concatBufs = (...bufs) => { let len = bufs.reduce((a,b) => a + b.byteLength, 0), tmp = new Uint8Array(len), off = 0; bufs.forEach(b => { tmp.set(new Uint8Array(b), off); off += b.byteLength; }); return tmp.buffer; };
 const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => { const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16; return (c == 'x' ? r : r & 0x3 | 0x8).toString(16); });
@@ -486,18 +493,21 @@ async function checkHash() {
   const p = new URLSearchParams(h);
   if (p.has('offer')) {
     try {
-      const offer = JSON.parse(atob(p.get('offer'))); closeConnection();
+      const offerStr = p.get('offer');
+      const offer = decodeSDP(offerStr);
+      closeConnection();
       document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
       document.getElementById('answerPanel').classList.remove('hidden');
       document.getElementById('autoAnswerContent').classList.remove('hidden');
       document.getElementById('manualJoinContent').classList.add('hidden');
-      document.getElementById('answerSpinner').style.display = 'inline-block';
+      document.getElementById('answerSpinner').style.display='inline-block';
       document.getElementById('answerReadyPanel').classList.add('hidden');
       await initiateAnswer(offer);
     } catch (e) { alert('잘못된 초대 링크입니다.'); }
   } else if (p.has('answer')) {
     try {
-      const answer = JSON.parse(atob(p.get('answer')));
+      const answerStr = p.get('answer');
+      const answer = decodeSDP(answerStr);
       if (pc && isOfferer) await pc.setRemoteDescription(answer);
       else {
         closeConnection(); isOfferer = true;
@@ -522,11 +532,11 @@ async function startNewChat() {
   localStorage.removeItem(DESTROY_KEY); closeConnection(); isOfferer = true;
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('answerPanel').classList.add('hidden');
-  document.getElementById('offerSpinner').style.display = 'inline-block';
+  document.getElementById('offerSpinner').style.display='inline-block';
   initPC(); createDataChannels();
   pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => waitIce().then(() => {
-    document.getElementById('offerSpinner').style.display = 'none';
-    const offerB64 = btoa(JSON.stringify(pc.localDescription));
+    document.getElementById('offerSpinner').style.display='none';
+    const offerB64 = encodeSDP(pc.localDescription);
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
   }));
 }
@@ -535,27 +545,43 @@ async function initiateAnswer(offer) {
   isOfferer = false; initPC();
   await pc.setRemoteDescription(offer);
   const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
-  document.getElementById('answerSpinner').style.display = 'none';
+  document.getElementById('answerSpinner').style.display='none';
   document.getElementById('answerReadyPanel').classList.remove('hidden');
-  document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + btoa(JSON.stringify(pc.localDescription));
+  const answerB64 = encodeSDP(pc.localDescription);
+  document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64;
 }
 
 async function createAnswerFromOffer() {
   const t = document.getElementById('remoteOfferSDP').value.trim(); if (!t) return;
   closeConnection(); isOfferer = false; initPC();
-  const u = new URL(t); const hp = new URLSearchParams(u.hash.substring(1));
-  if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
-  await pc.setRemoteDescription(JSON.parse(atob(hp.get('offer'))));
+  // 링크 전체를 넣었을 수 있으므로 URL 파싱
+  let offerStr = t;
+  if (t.startsWith('http')) {
+    const u = new URL(t);
+    const hp = new URLSearchParams(u.hash.substring(1));
+    if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
+    offerStr = hp.get('offer');
+  }
+  const offer = decodeSDP(offerStr);
+  await pc.setRemoteDescription(offer);
   const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
-  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + btoa(JSON.stringify(pc.localDescription));
+  const answerB64 = encodeSDP(pc.localDescription);
+  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64;
   document.getElementById('answerResultPanel').classList.remove('hidden');
 }
 
 async function applyAnswerLink() {
   const l = document.getElementById('answerLinkInput').value.trim(); if (!l) return;
   try {
-    const u = new URL(l); const hp = new URLSearchParams(u.hash.substring(1));
-    if (hp.has('answer')) { await pc.setRemoteDescription(JSON.parse(atob(hp.get('answer')))); }
+    let answerStr = l;
+    if (l.startsWith('http')) {
+      const u = new URL(l);
+      const hp = new URLSearchParams(u.hash.substring(1));
+      if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
+      answerStr = hp.get('answer');
+    }
+    const answer = decodeSDP(answerStr);
+    if (pc && isOfferer) await pc.setRemoteDescription(answer);
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
@@ -716,7 +742,18 @@ function showSimple() { document.getElementById('simpleMode').style.display = 'b
 function closeConnection() { if (pc) { pc.close(); pc = null; } dc = null; typingChannel = null; authKey = sessionKey = null; sendChain = recvChain = null; salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null; handshakeDone = false; receivedMessageIds.clear(); pendingOutbox = []; document.getElementById('sessionFingerprint').textContent = ''; document.getElementById('securityCard').style.display = 'none'; document.getElementById('passwordPrompt').style.display = 'block'; document.getElementById('passwordError').style.display = 'none'; }
 function formatBytes(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
 function toggleSecurityDetail() { document.getElementById('securityDetail').classList.toggle('hidden'); }
-function copyTextById(id) { const el = document.getElementById(id); const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent; navigator.clipboard.writeText(text).then(() => alert('복사됨')).catch(() => prompt('Ctrl+C로 복사하세요', text)); }
+
+// 수정된 복사 함수: navigator.clipboard.writeText 직접 사용 (차단되지 않음)
+function copyTextById(id) {
+  const el = document.getElementById(id);
+  const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('복사됨');
+  }).catch(() => {
+    // 대체: 텍스트 선택 후 Ctrl+C 유도
+    alert('자동 복사 실패. 링크를 길게 눌러 복사하세요.');
+  });
+}
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]); }
 </script>
 </body>
