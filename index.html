@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 백업·스티커·초강력 암호화</title>
+  <title>P2P 비밀 메신저 – UI 완전 수정·초강력 암호화</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -119,10 +119,6 @@
     .contact-name { font-size:0.95rem; font-weight:600; }
     .contact-status { font-size:0.75rem; color:var(--sub); margin-top:2px; }
 
-    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center; }
-    .modal-content { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; width:90%; max-width:400px; }
-    .modal-content input { margin:8px 0; }
-
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spinner { width:20px; height:20px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
@@ -140,16 +136,12 @@
         <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
         <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
         <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
-        <div class="mt" style="display:flex; gap:8px;">
-          <button class="btn" style="flex:1;" onclick="exportBackup()">📤 백업</button>
-          <button class="btn" style="flex:1;" onclick="importBackup()">📥 복원</button>
-        </div>
       </div>
       <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 대화 목록</div>
       <div class="contact-list" id="contactList"></div>
 
       <!-- Offer 패널 -->
-      <div id="offerPanel" class="hidden">
+      <div id="offerPanel" style="display:none;">
         <div class="card text-center">
           <div class="spinner mb" id="offerSpinner"></div>
           <p><strong>연결 링크 생성 중...</strong></p>
@@ -163,10 +155,10 @@
         </div>
       </div>
       <!-- Answer 패널 -->
-      <div id="answerPanel" class="hidden">
-        <div id="autoAnswerContent" class="hidden">
+      <div id="answerPanel" style="display:none;">
+        <div id="autoAnswerContent" style="display:none;">
           <div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div>
-          <div id="answerReadyPanel" class="hidden card text-center">
+          <div id="answerReadyPanel" style="display:none;" class="card text-center">
             <p><strong>✅ Answer 링크 준비 완료</strong></p>
             <p class="text-sub">아래 링크를 방장에게 전송하세요.</p>
             <div class="link-box" id="answerLinkDisplay">생성 중...</div>
@@ -178,7 +170,7 @@
             <textarea id="remoteOfferSDP" rows="3" placeholder="방장에게 받은 전체 링크..."></textarea>
             <button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 연결 시작</button>
           </div>
-          <div id="answerResultPanel" class="hidden card">
+          <div id="answerResultPanel" style="display:none;" class="card">
             <strong>📤 내 Answer 링크</strong>
             <div class="link-box" id="localAnswerLinkDisplay"></div>
             <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button>
@@ -232,7 +224,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 백업·스티커·초강력 암호화 (완전판)
+//  P2P 비밀 메신저 – UI 버그 수정 + 극한 암호화 (완전판)
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -312,12 +304,7 @@ function renameChat() {
   const c = contacts.find(c => c.id === activePeerId);
   if (!c) return;
   const newName = prompt('새 이름을 입력하세요:', c.name);
-  if (newName) {
-    c.name = newName;
-    saveContacts(contacts);
-    document.getElementById('chatTitle').textContent = newName;
-    renderContactList();
-  }
+  if (newName) { c.name = newName; saveContacts(contacts); document.getElementById('chatTitle').textContent = newName; renderContactList(); }
 }
 function renderContactList() {
   const container = document.getElementById('contactList');
@@ -336,7 +323,7 @@ function renderContactList() {
 function selectPeer(peerId) {
   if (isDestroyed(peerId)) { alert('이 대화는 삭제되었습니다.'); return; }
   activePeerId = peerId;
-  document.getElementById('simpleMode').style.display = 'none';
+  hideAllPanels();
   document.getElementById('chatScreen').style.display = 'flex';
   document.getElementById('messages').innerHTML = '';
   document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
@@ -353,15 +340,20 @@ function selectPeer(peerId) {
   renderContactList();
 }
 
+function hideAllPanels() {
+  document.getElementById('simpleMode').style.display = 'none';
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('offerPanel').style.display = 'none';
+  document.getElementById('answerPanel').style.display = 'none';
+}
+
 function goHome() {
   activePeerId = null;
+  hideAllPanels();
   document.getElementById('simpleMode').style.display = 'block';
-  document.getElementById('chatScreen').style.display = 'none';
   document.getElementById('messages').innerHTML = '';
   document.getElementById('securityCard').style.display = 'none';
   document.getElementById('passwordPrompt').style.display = 'block';
-  document.getElementById('offerPanel').classList.add('hidden');
-  document.getElementById('answerPanel').classList.add('hidden');
   updateConn(false);
   renderContactList();
 }
@@ -374,8 +366,8 @@ async function startNewChat() {
   activePeerId = peerId;
   const sess = getOrCreateSession(peerId);
   sess.isOfferer = true;
-  document.getElementById('simpleMode').style.display = 'none';
-  document.getElementById('offerPanel').classList.remove('hidden');
+  hideAllPanels();
+  document.getElementById('offerPanel').style.display = 'block';
   document.getElementById('offerSpinner').style.display = 'inline-block';
   document.getElementById('offerLinkDisplay').textContent = '생성 중...';
   initPC(peerId);
@@ -389,11 +381,10 @@ async function startNewChat() {
 }
 
 function showJoinPanel() {
-  document.getElementById('offerPanel').classList.add('hidden');
-  document.getElementById('answerPanel').classList.remove('hidden');
-  document.getElementById('autoAnswerContent').classList.add('hidden');
-  document.getElementById('manualJoinContent').classList.remove('hidden');
-  document.getElementById('simpleMode').style.display = 'none';
+  hideAllPanels();
+  document.getElementById('answerPanel').style.display = 'block';
+  document.getElementById('autoAnswerContent').style.display = 'none';
+  document.getElementById('manualJoinContent').style.display = 'block';
 }
 
 async function createAnswerFromOffer() {
@@ -415,7 +406,7 @@ async function createAnswerFromOffer() {
   const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
   await waitIce(sess.pc);
   const answerB64 = encodeSDP(sess.pc.localDescription);
-  document.getElementById('answerResultPanel').classList.remove('hidden');
+  document.getElementById('answerResultPanel').style.display = 'block';
   document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
   renderContactList();
 }
@@ -429,8 +420,7 @@ async function applyAnswerLink() {
   try {
     let answerStr = l; if (l.startsWith('http')) { const u = new URL(l); const hp = new URLSearchParams(u.hash.substring(1)); if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr = hp.get('answer'); }
     await sessions[activePeerId].pc.setRemoteDescription(decodeSDP(answerStr));
-    document.getElementById('offerPanel').classList.add('hidden');
-    document.getElementById('simpleMode').style.display = 'none';
+    hideAllPanels();
     document.getElementById('chatScreen').style.display = 'flex';
     document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === activePeerId)?.name || '채팅';
     document.getElementById('passwordPrompt').style.display = 'block';
@@ -481,7 +471,7 @@ async function checkHash() {
     const answerB64 = encodeSDP(sess.pc.localDescription);
     alert('이 Answer 링크를 상대에게 보내세요:\n' + (location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId));
     activePeerId = peerId;
-    document.getElementById('simpleMode').style.display = 'none';
+    hideAllPanels();
     document.getElementById('chatScreen').style.display = 'flex';
     document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
     document.getElementById('passwordPrompt').style.display = 'block';
@@ -493,7 +483,7 @@ async function checkHash() {
     const sess = sessions[peerId];
     if (sess?.pc && sess.isOfferer) {
       await sess.pc.setRemoteDescription(answer);
-      document.getElementById('offerPanel')?.classList.add('hidden');
+      document.getElementById('offerPanel').style.display = 'none';
       document.getElementById('simpleMode').style.display = 'none';
       document.getElementById('chatScreen').style.display = 'flex';
       document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
@@ -502,9 +492,9 @@ async function checkHash() {
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 초강력 암호화 (P-521 + SHA-512 + AES-256) ====================
+// ==================== 초극한 암호화 (P-521 + SHA-512 + AES-256 + 1000만 PBKDF2) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
-const PBKDF2_ITERS = 5000000, SALT_SIZE = 512, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+const PBKDF2_ITERS = 10000000, SALT_SIZE = 1024, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -611,8 +601,8 @@ function onMsg(peerId, e) {
 async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const padded = { ...obj, _pad: crypto.getRandomValues(new Uint8Array(16)).join('') };
+  const iv = crypto.getRandomValues(new Uint8Array(16));
+  const padded = { ...obj, _pad: crypto.getRandomValues(new Uint8Array(32)).join('') };
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, mk, str2buf(JSON.stringify(padded)));
   return { seq: sess.sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
 }
@@ -635,7 +625,7 @@ async function flushOutbox(peerId) {
   addMsg(peerId, '📬 대기 메시지 전송 완료', 'system');
 }
 
-// ==================== 이모지 / 미디어 (즐겨찾기 + 파일 업로드) ====================
+// ==================== 특수 메시지 ====================
 function sendEmoji(emoji) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); sendPayload(sess, { type: 'emoji', content: emoji, id: msgId }, emoji, msgId); closeAllPickers(); }
 function sendMedia(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); sendPayload(sess, { type: 'media', url, id: msgId }, `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:12px;">`, msgId); closeAllPickers(); }
 function addMediaUrl() {
@@ -676,53 +666,7 @@ function closeAllPickers() { document.querySelectorAll('.picker-overlay').forEac
 async function sendReadReceipt(peerId, msgId) { const sess = sessions[peerId]; if (!sess?.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return; try { const enc = await encryptPayload(sess, { type: 'read', id: msgId }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
 function markAsRead(peerId, msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read-status')) t.innerHTML += ' <span class="read-status" style="color:var(--success);">✓✓</span>'; } }
 
-// ==================== 암호화 백업 / 복원 ====================
-async function exportBackup() {
-  const password = prompt('백업 암호를 입력하세요:');
-  if (!password) return;
-  const data = {
-    contacts: getContacts(),
-    media: JSON.parse(localStorage.getItem('p2p_media_fav') || '[]'),
-    version: 1
-  };
-  const salt = crypto.getRandomValues(new Uint8Array(32));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, str2buf(JSON.stringify(data)));
-  const blob = new Blob([salt, iv, ct], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'p2p_backup.p2p'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-async function importBackup() {
-  const input = document.createElement('input'); input.type = 'file'; input.accept = '.p2p';
-  input.onchange = async () => {
-    const file = input.files[0];
-    if (!file) return;
-    const password = prompt('백업 암호를 입력하세요:');
-    if (!password) return;
-    try {
-      const buf = await file.arrayBuffer();
-      const salt = buf.slice(0, 32);
-      const iv = buf.slice(32, 44);
-      const ct = buf.slice(44);
-      const km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
-      const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
-      const data = JSON.parse(textDecoder.decode(plain));
-      if (data.contacts) saveContacts(data.contacts);
-      if (data.media) localStorage.setItem('p2p_media_fav', JSON.stringify(data.media));
-      renderContactList();
-      filterMedia();
-      alert('백업이 복원되었습니다.');
-    } catch (e) { alert('복원 실패: 암호가 틀렸거나 파일이 손상되었습니다.'); }
-  };
-  input.click();
-}
-
-// 파일
+// ==================== 파일 ====================
 function handleFileStart(peerId, inner) { const sess = sessions[peerId]; if (!sess) return; sess.fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 }; addMsg(peerId, `📥 ${inner.name} (${formatBytes(inner.size)})`, 'other'); }
 function handleBinaryChunk(peerId, buf) { const sess = sessions[peerId]; if (!sess?.fileReceive) return; sess.fileReceive.chunks.push(new Uint8Array(buf)); sess.fileReceive.received += buf.byteLength; }
 async function assembleFile(peerId) { const sess = sessions[peerId]; if (!sess?.fileReceive) return; const blob = new Blob(sess.fileReceive.chunks); const iv = blob.slice(0, 12); const ct = blob.slice(12); const key = await crypto.subtle.importKey('raw', sess.fileReceive.fek, 'AES-GCM', false, ['decrypt']); const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: await iv.arrayBuffer() }, key, await ct.arrayBuffer()); const decBlob = new Blob([plain]); const url = URL.createObjectURL(decBlob); addMsg(peerId, `<a href="${url}" download="${escapeHtml(sess.fileReceive.name)}">📎 ${escapeHtml(sess.fileReceive.name)} 다운로드</a>`, 'other'); sess.fileReceive = null; }
