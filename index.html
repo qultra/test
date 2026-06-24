@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 완전 암호화·풀기능</title>
+  <title>P2P 비밀 메신저 – 백업·스티커·초강력 암호화</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -105,6 +105,7 @@
     .chat-header { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
     .back-btn { background:none; border:none; color:var(--accent); font-size:1.2rem; cursor:pointer; padding:6px; }
     .chat-title { font-size:0.95rem; font-weight:600; flex:1; }
+    .typing-indicator { font-size:0.75rem; color:var(--sub); padding:4px 16px; display:none; }
 
     .contact-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
     .contact-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:16px; padding:14px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:0.15s; -webkit-tap-highlight-color: transparent; }
@@ -117,6 +118,10 @@
     .contact-info { flex:1; min-width:0; }
     .contact-name { font-size:0.95rem; font-weight:600; }
     .contact-status { font-size:0.75rem; color:var(--sub); margin-top:2px; }
+
+    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center; }
+    .modal-content { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; width:90%; max-width:400px; }
+    .modal-content input { margin:8px 0; }
 
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
@@ -135,6 +140,10 @@
         <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
         <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
         <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
+        <div class="mt" style="display:flex; gap:8px;">
+          <button class="btn" style="flex:1;" onclick="exportBackup()">📤 백업</button>
+          <button class="btn" style="flex:1;" onclick="importBackup()">📥 복원</button>
+        </div>
       </div>
       <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 대화 목록</div>
       <div class="contact-list" id="contactList"></div>
@@ -184,6 +193,7 @@
       <div class="chat-header" id="chatHeader">
         <button class="back-btn" onclick="goHome()">←</button>
         <span class="chat-title" id="chatTitle">채팅</span>
+        <button class="btn-small" onclick="renameChat()" style="margin-right:4px;">✏️</button>
         <button class="btn-small danger" onclick="destroyActiveChat()" style="padding:6px 10px; font-size:0.7rem;">💣</button>
       </div>
       <div id="securityCard" class="card" style="margin:0 0 4px; padding:6px 12px; font-size:0.7rem; display:none; align-items:center; gap:6px;">
@@ -197,15 +207,18 @@
         <p id="passwordError" class="text-sub" style="color:var(--danger); display:none;"></p>
       </div>
       <div id="messages"></div>
+      <div id="typingIndicator" class="typing-indicator">상대방이 입력 중...</div>
       <div class="action-bar" style="position:relative; padding:0 8px;">
         <button class="action-btn" onclick="togglePicker('emoji')">😀</button>
-        <button class="action-btn" onclick="togglePicker('media')">🖼️ 미디어</button>
-        <button class="action-btn" onclick="addMediaUrl()">＋ URL 추가</button>
+        <button class="action-btn" onclick="togglePicker('media')">🖼️</button>
+        <button class="action-btn" onclick="addMediaUrl()">🔗</button>
+        <button class="action-btn" onclick="document.getElementById('stickerFileInput').click()">📁</button>
         <div class="picker-overlay" id="emojiPicker"><div class="picker-grid" id="emojiGrid"></div></div>
         <div class="picker-overlay" id="mediaPicker">
           <input type="text" class="picker-search" placeholder="URL 검색..." id="mediaSearch" oninput="filterMedia()">
           <div class="picker-grid" id="mediaGrid"></div>
         </div>
+        <input type="file" id="stickerFileInput" class="hidden" accept="image/*" onchange="uploadSticker(this.files)">
       </div>
       <div class="input-bar" style="padding:8px;">
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="파일">📎</button>
@@ -219,7 +232,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 완전 암호화·풀기능 (prompt 제거, 미디어 즐겨찾기)
+//  P2P 비밀 메신저 – 백업·스티커·초강력 암호화 (완전판)
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -292,6 +305,19 @@ function addContact(peerId, name) {
   let contacts = getContacts();
   if (!contacts.find(c => c.id === peerId)) { contacts.push({ id: peerId, name }); saveContacts(contacts); }
   renderContactList();
+}
+function renameChat() {
+  if (!activePeerId) return;
+  const contacts = getContacts();
+  const c = contacts.find(c => c.id === activePeerId);
+  if (!c) return;
+  const newName = prompt('새 이름을 입력하세요:', c.name);
+  if (newName) {
+    c.name = newName;
+    saveContacts(contacts);
+    document.getElementById('chatTitle').textContent = newName;
+    renderContactList();
+  }
 }
 function renderContactList() {
   const container = document.getElementById('contactList');
@@ -478,7 +504,7 @@ window.addEventListener('hashchange', checkHash);
 
 // ==================== 초강력 암호화 (P-521 + SHA-512 + AES-256) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
-const PBKDF2_ITERS = 2000000, SALT_SIZE = 256, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+const PBKDF2_ITERS = 5000000, SALT_SIZE = 512, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -570,7 +596,7 @@ function onMsg(peerId, e) {
         if (inner.id) sess.receivedMessageIds.add(inner.id);
         switch (inner.type) {
           case 'text': addMsg(peerId, inner.content, 'other', inner.id); sendReadReceipt(peerId, inner.id); break;
-          case 'typing': document.getElementById('typingIndicator')?.style?.display = inner.state ? 'block' : 'none'; break;
+          case 'typing': document.getElementById('typingIndicator').style.display = inner.state ? 'block' : 'none'; break;
           case 'emoji': addMsg(peerId, inner.content, 'other', inner.id); break;
           case 'media': addMsg(peerId, `<img src="${inner.url}" style="max-width:200px;max-height:200px;border-radius:12px;" alt="media">`, 'other', inner.id); break;
           case 'read': markAsRead(peerId, inner.id); break;
@@ -586,7 +612,7 @@ async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const padded = { ...obj, _pad: Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10) };
+  const padded = { ...obj, _pad: crypto.getRandomValues(new Uint8Array(16)).join('') };
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, mk, str2buf(JSON.stringify(padded)));
   return { seq: sess.sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
 }
@@ -609,16 +635,30 @@ async function flushOutbox(peerId) {
   addMsg(peerId, '📬 대기 메시지 전송 완료', 'system');
 }
 
-// ==================== 이모지 / 미디어 (즐겨찾기) ====================
+// ==================== 이모지 / 미디어 (즐겨찾기 + 파일 업로드) ====================
 function sendEmoji(emoji) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); sendPayload(sess, { type: 'emoji', content: emoji, id: msgId }, emoji, msgId); closeAllPickers(); }
 function sendMedia(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); sendPayload(sess, { type: 'media', url, id: msgId }, `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:12px;">`, msgId); closeAllPickers(); }
 function addMediaUrl() {
   const url = document.getElementById('mediaSearch')?.value?.trim();
   if (!url) return;
   let favorites = JSON.parse(localStorage.getItem('p2p_media_fav') || '[]');
-  favorites.push(url);
-  localStorage.setItem('p2p_media_fav', JSON.stringify(favorites));
+  if (!favorites.includes(url)) { favorites.push(url); localStorage.setItem('p2p_media_fav', JSON.stringify(favorites)); }
   filterMedia();
+}
+async function uploadSticker(files) {
+  if (!files || files.length === 0) return;
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target.result;
+      let favorites = JSON.parse(localStorage.getItem('p2p_media_fav') || '[]');
+      favorites.push(url);
+      localStorage.setItem('p2p_media_fav', JSON.stringify(favorites));
+      filterMedia();
+      sendMedia(url);
+    };
+    reader.readAsDataURL(file);
+  }
 }
 function filterMedia() {
   const query = document.getElementById('mediaSearch')?.value?.toLowerCase() || '';
@@ -635,6 +675,52 @@ function closeAllPickers() { document.querySelectorAll('.picker-overlay').forEac
 
 async function sendReadReceipt(peerId, msgId) { const sess = sessions[peerId]; if (!sess?.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return; try { const enc = await encryptPayload(sess, { type: 'read', id: msgId }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
 function markAsRead(peerId, msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read-status')) t.innerHTML += ' <span class="read-status" style="color:var(--success);">✓✓</span>'; } }
+
+// ==================== 암호화 백업 / 복원 ====================
+async function exportBackup() {
+  const password = prompt('백업 암호를 입력하세요:');
+  if (!password) return;
+  const data = {
+    contacts: getContacts(),
+    media: JSON.parse(localStorage.getItem('p2p_media_fav') || '[]'),
+    version: 1
+  };
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, str2buf(JSON.stringify(data)));
+  const blob = new Blob([salt, iv, ct], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'p2p_backup.p2p'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importBackup() {
+  const input = document.createElement('input'); input.type = 'file'; input.accept = '.p2p';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const password = prompt('백업 암호를 입력하세요:');
+    if (!password) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const salt = buf.slice(0, 32);
+      const iv = buf.slice(32, 44);
+      const ct = buf.slice(44);
+      const km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+      const data = JSON.parse(textDecoder.decode(plain));
+      if (data.contacts) saveContacts(data.contacts);
+      if (data.media) localStorage.setItem('p2p_media_fav', JSON.stringify(data.media));
+      renderContactList();
+      filterMedia();
+      alert('백업이 복원되었습니다.');
+    } catch (e) { alert('복원 실패: 암호가 틀렸거나 파일이 손상되었습니다.'); }
+  };
+  input.click();
+}
 
 // 파일
 function handleFileStart(peerId, inner) { const sess = sessions[peerId]; if (!sess) return; sess.fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 }; addMsg(peerId, `📥 ${inner.name} (${formatBytes(inner.size)})`, 'other'); }
