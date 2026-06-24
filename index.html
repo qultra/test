@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 링크·연결 완전 수정</title>
+  <title>P2P 암호 채팅 – 완벽 상태·폭파·큐잉</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -12,9 +12,21 @@
       --text: #e0e5f0; --sub: #8892b0; --accent: #5b8df0; --danger: #f97070;
       --success: #45d68a; --border: #1a2332; --radius: 20px; --radius-sm: 14px;
     }
-    * { margin:0; padding:0; box-sizing:border-box; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent; -webkit-user-modify: read-only; }
-    input, textarea { -webkit-user-modify: read-write !important; user-select: text !important; -webkit-user-select: text !important; }
-    @media print { html, body, .container, #chatScreen { display: none !important; } html::before { content: "🔒 인쇄가 차단되었습니다."; color: red; font-size: 3rem; text-align: center; display: block; padding-top: 50vh; } }
+    * {
+      margin:0; padding:0; box-sizing:border-box;
+      user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
+      -webkit-touch-callout: none !important;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-modify: read-only;
+    }
+    input, textarea {
+      -webkit-user-modify: read-write !important;
+      user-select: text !important; -webkit-user-select: text !important;
+    }
+    @media print {
+      html, body, .container, #chatScreen { display: none !important; }
+      html::before { content: "🔒 인쇄가 차단되었습니다."; color: red; font-size: 3rem; text-align: center; display: block; padding-top: 50vh; }
+    }
     body {
       font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg); color: var(--text);
@@ -99,7 +111,7 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>200개 서버·대용량 파일·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>오프라인 큐·폭파·블러</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
       <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
@@ -115,7 +127,7 @@
 
 <script>
 // =====================================================================
-//  링크 생성·연결 문제 완전 해결 + 모든 기능 유지
+//  완벽한 연결 상태 표시 + 오프라인 큐 + 폭파 + 블러
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -124,7 +136,7 @@ const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); wh
 const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
-// 200개 ICE 서버
+// 200 ICE 서버
 const ICE_SERVERS = (() => {
   const servers = [];
   const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => servers.push({ urls: `stun:${host}:${p}` }));
@@ -251,7 +263,22 @@ function showSimple() {
 // ==================== WebRTC 초기화 및 시그널링 ====================
 function initPC() {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-  pc.oniceconnectionstatechange = onIceState;
+  pc.oniceconnectionstatechange = () => {
+    const state = pc.iceConnectionState;
+    console.log('ICE state:', state);
+    if (state === 'connected' || state === 'completed') {
+      isOnline = true;
+      updateConn(true);
+      if (isDestroyed()) executeDestroy();
+    } else if (state === 'disconnected') {
+      isOnline = false;
+      updateConn(false);
+      pc.restartIce();
+    } else if (state === 'failed' || state === 'closed') {
+      isOnline = false;
+      updateConn(false);
+    }
+  };
   pc.ondatachannel = e => {
     if (isDestroyed()) return;
     if (e.channel.label === 'chat') {
@@ -282,18 +309,6 @@ function setupDC() {
   };
   dc.onmessage = onMsg;
   dc.onclose = () => { isOnline = false; updateConn(false); };
-}
-function onIceState() {
-  const s = pc.iceConnectionState;
-  if (s === 'connected' || s === 'completed') {
-    isOnline = true; updateConn(true);
-    if ((!dc || dc.readyState !== 'open') && isOfferer) createDataChannels();
-    if (isDestroyed()) executeDestroy();
-  } else if (s === 'disconnected') {
-    isOnline = false; updateConn(false); pc.restartIce();
-  } else if (s === 'failed' || s === 'closed') {
-    isOnline = false; updateConn(false);
-  }
 }
 function waitIce() {
   return new Promise(r => {
@@ -409,7 +424,6 @@ async function checkHash() {
     } catch (e) { alert('잘못된 초대 링크입니다.'); }
   } else if (p.has('answer')) {
     if (!pc || !isOfferer) {
-      // Offerer가 아닌 상태에서 Answer 링크를 열었을 경우, 새 채팅을 시작한 후 적용하도록 유도
       alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.');
       return;
     }
@@ -551,9 +565,15 @@ async function sendText() {
   const inp = document.getElementById('msgInput'); const txt = inp.value.trim(); if (!txt) return;
   const msgId = genUUID(); const payload = { type: 'text', content: txt, id: msgId };
   if (!dc || dc.readyState !== 'open' || !sessionKey) {
-    if (sessionKey) { pendingOutbox.push({ payload, id: msgId }); addMsg(txt, 'me', msgId); addMsg('⏳ 오프라인-복구 시 전송', 'system'); }
-    else addMsg('⚠️ 암호를 설정하세요.', 'system');
-    inp.value = ''; return;
+    if (sessionKey) {
+      pendingOutbox.push({ payload, id: msgId });
+      addMsg(txt, 'me', msgId);
+      addMsg('⏳ 오프라인-복구 시 전송', 'system');
+    } else {
+      addMsg('⚠️ 암호를 설정하세요.', 'system');
+    }
+    inp.value = '';
+    return;
   }
   try {
     const enc = await encryptPayload(payload);
@@ -576,7 +596,6 @@ function onMsg(e) {
         if (inner.id) receivedMessageIds.add(inner.id);
         if (inner.type === 'text') { addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
         else if (inner.type === 'read') markAsRead(inner.id);
-        else if (inner.type === 'delete') document.getElementById('msg-' + inner.id)?.remove();
         else if (inner.type === 'file_start') handleFileStart(inner);
         else if (inner.type === 'file_end') { if (fileReceive && fileReceive.id === inner.id) assembleFile(); }
         else if (inner.type === '__destroy__') { markDestroyed(); executeDestroy(); }
@@ -585,10 +604,19 @@ function onMsg(e) {
   } catch (e) {}
 }
 async function destroyChat() {
-  if (!sessionKey || !dc || dc.readyState !== 'open') { markDestroyed(); executeDestroy(); return; }
+  if (!sessionKey || !dc || dc.readyState !== 'open') {
+    // 오프라인이면 폭파 플래그만 저장하고 UI 초기화
+    markDestroyed();
+    executeDestroy();
+    return;
+  }
   if (!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
-  try { const enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
-  markDestroyed(); executeDestroy();
+  try {
+    const enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() });
+    dc.send(JSON.stringify({ type: 'msg', ...enc }));
+  } catch (e) {}
+  markDestroyed();
+  executeDestroy();
 }
 function addMsg(text, who, msgId) {
   if (isDestroyed()) return;
@@ -596,9 +624,7 @@ function addMsg(text, who, msgId) {
   d.className = 'msg ' + (who === 'me' ? 'me' : who === 'other' ? 'other' : 'system');
   if (msgId) d.id = 'msg-' + msgId;
   let bubble = escapeHtml(text);
-  let timeHtml = `<div class="time">${new Date().toLocaleTimeString()}`;
-  if (who === 'me' && msgId) timeHtml += ` <button class="btn-small" style="background:none;color:var(--danger);padding:2px 6px;" onclick="deleteMessage('${msgId}')">✕</button>`;
-  timeHtml += `</div>`;
+  let timeHtml = `<div class="time">${new Date().toLocaleTimeString()}</div>`;
   if (fileReceive && text.startsWith('📥')) bubble += `<div class="progress"><div class="progress-bar" id="file-progress"></div></div>`;
   d.innerHTML = `<div class="bubble blur-target">${bubble}${timeHtml}<div class="noise-layer"></div></div>`;
   c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
@@ -611,7 +637,6 @@ function addEncryptedMessage(rawData) {
   c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
 }
 async function sendReadReceipt(msgId) { if (!sessionKey || isDestroyed()) return; try { const enc = await encryptPayload({ type: 'read', id: msgId }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
-async function deleteMessage(msgId) { if (!sessionKey || isDestroyed()) return; try { const enc = await encryptPayload({ type: 'delete', id: msgId }); dc.send(JSON.stringify({ type: 'msg', ...enc })); document.getElementById('msg-' + msgId)?.remove(); } catch (e) {} }
 function markAsRead(msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read')) t.innerHTML += ' <span class="read" style="color:var(--success);">✓✓</span>'; } }
 
 // ==================== 파일 전송 ====================
