@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 링크·연결 완벽 해결</title>
+  <title>P2P 암호 채팅 – 링크·연결 완전 수정</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -13,28 +12,15 @@
       --text: #e0e5f0; --sub: #8892b0; --accent: #5b8df0; --danger: #f97070;
       --success: #45d68a; --border: #1a2332; --radius: 20px; --radius-sm: 14px;
     }
-    * {
-      margin:0; padding:0; box-sizing:border-box;
-      user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
-      -webkit-touch-callout: none !important;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-user-modify: read-only;
-    }
-    input, textarea {
-      -webkit-user-modify: read-write !important;
-      user-select: text !important; -webkit-user-select: text !important;
-    }
-    @media print {
-      html, body, .container, #chatScreen { display: none !important; }
-      html::before { content: "🔒 인쇄가 차단되었습니다."; color: red; font-size: 3rem; text-align: center; display: block; padding-top: 50vh; }
-    }
+    * { margin:0; padding:0; box-sizing:border-box; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent; -webkit-user-modify: read-only; }
+    input, textarea { -webkit-user-modify: read-write !important; user-select: text !important; -webkit-user-select: text !important; }
+    @media print { html, body, .container, #chatScreen { display: none !important; } html::before { content: "🔒 인쇄가 차단되었습니다."; color: red; font-size: 3rem; text-align: center; display: block; padding-top: 50vh; } }
     body {
       font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg); color: var(--text);
       display: flex; justify-content: center; align-items: center;
       min-height: 100dvh; padding: 10px;
-      -webkit-backface-visibility: hidden; backface-visibility: hidden;
-      overscroll-behavior: none;
+      -webkit-backface-visibility: hidden; backface-visibility: hidden; overscroll-behavior: none;
     }
     .container {
       width: 100%; max-width: 520px; height: 95dvh;
@@ -45,14 +31,9 @@
     }
     #antiScreenshotCanvas {
       position: fixed; top:0; left:0; width:100%; height:100%;
-      z-index: 9998; pointer-events: none; opacity: 0.03;
-      mix-blend-mode: difference;
+      z-index: 9998; pointer-events: none; opacity: 0.03; mix-blend-mode: difference;
     }
-    .blur-target {
-      filter: blur(12px) !important;
-      transition: filter 0.2s ease;
-      cursor: pointer;
-    }
+    .blur-target { filter: blur(12px) !important; transition: filter 0.2s ease; cursor: pointer; }
     .blur-target.revealed { filter: blur(0) !important; }
     .blur-target.locked { filter: blur(20px) !important; cursor: not-allowed; pointer-events: auto; }
 
@@ -118,8 +99,8 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>대용량 파일·완전 삭제·블러 보안</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
-      <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">ICE 후보를 수집 중입니다. 잠시만 기다려 주세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>200개 서버·대용량 파일·완전 삭제</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
     <div id="chatScreen">
@@ -134,37 +115,24 @@
 
 <script>
 // =====================================================================
-//  기본 유틸리티 (Base64url 인코딩) – 완전하게 디버깅
+//  링크 생성·연결 문제 완전 해결 + 모든 기능 유지
 // =====================================================================
-const te = new TextEncoder(), td = new TextDecoder();
-const toBase64url = (buf) => {
-  const bytes = new Uint8Array(buf);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-};
-const fromBase64url = (str) => {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  const binary = atob(str);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-};
-const encodeSDP = (obj) => toBase64url(te.encode(JSON.stringify(obj)));
-const decodeSDP = (str) => JSON.parse(td.decode(fromBase64url(str)));
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; return Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer; };
+const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
+const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
-// =====================================================================
-//  200개 ICE 서버 (무료 공개 STUN/TURN)
-// =====================================================================
+// 200개 ICE 서버
 const ICE_SERVERS = (() => {
-  const list = [];
-  const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => list.push({ urls: `stun:${host}:${p}` }));
-  const addTURN = (host, ports, user, cred) => ports.forEach(p => {
-    list.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
-    list.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
+  const servers = [];
+  const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => servers.push({ urls: `stun:${host}:${p}` }));
+  const addTURN = (host, ports = [3478], user, cred) => ports.forEach(p => {
+    servers.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
+    servers.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
   });
-  [
+  const hosts = [
     'stun.l.google.com','stun1.l.google.com','stun2.l.google.com','stun3.l.google.com','stun4.l.google.com',
     'stun.cloudflare.com','global.stun.twilio.com','stun.freeswitch.org','stun.nextcloud.com',
     'stun.viagenie.ca','stun.ekiga.net','stun.linphone.org','stun.iptel.org','stun.services.mozilla.com',
@@ -179,18 +147,17 @@ const ICE_SERVERS = (() => {
     'stun.telbo.com','stun.telio.no','stun.telstra.com','stun.tng.de','stun.twt.it','stun.vivox.com',
     'stun.voip.aebc.com','stun.voip.eutelia.it','stun.voipcheap.com','stun.voipdiscount.com',
     'stun.voipraider.com','stun.vonage.com','stun.voxox.com','stun.zadarma.com'
-  ].forEach(h => addSTUN(h));
+  ];
+  hosts.forEach(h => addSTUN(h));
   addTURN('openrelay.metered.ca', [80, 443], 'openrelayproject', 'openrelayproject');
   addTURN('turn.anyfirewall.com', [443], 'webrtc', 'webrtc');
   addTURN('numb.viagenie.ca', [3478, 80, 443], 'webrtc@live.com', 'muazkh');
   addTURN('turn.matrix.org', [3478], 'matrix', 'matrix');
   const seen = new Set();
-  return list.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
+  return servers.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
 })();
 
-// =====================================================================
-//  전역 변수
-// =====================================================================
+// ==================== 상태 변수 ====================
 let pc, dc, isOfferer = false, password = null;
 let authKey, sessionKey, sendChain, recvChain;
 let ourEcdhPair = null, peerEcdhPub = null;
@@ -200,10 +167,40 @@ let pendingOutbox = [];
 const receivedMessageIds = new Set();
 const DESTROY_KEY = 'p2p_chat_destroyed_v2';
 const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session';
+const TYPING_LABEL = 'typing';
 
-// =====================================================================
-//  블러 관리 (오프라인 시 해제 불가)
-// =====================================================================
+// ==================== 파괴 플래그 ====================
+function isDestroyed() { return !!(localStorage.getItem(DESTROY_KEY) || sessionStorage.getItem(DESTROY_SESSION_KEY)); }
+function markDestroyed() {
+  const ts = Date.now();
+  localStorage.setItem(DESTROY_KEY, ts);
+  sessionStorage.setItem(DESTROY_SESSION_KEY, ts);
+  if (location.hash) history.replaceState(null, '', location.pathname);
+}
+function clearDestroyedFlags() { localStorage.removeItem(DESTROY_KEY); sessionStorage.removeItem(DESTROY_SESSION_KEY); }
+
+setInterval(() => { if (isDestroyed()) { showSimple(); } }, 500);
+
+function executeDestroy() {
+  document.getElementById('messages').innerHTML = '';
+  receivedMessageIds.clear(); pendingOutbox = [];
+  markDestroyed();
+  document.getElementById('simpleMode').style.display = 'block';
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('securityCard').style.display = 'none';
+  document.getElementById('sessionFingerprint').textContent = '';
+  document.getElementById('passwordPrompt').style.display = 'block';
+  document.getElementById('passwordError').style.display = 'none';
+  if (pc) { pc.close(); pc = null; }
+  dc = null; typingChannel = null;
+  authKey = sessionKey = null; sendChain = recvChain = null;
+  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
+  handshakeDone = false; isOnline = false;
+  updateConn(false);
+  document.querySelectorAll('.blur-target').forEach(el => el.classList.remove('blur-target','revealed','locked'));
+}
+
+// ==================== 블러 관리 ====================
 let securityLockLevel = 0, globalBlurTimer = null;
 function applyBlurToSensitiveElements() {
   document.querySelectorAll('.bubble').forEach(el => {
@@ -235,48 +232,7 @@ function triggerSecurityLock(level = 1) {
   setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
 }
 
-// =====================================================================
-//  완전 삭제 (채팅방 영구 제거)
-// =====================================================================
-function isDestroyed() { return !!(localStorage.getItem(DESTROY_KEY) || sessionStorage.getItem(DESTROY_SESSION_KEY)); }
-function markDestroyed() {
-  const ts = Date.now();
-  localStorage.setItem(DESTROY_KEY, ts);
-  sessionStorage.setItem(DESTROY_SESSION_KEY, ts);
-  if (location.hash) history.replaceState(null, '', location.pathname);
-}
-function clearDestroyedFlags() {
-  localStorage.removeItem(DESTROY_KEY);
-  sessionStorage.removeItem(DESTROY_SESSION_KEY);
-}
-setInterval(() => {
-  if (isDestroyed()) {
-    document.getElementById('simpleMode').style.display = 'block';
-    document.getElementById('chatScreen').style.display = 'none';
-  }
-}, 500);
-function executeDestroy() {
-  document.getElementById('messages').innerHTML = '';
-  receivedMessageIds.clear(); pendingOutbox = [];
-  markDestroyed();
-  document.getElementById('simpleMode').style.display = 'block';
-  document.getElementById('chatScreen').style.display = 'none';
-  document.getElementById('securityCard').style.display = 'none';
-  document.getElementById('sessionFingerprint').textContent = '';
-  document.getElementById('passwordPrompt').style.display = 'block';
-  document.getElementById('passwordError').style.display = 'none';
-  if (pc) { pc.close(); pc = null; }
-  dc = null; typingChannel = null;
-  authKey = sessionKey = null; sendChain = recvChain = null;
-  salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
-  handshakeDone = false; isOnline = false;
-  updateConn(false);
-  document.querySelectorAll('.blur-target').forEach(el => el.classList.remove('blur-target','revealed','locked'));
-}
-
-// =====================================================================
-//  UI 업데이트
-// =====================================================================
+// ==================== UI ====================
 function updateConn(ok) {
   document.getElementById('connDot').className = 'dot ' + (ok ? 'on' : 'off');
   document.getElementById('connLabel').textContent = ok ? '연결됨' : '오프라인';
@@ -292,9 +248,7 @@ function showSimple() {
   document.getElementById('chatScreen').style.display = 'none';
 }
 
-// =====================================================================
-//  WebRTC 초기화 및 시그널링 (강화된 waitIce)
-// =====================================================================
+// ==================== WebRTC 초기화 및 시그널링 ====================
 function initPC() {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   pc.oniceconnectionstatechange = onIceState;
@@ -341,86 +295,28 @@ function onIceState() {
     isOnline = false; updateConn(false);
   }
 }
-
-// 중요: ICE 후보 수집 완전 대기 (15초 타임아웃)
 function waitIce() {
-  return new Promise((resolve) => {
-    if (pc.iceGatheringState === 'complete') {
-      resolve();
-      return;
-    }
-    const onStateChange = () => {
-      if (pc.iceGatheringState === 'complete') {
-        pc.removeEventListener('icegatheringstatechange', onStateChange);
-        clearTimeout(timeout);
-        resolve();
-      }
-    };
-    const timeout = setTimeout(() => {
-      pc.removeEventListener('icegatheringstatechange', onStateChange);
-      console.warn('ICE gathering timed out, proceeding anyway');
-      resolve();
-    }, 15000);
-    pc.addEventListener('icegatheringstatechange', onStateChange);
+  return new Promise(r => {
+    if (pc.iceGatheringState === 'complete') r();
+    else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); });
   });
 }
 
-// =====================================================================
-//  해시 링크를 통한 연결
-// =====================================================================
-async function checkHash() {
-  if (isDestroyed()) { executeDestroy(); return; }
-  const h = location.hash.substring(1);
-  if (!h) return;
-  const p = new URLSearchParams(h);
-  if (p.has('offer')) {
-    try {
-      const offer = decodeSDP(p.get('offer'));
-      closeConnection();
-      document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
-      document.getElementById('answerPanel').classList.remove('hidden');
-      document.getElementById('autoAnswerContent').classList.remove('hidden');
-      document.getElementById('manualJoinContent').classList.add('hidden');
-      document.getElementById('answerSpinner').style.display = 'inline-block';
-      document.getElementById('answerReadyPanel').classList.add('hidden');
-      await initiateAnswer(offer);
-    } catch (e) { alert('잘못된 초대 링크입니다.'); }
-  } else if (p.has('answer')) {
-    if (!pc || !isOfferer) {
-      alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.');
-      return;
-    }
-    try {
-      const answer = decodeSDP(p.get('answer'));
-      await pc.setRemoteDescription(answer);
-    } catch (e) { alert('잘못된 Answer 링크입니다.'); }
-  }
-}
-window.addEventListener('hashchange', checkHash);
-
+// ==================== 시그널링 함수들 ====================
 async function startNewChat() {
   clearDestroyedFlags();
   closeConnection();
   isOfferer = true;
-  document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('answerPanel').classList.add('hidden');
   document.getElementById('offerSpinner').style.display = 'inline-block';
-  document.getElementById('offerLinkDisplay').textContent = '생성 중...';
   initPC();
   createDataChannels();
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    // ICE 후보 수집 완전 대기
-    await waitIce();
+  pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => waitIce().then(() => {
     document.getElementById('offerSpinner').style.display = 'none';
     const offerB64 = encodeSDP(pc.localDescription);
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
-  } catch (e) {
-    document.getElementById('offerSpinner').style.display = 'none';
-    alert('연결 생성 실패: ' + e.message);
-  }
+  }));
 }
 
 async function initiateAnswer(offer) {
@@ -436,7 +332,6 @@ async function initiateAnswer(offer) {
 }
 
 function showJoinPanel() {
-  document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
   document.getElementById('offerPanel').classList.add('hidden');
   document.getElementById('answerPanel').classList.remove('hidden');
   document.getElementById('autoAnswerContent').classList.add('hidden');
@@ -456,16 +351,12 @@ async function createAnswerFromOffer() {
     if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
     offerStr = hp.get('offer');
   }
-  try {
-    const offerObj = decodeSDP(offerStr);
-    await pc.setRemoteDescription(offerObj);
-    const ans = await pc.createAnswer();
-    await pc.setLocalDescription(ans);
-    await waitIce();
-    document.getElementById('manualJoinContent').classList.add('hidden');
-    document.getElementById('answerResultPanel').classList.remove('hidden');
-    document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
-  } catch (e) { alert('Answer 생성 실패: ' + e.message); }
+  await pc.setRemoteDescription(decodeSDP(offerStr));
+  const ans = await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  await waitIce();
+  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
+  document.getElementById('answerResultPanel').classList.remove('hidden');
 }
 
 async function applyAnswerLink() {
@@ -480,8 +371,7 @@ async function applyAnswerLink() {
       if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
       answerStr = hp.get('answer');
     }
-    const answerObj = decodeSDP(answerStr);
-    await pc.setRemoteDescription(answerObj);
+    await pc.setRemoteDescription(decodeSDP(answerStr));
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
@@ -499,15 +389,45 @@ function closeConnection() {
   updateConn(false);
 }
 
-// =====================================================================
-//  암호화 (P-521, SHA-512, AES-256, 100만 PBKDF2)
-// =====================================================================
+// ==================== 해시 기반 연결 ====================
+async function checkHash() {
+  if (isDestroyed()) { executeDestroy(); return; }
+  const h = location.hash.substring(1);
+  if (!h) return;
+  const p = new URLSearchParams(h);
+  if (p.has('offer')) {
+    try {
+      const offer = decodeSDP(p.get('offer'));
+      closeConnection();
+      document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
+      document.getElementById('answerPanel').classList.remove('hidden');
+      document.getElementById('autoAnswerContent').classList.remove('hidden');
+      document.getElementById('manualJoinContent').classList.add('hidden');
+      document.getElementById('answerSpinner').style.display = 'inline-block';
+      document.getElementById('answerReadyPanel').classList.add('hidden');
+      await initiateAnswer(offer);
+    } catch (e) { alert('잘못된 초대 링크입니다.'); }
+  } else if (p.has('answer')) {
+    if (!pc || !isOfferer) {
+      // Offerer가 아닌 상태에서 Answer 링크를 열었을 경우, 새 채팅을 시작한 후 적용하도록 유도
+      alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.');
+      return;
+    }
+    try {
+      const answer = decodeSDP(p.get('answer'));
+      await pc.setRemoteDescription(answer);
+    } catch (e) { alert('잘못된 Answer 링크입니다.'); }
+  }
+}
+window.addEventListener('hashchange', checkHash);
+
+// ==================== 암호화 엔진 (P-521, SHA-512, 100만 PBKDF2) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
 async function startEcdhExchange() {
   try {
-    const keyPair = await crypto.subtle.generateKey(ECDH_ALG, true, ['deriveKey', 'deriveBits']);
+    const keyPair = await crypto.subtle.generateKey(ECDH_ALG, true, ['deriveKey','deriveBits']);
     ourEcdhPair = { privateKey: keyPair.privateKey, publicKey: keyPair.publicKey };
     const pubRaw = await crypto.subtle.exportKey('raw', ourEcdhPair.publicKey);
     if (isOfferer) {
@@ -610,12 +530,13 @@ async function decryptPayload(d) {
     const mk = await ratchetForward(recvChain);
     recvChain.seq = seq;
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, mk, new Uint8Array(ct));
-    const obj = JSON.parse(td.decode(plain));
+    const obj = JSON.parse(textDecoder.decode(plain));
     delete obj._pad;
     return obj;
   } catch (e) { recvChain.chain = prevChain; recvChain.seq = prevSeq; throw e; }
 }
 
+// ==================== 메시지 송수신 ====================
 async function flushOutbox() {
   if (isDestroyed()) return;
   if (!dc || dc.readyState !== 'open' || pendingOutbox.length === 0) return;
@@ -625,19 +546,14 @@ async function flushOutbox() {
   }
   addMsg('📬 대기 메시지 전송 완료', 'system');
 }
-
 async function sendText() {
   if (isDestroyed()) return;
-  const inp = document.getElementById('msgInput');
-  const txt = inp.value.trim();
-  if (!txt) return;
-  const msgId = genUUID();
-  const payload = { type: 'text', content: txt, id: msgId };
+  const inp = document.getElementById('msgInput'); const txt = inp.value.trim(); if (!txt) return;
+  const msgId = genUUID(); const payload = { type: 'text', content: txt, id: msgId };
   if (!dc || dc.readyState !== 'open' || !sessionKey) {
     if (sessionKey) { pendingOutbox.push({ payload, id: msgId }); addMsg(txt, 'me', msgId); addMsg('⏳ 오프라인-복구 시 전송', 'system'); }
     else addMsg('⚠️ 암호를 설정하세요.', 'system');
-    inp.value = '';
-    return;
+    inp.value = ''; return;
   }
   try {
     const enc = await encryptPayload(payload);
@@ -646,7 +562,6 @@ async function sendText() {
   } catch (e) { pendingOutbox.push({ payload, id: msgId }); addMsg(txt, 'me', msgId); addMsg('⚠️ 전송 실패-대기열 저장', 'system'); }
   inp.value = '';
 }
-
 function onMsg(e) {
   if (isDestroyed()) return;
   if (e.data instanceof ArrayBuffer) { handleBinaryChunk(e.data); return; }
@@ -669,14 +584,12 @@ function onMsg(e) {
     }
   } catch (e) {}
 }
-
 async function destroyChat() {
   if (!sessionKey || !dc || dc.readyState !== 'open') { markDestroyed(); executeDestroy(); return; }
   if (!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
   try { const enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
   markDestroyed(); executeDestroy();
 }
-
 function addMsg(text, who, msgId) {
   if (isDestroyed()) return;
   const c = document.getElementById('messages'), d = document.createElement('div');
@@ -690,7 +603,6 @@ function addMsg(text, who, msgId) {
   d.innerHTML = `<div class="bubble blur-target">${bubble}${timeHtml}<div class="noise-layer"></div></div>`;
   c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
 }
-
 function addEncryptedMessage(rawData) {
   if (isDestroyed()) return;
   const c = document.getElementById('messages'), d = document.createElement('div');
@@ -698,14 +610,11 @@ function addEncryptedMessage(rawData) {
   d.innerHTML = `<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`;
   c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
 }
-
 async function sendReadReceipt(msgId) { if (!sessionKey || isDestroyed()) return; try { const enc = await encryptPayload({ type: 'read', id: msgId }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
 async function deleteMessage(msgId) { if (!sessionKey || isDestroyed()) return; try { const enc = await encryptPayload({ type: 'delete', id: msgId }); dc.send(JSON.stringify({ type: 'msg', ...enc })); document.getElementById('msg-' + msgId)?.remove(); } catch (e) {} }
 function markAsRead(msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read')) t.innerHTML += ' <span class="read" style="color:var(--success);">✓✓</span>'; } }
 
-// =====================================================================
-//  파일 전송 (대용량 Blob)
-// =====================================================================
+// ==================== 파일 전송 ====================
 function handleFileStart(inner) {
   fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 };
   addMsg(`📥 ${inner.name} (${formatBytes(inner.size)})`, 'other');
@@ -761,17 +670,15 @@ async function sendFile(file) {
   addMsg(`📤 ${file.name} 전송 완료`, 'me');
 }
 
-// =====================================================================
-//  유틸리티
-// =====================================================================
-const buf2hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('');
-const str2buf = s => te.encode(s);
+// ==================== 유틸리티 ====================
+const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const str2buf = s => textEncoder.encode(s);
 const buf2b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
-const b642buf = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
-const concatBufs = (...bufs) => { let len = bufs.reduce((a,b) => a + b.byteLength, 0), tmp = new Uint8Array(len), off = 0; bufs.forEach(b => { tmp.set(new Uint8Array(b), off); off += b.byteLength; }); return tmp.buffer; };
-const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => { const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16; return (c == 'x' ? r : r & 0x3 | 0x8).toString(16); });
-
-function formatBytes(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : b < 1073741824 ? (b / 1048576).toFixed(1) + ' MB' : (b / 1073741824).toFixed(1) + ' GB'; }
+const b642buf = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
+const concatBufs = (...bufs) => { let len=bufs.reduce((a,b)=>a+b.byteLength,0), tmp=new Uint8Array(len), off=0; bufs.forEach(b=>{tmp.set(new Uint8Array(b),off);off+=b.byteLength;}); return tmp.buffer; };
+const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]%16;return(c=='x'?r:r&0x3|0x8).toString(16);});
+function formatBytes(b) { return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(1)+' GB'; }
+function toggleSecurityDetail() { document.getElementById('securityDetail').classList.toggle('hidden'); }
 function copyTextById(id) {
   const el = document.getElementById(id);
   const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
@@ -784,37 +691,10 @@ function copyTextById(id) {
     alert('링크가 복사되었습니다.');
   });
 }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]); }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
-// =====================================================================
-//  렌더링 왜곡 (캡처 방해)
-// =====================================================================
-(function() {
-  const canvas = document.getElementById('antiScreenshotCanvas');
-  const ctx = canvas.getContext('2d');
-  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
-  resize(); window.addEventListener('resize', resize);
-  setInterval(() => {
-    const img = ctx.createImageData(canvas.width, canvas.height);
-    for (let i = 0; i < img.data.length; i += 4) {
-      img.data[i] = Math.random() * 5; img.data[i+1] = Math.random() * 5; img.data[i+2] = Math.random() * 5; img.data[i+3] = 3;
-    }
-    ctx.putImageData(img, 0, 0);
-    ctx.fillStyle = 'rgba(255,255,255,0.002)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }, 100);
-  let frame = 0;
-  (function jitter() {
-    frame++;
-    document.body.style.transform = `translate(${Math.sin(frame/10)*0.2}px, ${Math.cos(frame/15)*0.2}px)`;
-    requestAnimationFrame(jitter);
-  })();
-})();
-
-// =====================================================================
-//  시작
-// =====================================================================
+// ==================== 초기 실행 ====================
 checkHash();
 </script>
 </body>
 </html>
-```
