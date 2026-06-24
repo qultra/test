@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 심플·고급·완전보안</title>
+  <title>P2P 비밀 메신저 – 모바일 최적화</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -11,6 +11,7 @@
       --bg: #06090f; --surface: #0f141e; --card: rgba(15,20,30,0.9);
       --text: #e0e5f0; --sub: #8892b0; --accent: #5b8df0; --danger: #f97070;
       --success: #45d68a; --border: #1a2332; --radius: 20px; --radius-sm: 14px;
+      --safe-bottom: env(safe-area-inset-bottom, 10px);
     }
     * { margin:0; padding:0; box-sizing:border-box; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent; -webkit-user-modify: read-only; }
     input, textarea { -webkit-user-modify: read-write !important; user-select: text !important; -webkit-user-select: text !important; }
@@ -33,7 +34,7 @@
       position: fixed; top:0; left:0; width:100%; height:100%;
       z-index: 9998; pointer-events: none; opacity: 0.03; mix-blend-mode: difference;
     }
-    .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; min-height:56px; }
     .header h1 { font-size:1.1rem; font-weight:700; background:linear-gradient(135deg,#90b4ff,#b794f4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .status-bar { display:flex; align-items:center; gap:7px; }
     .dot { width:10px; height:10px; border-radius:50%; transition:0.2s; }
@@ -44,14 +45,14 @@
     .main-content::-webkit-scrollbar { width:4px; } .main-content::-webkit-scrollbar-thumb { background:#253040; border-radius:2px; }
 
     .card { background:var(--card); backdrop-filter:blur(14px); border-radius:var(--radius); padding:18px; margin-bottom:12px; border:1px solid var(--border); }
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:12px 20px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; font-size:0.9rem; transition:0.2s; width:100%; backdrop-filter:blur(10px); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:14px 20px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; font-size:0.95rem; transition:0.2s; width:100%; backdrop-filter:blur(10px); -webkit-tap-highlight-color: transparent; }
     .btn:hover { background:rgba(255,255,255,0.12); transform:translateY(-1px); }
     .btn:active { transform:scale(0.97); }
     .btn.primary { background:var(--accent); border:none; }
     .btn.danger { background:var(--danger); border:none; }
-    .btn-small { padding:7px 12px; font-size:0.8rem; width:auto; }
+    .btn-small { padding:8px 14px; font-size:0.8rem; width:auto; border-radius:12px; }
 
-    input, textarea { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 15px; font-size:0.95rem; outline:none; user-select:text; -webkit-user-select:text; }
+    input, textarea { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 15px; font-size:16px; outline:none; user-select:text; -webkit-user-select:text; }
     input:focus, textarea:focus { border-color:var(--accent); }
 
     #chatScreen { display:none; flex-direction:column; flex:1; }
@@ -69,38 +70,67 @@
     .progress-bar { height:100%; width:0%; background:var(--accent); transition:width 0.3s; }
     .file-preview img, .file-preview video { max-width:180px; max-height:140px; border-radius:12px; border:1px solid var(--border); }
 
-    .input-bar { display:flex; gap:6px; padding:10px 0 0; align-items:flex-end; }
-    #msgInput { flex:1; min-height:42px; max-height:110px; resize:none; }
-    .icon-btn { background:none; border:none; font-size:1.3rem; cursor:pointer; padding:8px; color:var(--accent); }
-    .send-btn { background:var(--accent); color:white; width:42px; height:42px; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; }
+    .input-bar { display:flex; gap:6px; padding:10px 0 0; align-items:flex-end; padding-bottom:var(--safe-bottom); }
+    #msgInput { flex:1; min-height:44px; max-height:110px; resize:none; }
+    .icon-btn { background:none; border:none; font-size:1.3rem; cursor:pointer; padding:10px; color:var(--accent); -webkit-tap-highlight-color: transparent; }
+    .send-btn { background:var(--accent); color:white; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; flex-shrink:0; }
 
-    .action-bar { display:flex; gap:4px; padding:4px 0 0; position:relative; }
-    .action-btn { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:14px; cursor:pointer; font-size:0.8rem; }
-    .action-btn:hover { background:rgba(255,255,255,0.1); }
+    .action-bar { display:flex; gap:4px; padding:4px 0 0; position:relative; flex-wrap:wrap; }
+    .action-btn { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:14px; cursor:pointer; font-size:0.85rem; -webkit-tap-highlight-color: transparent; }
+    .action-btn:active { background:rgba(255,255,255,0.15); }
 
-    .picker-overlay { display:none; position:absolute; bottom:100%; left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; max-height:250px; overflow-y:auto; z-index:20; margin-bottom:4px; }
+    .picker-overlay { display:none; position:absolute; bottom:100%; left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; max-height:220px; overflow-y:auto; z-index:20; margin-bottom:4px; }
     .picker-overlay.active { display:flex; flex-direction:column; gap:8px; }
-    .picker-search { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; font-size:0.85rem; outline:none; margin-bottom:4px; }
-    .picker-search:focus { border-color:var(--accent); }
+    .picker-search { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-size:16px; outline:none; margin-bottom:4px; }
     .picker-grid { display:flex; flex-wrap:wrap; gap:8px; }
     .picker-item { cursor:pointer; border-radius:8px; overflow:hidden; transition:0.15s; }
-    .picker-item:hover { transform:scale(1.05); background:rgba(255,255,255,0.1); }
-    .picker-item img { width:70px; height:70px; object-fit:cover; border-radius:8px; }
-    .emoji-item { font-size:1.8rem; cursor:pointer; padding:4px 8px; border-radius:8px; }
-    .emoji-item:hover { background:rgba(255,255,255,0.1); }
+    .picker-item:active { transform:scale(1.05); background:rgba(255,255,255,0.1); }
+    .picker-item img { width:64px; height:64px; object-fit:cover; border-radius:8px; }
+    .emoji-item { font-size:1.8rem; cursor:pointer; padding:6px 8px; border-radius:8px; }
+    .emoji-item:active { background:rgba(255,255,255,0.1); }
+
+    /* 연락처 목록 */
+    .contact-list { display:flex; flex-direction:column; gap:8px; }
+    .contact-card {
+      background:rgba(255,255,255,0.03); border:1px solid var(--border);
+      border-radius:16px; padding:14px 16px; cursor:pointer;
+      display:flex; align-items:center; gap:12px; transition:0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .contact-card:active { background:rgba(255,255,255,0.08); }
+    .contact-card.active { border-color:var(--accent); background:rgba(91,141,240,0.1); }
+    .contact-avatar {
+      width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.08);
+      display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+      flex-shrink:0; position:relative;
+    }
+    .contact-dot {
+      position:absolute; bottom:0; right:0; width:12px; height:12px;
+      border-radius:50%; border:2px solid var(--surface);
+    }
+    .contact-dot.on { background:var(--success); }
+    .contact-dot.off { background:var(--danger); }
+    .contact-info { flex:1; min-width:0; }
+    .contact-name { font-size:0.95rem; font-weight:600; }
+    .contact-status { font-size:0.75rem; color:var(--sub); margin-top:2px; }
+    .add-contact-btn {
+      background:rgba(255,255,255,0.03); border:1px dashed var(--border);
+      border-radius:16px; padding:14px 16px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      gap:8px; color:var(--sub); font-size:0.9rem; transition:0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .add-contact-btn:active { background:rgba(255,255,255,0.08); color:var(--text); }
 
     .hidden { display:none !important; }
     .text-center { text-align:center; } .text-sub { color:var(--sub); font-size:0.82rem; }
-    .mt { margin-top:10px; } .mb { margin-bottom:10px; }
+    .mt { margin-top:12px; } .mb { margin-bottom:12px; }
     .link-box { word-break:break-all; background:#0a0f18; padding:10px; border-radius:12px; font-size:0.72rem; margin:8px 0; max-height:75px; overflow-y:auto; color:#9aa4bf; }
     .fingerprint { font-family:monospace; font-size:0.65rem; background:#0a0f18; padding:6px; border-radius:8px; word-break:break-all; }
 
-    .peer-list-simple { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
-    .peer-chip { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:20px; padding:8px 14px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:6px; }
-    .peer-chip.active { background:var(--accent); border-color:var(--accent); }
-    .peer-chip .chip-dot { width:7px; height:7px; border-radius:50%; }
-    .peer-chip .chip-dot.on { background:var(--success); }
-    .peer-chip .chip-dot.off { background:var(--danger); }
+    .chat-header { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
+    .back-btn { background:none; border:none; color:var(--accent); font-size:1.2rem; cursor:pointer; padding:6px; }
+    .chat-title { font-size:0.95rem; font-weight:600; flex:1; }
 
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
@@ -114,13 +144,15 @@
   <div class="main-content" id="mainArea">
     <!-- 메인 화면 -->
     <div id="simpleMode">
-      <div class="card text-center">
-        <h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3>
-        <p class="text-sub mb">512+급 종단간 암호화<br>이모지·스티커·짤·파일 완벽 지원</p>
+      <div class="card text-center" style="padding:14px;">
+        <h3 style="margin-bottom:4px;">서버 없이 완벽한 프라이버시</h3>
+        <p class="text-sub mb">512+급 종단간 암호화</p>
         <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
         <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
-        <div id="peerListSimple" class="peer-list-simple mt"></div>
       </div>
+      <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 연락처 목록</div>
+      <div class="contact-list" id="contactList"></div>
+      <div class="add-contact-btn mt" onclick="addContact()">＋ 새 연락처 추가</div>
       <!-- Offer 패널 -->
       <div id="offerPanel" class="hidden">
         <div class="card text-center">
@@ -161,19 +193,23 @@
 
     <!-- 채팅 화면 -->
     <div id="chatScreen">
-      <div id="securityCard" class="card" style="margin:0 0 8px; padding:8px 14px; font-size:0.78rem; display:none; align-items:center; gap:6px;">
-        <span>🔒 세션:</span><span id="sessionFingerprint" class="fingerprint blur-target" style="flex:1;"></span>
-        <button class="btn-small danger" onclick="destroyActiveChat()">💣 폭파</button>
+      <div class="chat-header" id="chatHeader">
+        <button class="back-btn" onclick="goHome()">←</button>
+        <span class="chat-title" id="chatTitle">채팅</span>
+        <button class="btn-small danger" onclick="destroyActiveChat()" style="padding:6px 10px; font-size:0.7rem;">💣</button>
       </div>
-      <div id="passwordPrompt" class="card text-center">
+      <div id="securityCard" class="card" style="margin:0 0 4px; padding:6px 12px; font-size:0.7rem; display:none; align-items:center; gap:6px;">
+        <span>🔒</span><span id="sessionFingerprint" class="fingerprint" style="flex:1;"></span>
+      </div>
+      <div id="passwordPrompt" class="card text-center" style="margin:8px;">
         <strong>🔐 채팅방 암호 입력</strong>
-        <input type="password" id="chatPasswordInput" placeholder="상대와 공유한 암호">
+        <input type="password" id="chatPasswordInput" placeholder="상대와 공유한 암호" style="margin-top:8px;">
         <button class="btn primary mt" id="submitPasswordBtn" onclick="submitPassword()">암호 설정</button>
         <p class="text-sub mt">암호가 없으면 수신된 암호문만 표시됩니다.</p>
         <p id="passwordError" class="text-sub" style="color:var(--danger); display:none;"></p>
       </div>
       <div id="messages"></div>
-      <div class="action-bar" style="position:relative;">
+      <div class="action-bar" style="position:relative; padding:0 8px;">
         <button class="action-btn" onclick="togglePicker('emoji')">😀</button>
         <button class="action-btn" onclick="togglePicker('sticker')">⭐</button>
         <button class="action-btn" onclick="togglePicker('gif')">🎞️</button>
@@ -187,7 +223,7 @@
           <div class="picker-grid" id="gifGrid"></div>
         </div>
       </div>
-      <div class="input-bar">
+      <div class="input-bar" style="padding:8px;">
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="파일">📎</button>
         <textarea id="msgInput" rows="1" placeholder="메시지 (종단간 암호화)"></textarea>
         <button class="send-btn" onclick="sendText()">➤</button>
@@ -199,7 +235,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 심플·고급·완전보안
+//  P2P 비밀 메신저 – 모바일 최적화 완전판
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -264,7 +300,7 @@ function isDestroyed(peerId) { return !!(localStorage.getItem(DESTROY_PREFIX + p
 function markDestroyed(peerId) { localStorage.setItem(DESTROY_PREFIX + peerId, Date.now()); sessionStorage.setItem(DESTROY_PREFIX + peerId, Date.now()); if (location.hash) history.replaceState(null, '', location.pathname); }
 function clearDestroyed(peerId) { localStorage.removeItem(DESTROY_PREFIX + peerId); sessionStorage.removeItem(DESTROY_PREFIX + peerId); }
 
-// ==================== 연락처 관리 (간소화) ====================
+// ==================== 연락처 관리 ====================
 function getContacts() { try { return JSON.parse(localStorage.getItem('p2p_contacts') || '[]'); } catch (e) { return []; } }
 function saveContacts(contacts) { localStorage.setItem('p2p_contacts', JSON.stringify(contacts)); }
 function addContact() {
@@ -276,19 +312,27 @@ function addContact() {
   if (contacts.find(c => c.id === id)) { alert('이미 존재하는 ID입니다.'); return; }
   contacts.push({ id, name });
   saveContacts(contacts);
-  renderPeerList();
+  renderContactList();
 }
-function renderPeerList() {
-  const container = document.getElementById('peerListSimple');
+function renderContactList() {
+  const container = document.getElementById('contactList');
   if (!container) return;
   const contacts = getContacts();
   container.innerHTML = contacts.map(c => {
     const sess = sessions[c.id];
     const online = sess && sess.isOnline;
     const destroyed = isDestroyed(c.id);
-    return `<span class="peer-chip ${c.id === activePeerId ? 'active' : ''} ${destroyed ? 'hidden' : ''}" onclick="selectPeer('${c.id}')">
-      <span class="chip-dot ${online ? 'on' : 'off'}"></span> ${escapeHtml(c.name)}
-    </span>`;
+    if (destroyed) return '';
+    return `<div class="contact-card ${c.id === activePeerId ? 'active' : ''}" onclick="selectPeer('${c.id}')">
+      <div class="contact-avatar">
+        ${escapeHtml(c.name).charAt(0)}
+        <span class="contact-dot ${online ? 'on' : 'off'}"></span>
+      </div>
+      <div class="contact-info">
+        <div class="contact-name">${escapeHtml(c.name)}</div>
+        <div class="contact-status">${online ? '온라인' : '오프라인'}</div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -298,6 +342,7 @@ function selectPeer(peerId) {
   document.getElementById('simpleMode').style.display = 'none';
   document.getElementById('chatScreen').style.display = 'flex';
   document.getElementById('messages').innerHTML = '';
+  document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
   const sess = getOrCreateSession(peerId);
   updateConn(sess.isOnline);
   if (sess.sessionKey) {
@@ -308,7 +353,7 @@ function selectPeer(peerId) {
     document.getElementById('securityCard').style.display = 'none';
     document.getElementById('passwordPrompt').style.display = 'block';
   }
-  renderPeerList();
+  renderContactList();
 }
 
 function goHome() {
@@ -318,8 +363,10 @@ function goHome() {
   document.getElementById('messages').innerHTML = '';
   document.getElementById('securityCard').style.display = 'none';
   document.getElementById('passwordPrompt').style.display = 'block';
+  document.getElementById('offerPanel').classList.add('hidden');
+  document.getElementById('answerPanel').classList.add('hidden');
   updateConn(false);
-  renderPeerList();
+  renderContactList();
 }
 
 // ==================== WebRTC ====================
@@ -331,7 +378,7 @@ async function connectToPeer(peerId) {
   sess.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   sess.pc.oniceconnectionstatechange = () => {
     const state = sess.pc.iceConnectionState;
-    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderPeerList(); }
+    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderContactList(); }
     else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
     else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
   };
@@ -351,12 +398,12 @@ function setupDC(peerId) {
   if (!sess || !sess.dc) return;
   sess.dc.onopen = () => {
     if (isDestroyed(peerId)) return;
-    sess.isOnline = true; updateConn(true); renderPeerList();
+    sess.isOnline = true; updateConn(true); renderContactList();
     flushOutbox(peerId);
     if (!sess.handshakeDone && !sess.sessionKey) startEcdhExchange(peerId);
   };
   sess.dc.onmessage = e => onMsg(peerId, e);
-  sess.dc.onclose = () => { sess.isOnline = false; updateConn(false); renderPeerList(); };
+  sess.dc.onclose = () => { sess.isOnline = false; updateConn(false); renderContactList(); };
 }
 function waitIce(pc) { return new Promise(r => { if (pc.iceGatheringState === 'complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); }); }); }
 
@@ -377,7 +424,7 @@ async function startNewChat() {
   document.getElementById('offerSpinner').style.display = 'inline-block';
   document.getElementById('offerLinkDisplay').classList.add('hidden');
   connectToPeer(id);
-  renderPeerList();
+  renderContactList();
 }
 function showJoinPanel() {
   document.getElementById('offerPanel').classList.add('hidden');
@@ -396,7 +443,7 @@ async function createAnswerFromOffer() {
   sess.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   sess.pc.oniceconnectionstatechange = () => {
     const state = sess.pc.iceConnectionState;
-    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderPeerList(); }
+    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderContactList(); }
     else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
     else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
   };
@@ -410,9 +457,10 @@ async function createAnswerFromOffer() {
   activePeerId = peerId;
   document.getElementById('simpleMode').style.display = 'none';
   document.getElementById('chatScreen').style.display = 'flex';
+  document.getElementById('chatTitle').textContent = peerId;
   document.getElementById('securityCard').style.display = 'none';
   document.getElementById('passwordPrompt').style.display = 'block';
-  renderPeerList();
+  renderContactList();
 }
 async function applyAnswerLink() {
   const l = document.getElementById('answerLinkInput').value.trim(); if (!l) return;
@@ -424,6 +472,7 @@ async function applyAnswerLink() {
     document.getElementById('offerPanel').classList.add('hidden');
     document.getElementById('simpleMode').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
+    document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === activePeerId)?.name || '채팅';
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
@@ -440,7 +489,7 @@ async function checkHash() {
     sess.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     sess.pc.oniceconnectionstatechange = () => {
       const state = sess.pc.iceConnectionState;
-      if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderPeerList(); }
+      if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderContactList(); }
       else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
       else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
     };
@@ -454,9 +503,10 @@ async function checkHash() {
     activePeerId = peerId;
     document.getElementById('simpleMode').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
+    document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || peerId;
     document.getElementById('securityCard').style.display = 'none';
     document.getElementById('passwordPrompt').style.display = 'block';
-    renderPeerList();
+    renderContactList();
   } else if (p.has('answer') && p.has('peer')) {
     const peerId = p.get('peer');
     if (isDestroyed(peerId)) return;
@@ -602,7 +652,6 @@ const EMOJI_LIST = ['😀','😂','🥰','😎','🤔','👍','❤️','🔥','�
 const STICKER_LIST = [
   { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ffcc00"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '웃음,행복' },
   { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff6666"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 70 Q50 50 70 70" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '슬픔,울음' },
-  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff4444"/><text x="50" y="65" text-anchor="middle" font-size="40" fill="#fff">♥</text></svg>'), tags: '사랑,하트' },
 ];
 const DEFAULT_GIPHY_KEY = 'dc6zaTOxFJmzC';
 let giphyApiKey = localStorage.getItem('giphy_api_key') || DEFAULT_GIPHY_KEY;
@@ -684,7 +733,7 @@ async function destroyChat(peerId) {
   }
   markDestroyed(peerId); if (sess.pc) sess.pc.close(); delete sessions[peerId];
   if (activePeerId === peerId) goHome();
-  renderPeerList();
+  renderContactList();
 }
 
 // ==================== 유틸리티 ====================
@@ -723,7 +772,7 @@ function copyTextById(id) {
 }
 
 // ==================== 초기 실행 ====================
-buildEmojiPicker(); buildStickerPicker(); renderPeerList(); checkHash();
+buildEmojiPicker(); buildStickerPicker(); renderContactList(); checkHash();
 </script>
 </body>
 </html>
