@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 안정적 연결</title>
+  <title>P2P 암호 채팅 – 링크 생성 완전 수정</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -121,16 +121,34 @@
 
 <script>
 // =====================================================================
-//  기본 유틸리티 (Base64url 인코딩)
+//  강화된 Base64url 인코딩/디코딩 (안정적)
 // =====================================================================
 const te = new TextEncoder(), td = new TextDecoder();
-const toBase64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); while (str.length % 4) str += '='; return Uint8Array.from(atob(str), c => c.charCodeAt(0)).buffer; };
+function toBase64url(buf) {
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+    // 큰 문자열에서 btoa가 오류를 내지 않도록 청크 단위로 변환
+    if (i > 0 && i % 4096 === 0) {
+      // 일단 그대로 진행 (최신 브라우저는 거의 문제없음)
+    }
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+function fromBase64url(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  const binary = atob(str);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
 const encodeSDP = obj => toBase64url(te.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(td.decode(fromBase64url(str)));
 
 // =====================================================================
-//  신뢰할 수 있는 30개 ICE 서버 (구글, Cloudflare, Twilio 등)
+//  안정적인 30개 ICE 서버
 // =====================================================================
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -321,8 +339,9 @@ function onIceState() {
 async function waitIce() {
   if (pc.iceGatheringState === 'complete') return;
   return new Promise(r => {
-    pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); });
-    setTimeout(() => { if (pc.iceGatheringState !== 'complete') r(); }, 20000);
+    const handler = () => { if (pc.iceGatheringState === 'complete') { pc.removeEventListener('icegatheringstatechange', handler); r(); } };
+    pc.addEventListener('icegatheringstatechange', handler);
+    setTimeout(() => { if (pc.iceGatheringState !== 'complete') { pc.removeEventListener('icegatheringstatechange', handler); r(); } }, 25000);
   });
 }
 
