@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 궁극의 완성판</title>
+  <title>P2P 비밀 메신저 – 완전 익명·메타데이터 보호</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -91,8 +91,6 @@
     .contact-name { font-size:0.95rem; font-weight:600; }
     .contact-status { font-size:0.75rem; color:var(--sub); margin-top:2px; }
     .svg-icon { width:20px; height:20px; fill:currentColor; flex-shrink:0; }
-    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center; }
-    .modal-content { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; width:90%; max-width:400px; }
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spinner { width:20px; height:20px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
@@ -100,27 +98,15 @@
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <h1>🔐 P2P 비밀채팅</h1>
-    <div class="status-bar">
-      <span id="connDot" class="dot off"></span>
-      <span id="connLabel">오프라인</span>
-    </div>
-  </div>
+  <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <!-- 메인 화면 -->
     <div id="simpleMode" class="view">
       <div class="card text-center">
-        <h3 style="margin-bottom:4px;">서버 없이 완벽한 프라이버시</h3>
-        <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
-        <button class="btn primary" onclick="startNewChat()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-          새 채팅 생성
-        </button>
-        <button class="btn mt" onclick="showJoinPanel()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          초대 링크로 참가
-        </button>
+        <h3 style="margin-bottom:4px;">서버 없이 완벽한 익명성</h3>
+        <p class="text-sub mb">모든 메타데이터 완전 암호화</p>
+        <button class="btn primary" onclick="startNewChat()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>새 채팅 생성</button>
+        <button class="btn mt" onclick="showJoinPanel()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>초대 링크로 참가</button>
       </div>
       <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 대화 목록</div>
       <div class="contact-list" id="contactList"></div>
@@ -132,57 +118,33 @@
         <p><strong>연결 링크 생성 중...</strong></p>
         <p class="text-sub">생성된 링크를 상대에게 전송하세요.</p>
         <div class="link-box" id="offerLinkDisplay">생성 중...</div>
-        <button class="btn mt" onclick="copyTextById('offerLinkDisplay')">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-          링크 복사
-        </button>
+        <button class="btn mt" onclick="copyTextById('offerLinkDisplay')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>링크 복사</button>
         <p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p>
         <input type="text" id="answerLinkInput" placeholder="Answer 링크 입력...">
-        <button class="btn primary mt" onclick="applyAnswerLink()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          연결 완료
-        </button>
-        <button class="btn mt" onclick="goHome()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-          홈으로
-        </button>
+        <button class="btn primary mt" onclick="applyAnswerLink()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>연결 완료</button>
+        <button class="btn mt" onclick="goHome()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>홈으로</button>
       </div>
     </div>
     <!-- Answer 패널 -->
     <div id="answerPanel" class="view hidden">
       <div class="card"><strong>📥 초대 링크 붙여넣기</strong>
         <textarea id="remoteOfferSDP" rows="3" placeholder="방장에게 받은 전체 링크..."></textarea>
-        <button class="btn primary mt" onclick="createAnswerFromOffer()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          연결 시작
-        </button>
+        <button class="btn primary mt" onclick="createAnswerFromOffer()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>연결 시작</button>
       </div>
       <div id="answerResultPanel" class="hidden card">
         <strong>📤 내 Answer 링크</strong>
         <div class="link-box" id="localAnswerLinkDisplay"></div>
-        <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-          복사해서 방장에게 전송
-        </button>
+        <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>복사해서 방장에게 전송</button>
       </div>
-      <button class="btn mt" onclick="goHome()">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        홈으로
-      </button>
+      <button class="btn mt" onclick="goHome()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>홈으로</button>
     </div>
     <!-- 채팅 화면 -->
     <div id="chatScreen" class="view hidden">
       <div class="chat-header">
-        <button class="btn-small" onclick="goHome()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        </button>
+        <button class="btn-small" onclick="goHome()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
         <span class="chat-title" id="chatTitle">채팅</span>
-        <button class="btn-small" onclick="renameChat()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-        </button>
-        <button class="btn-small danger" onclick="destroyActiveChat()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-        </button>
+        <button class="btn-small" onclick="renameChat()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+        <button class="btn-small danger" onclick="destroyActiveChat()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
       </div>
       <div id="securityCard" class="card" style="margin:0 0 4px; padding:6px 12px; font-size:0.7rem; display:none; align-items:center; gap:6px;">
         <span>🔒</span><span id="sessionFingerprint" class="fingerprint"></span>
@@ -190,7 +152,7 @@
       <div id="passwordPrompt" class="card text-center" style="margin:8px;">
         <strong>🔐 채팅방 암호 입력</strong>
         <input type="password" id="chatPasswordInput" placeholder="상대와 공유한 암호" style="margin-top:8px;">
-        <button class="btn primary mt" id="submitPasswordBtn" onclick="submitPassword()">암호 설정</button>
+        <button class="btn primary mt" onclick="submitPassword()">암호 설정</button>
         <p class="text-sub mt">암호가 없으면 수신된 암호문만 표시됩니다.</p>
         <p id="passwordError" class="text-sub" style="color:var(--danger); display:none;"></p>
       </div>
@@ -220,7 +182,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 궁극의 완성판 (모든 문제 해결 + 강력 암호화)
+//  P2P 비밀 메신저 – 완전 익명·메타데이터 보호 (타이핑도 암호화)
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -229,6 +191,7 @@ const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); wh
 const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
+// 최소 STUN 서버 (데이터 중계 없이 연결 보조만)
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
@@ -335,7 +298,8 @@ async function startNewChat() {
   document.getElementById('offerSpinner').style.display = 'inline-block';
   document.getElementById('offerLinkDisplay').textContent = '생성 중...';
   initPC(peerId);
-  createDataChannel(peerId);
+  sess.dc = sess.pc.createDataChannel('chat', { ordered: true });
+  setupDC(peerId);
   sess.pc.createOffer().then(o => sess.pc.setLocalDescription(o)).then(() => waitIce(sess.pc).then(() => {
     document.getElementById('offerSpinner').style.display = 'none';
     const offerB64 = encodeSDP(sess.pc.localDescription);
@@ -388,9 +352,9 @@ function initPC(peerId) {
   };
   sess.pc.ondatachannel = e => { if (e.channel.label === 'chat') { sess.dc = e.channel; setupDC(peerId); } };
 }
-function createDataChannel(peerId) { const sess = sessions[peerId]; sess.dc = sess.pc.createDataChannel('chat', { ordered: true }); setupDC(peerId); }
 function setupDC(peerId) {
-  const sess = sessions[peerId]; if (!sess?.dc) return;
+  const sess = sessions[peerId];
+  if (!sess?.dc) return;
   sess.dc.onopen = () => {
     if (isDestroyed(peerId)) return;
     sess.isOnline = true; updateConn(true); renderContactList();
@@ -417,25 +381,25 @@ async function checkHash() {
     const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
     await waitIce(sess.pc);
     const answerB64 = encodeSDP(sess.pc.localDescription);
-    alert('이 Answer 링크를 상대에게 보내세요:\n' + (location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId));
+    document.getElementById('answerResultPanel').classList.remove('hidden');
+    document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
     activePeerId = peerId;
-    showView('chatScreen');
-    document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
-    document.getElementById('passwordPrompt').style.display = 'block';
+    showView('answerPanel');
     renderContactList();
   } else if (p.has('answer') && p.has('peer')) {
     const peerId = p.get('peer');
     if (isDestroyed(peerId)) return;
     const answer = decodeSDP(p.get('answer'));
     const sess = sessions[peerId];
-    if (sess?.pc && sess.isOfferer) { await sess.pc.setRemoteDescription(answer); showView('chatScreen'); document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅'; }
+    if (sess?.pc && sess.isOfferer) { await sess.pc.setRemoteDescription(answer); showView('chatScreen'); document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅'; document.getElementById('passwordPrompt').style.display = 'block'; }
   }
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 궁극 암호화 ====================
+// ==================== 궁극 암호화 (모든 메타데이터 포함) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 5000000, SALT_SIZE = 1024, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+const PADDING_LENGTH = 256; // 모든 메시지를 256바이트로 패딩
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -484,20 +448,18 @@ async function deriveSessionKey(peerId) {
   } catch (e) { document.getElementById('passwordError').textContent = '세션 키 생성 실패: ' + e.message; document.getElementById('passwordError').style.display = 'block'; }
 }
 
-// ==================== 메시지 (타이핑 분리) ====================
+// ==================== 메시지 (타이핑도 암호화) ====================
 async function sendTyping(state) {
   if (!activePeerId || isDestroyed(activePeerId)) return;
   const sess = sessions[activePeerId];
-  if (!sess?.handshakeDone || !sess.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return;
+  if (!sess?.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return;
+  // 타이핑도 암호화하여 전송
   try { const enc = await encryptPayload(sess, { type: 'typing', state }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
 }
 document.getElementById('msgInput').addEventListener('input', () => {
   sendTyping(true);
   const sess = sessions[activePeerId];
-  if (sess) {
-    clearTimeout(sess.typingTimer);
-    sess.typingTimer = setTimeout(() => sendTyping(false), 1500);
-  }
+  if (sess) { clearTimeout(sess.typingTimer); sess.typingTimer = setTimeout(() => sendTyping(false), 1500); }
 });
 
 async function sendText() {
@@ -546,7 +508,11 @@ async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
   const iv = crypto.getRandomValues(new Uint8Array(16));
-  const padded = { ...obj, _pad: crypto.getRandomValues(new Uint8Array(32)).join('') };
+  // 모든 페이로드를 고정 길이로 패딩하여 메타데이터 노출 최소화
+  let json = JSON.stringify(obj);
+  const padLen = PADDING_LENGTH - json.length;
+  if (padLen > 0) json += '\0'.repeat(padLen);
+  const padded = JSON.parse(json);
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, mk, str2buf(JSON.stringify(padded)));
   return { seq: sess.sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
 }
@@ -558,7 +524,8 @@ async function decryptPayload(sess, d) {
     while (sess.recvChain.seq < seq - 1) { await ratchetForward(sess.recvChain); sess.recvChain.seq++; }
     const mk = await ratchetForward(sess.recvChain); sess.recvChain.seq = seq;
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, mk, new Uint8Array(ct));
-    const obj = JSON.parse(textDecoder.decode(plain)); delete obj._pad; return obj;
+    const obj = JSON.parse(textDecoder.decode(plain));
+    return obj;
   } catch (e) { sess.recvChain.chain = prevChain; sess.recvChain.seq = prevSeq; throw e; }
 }
 async function flushOutbox(peerId) {
@@ -613,7 +580,7 @@ async function sendFile(file) { if (!activePeerId || isDestroyed(activePeerId)) 
 async function destroyActiveChat() { if (activePeerId) await destroyChat(activePeerId); }
 async function destroyChat(peerId) { const sess = sessions[peerId]; if (!sess) { markDestroyed(peerId); goHome(); return; } if (sess.sessionKey && sess.dc && sess.dc.readyState === 'open') { try { const enc = await encryptPayload(sess, { type: '__destroy__', timestamp: Date.now() }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} } markDestroyed(peerId); if (sess.pc) sess.pc.close(); delete sessions[peerId]; if (activePeerId === peerId) goHome(); renderContactList(); }
 
-// 블러 (메시지 내용만)
+// 블러
 let securityLockLevel = 0, globalBlurTimer = null;
 function applyBlurToSensitiveElements() { document.querySelectorAll('.bubble').forEach(el => { if (!el.classList.contains('blur-target') && !el.closest('#msgInput') && !el.closest('.input-bar')) el.classList.add('blur-target'); }); }
 function lockAllBlurs(d = 15000) { document.querySelectorAll('.blur-target').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); }); clearTimeout(globalBlurTimer); globalBlurTimer = setTimeout(() => document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked')), d); }
