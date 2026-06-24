@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 무료 GIF 검색·완전암호화</title>
+  <title>P2P 비밀 메신저 – 심플·고급·완전보안</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -14,7 +14,7 @@
     }
     * { margin:0; padding:0; box-sizing:border-box; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent; -webkit-user-modify: read-only; }
     input, textarea { -webkit-user-modify: read-write !important; user-select: text !important; -webkit-user-select: text !important; }
-    @media print { html, body, .container, #app { display: none !important; } html::before { content: "🔒 인쇄가 차단되었습니다."; color: red; font-size: 3rem; text-align: center; display: block; padding-top: 50vh; } }
+    @media print { html, body, .container { display: none !important; } }
     body {
       font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg); color: var(--text);
@@ -23,7 +23,7 @@
       -webkit-backface-visibility: hidden; backface-visibility: hidden; overscroll-behavior: none;
     }
     .container {
-      width: 100%; max-width: 900px; height: 95dvh;
+      width: 100%; max-width: 520px; height: 95dvh;
       background: var(--surface); border-radius: 30px;
       box-shadow: 0 30px 70px rgba(0,0,0,0.7);
       display: flex; flex-direction: column; overflow: hidden;
@@ -33,16 +33,6 @@
       position: fixed; top:0; left:0; width:100%; height:100%;
       z-index: 9998; pointer-events: none; opacity: 0.03; mix-blend-mode: difference;
     }
-    .blur-target { filter: blur(14px) !important; transition: filter 0.3s ease; cursor: pointer; position: relative; }
-    .blur-target::after {
-      content: "길게 눌러 보기"; position: absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,0.6); color: #fff; font-size:0.7rem; pointer-events: none; z-index:10; border-radius: inherit;
-    }
-    .blur-target.revealed { filter: blur(0) !important; }
-    .blur-target.revealed::after { display: none; }
-    .blur-target.locked { filter: blur(22px) !important; cursor: not-allowed; pointer-events: auto; }
-    .blur-target.locked::after { content: "🔒 잠금"; background: rgba(255,0,0,0.5); font-weight:bold; }
-
     .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
     .header h1 { font-size:1.1rem; font-weight:700; background:linear-gradient(135deg,#90b4ff,#b794f4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .status-bar { display:flex; align-items:center; gap:7px; }
@@ -50,25 +40,26 @@
     .dot.on { background:var(--success); box-shadow:0 0 10px var(--success); }
     .dot.off { background:var(--danger); }
 
-    #app { display:flex; flex:1; overflow:hidden; }
-    .sidebar { width:240px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
-    .sidebar .peer-item {
-      padding:12px 16px; cursor:pointer; border-bottom:1px solid var(--border);
-      display:flex; align-items:center; gap:8px; font-size:0.85rem;
-    }
-    .peer-item:hover { background:rgba(255,255,255,0.05); }
-    .peer-item.active { background:rgba(91,141,240,0.15); border-left:3px solid var(--accent); }
-    .main-chat { flex:1; display:flex; flex-direction:column; position:relative; }
+    .main-content { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; }
+    .main-content::-webkit-scrollbar { width:4px; } .main-content::-webkit-scrollbar-thumb { background:#253040; border-radius:2px; }
+
+    .card { background:var(--card); backdrop-filter:blur(14px); border-radius:var(--radius); padding:18px; margin-bottom:12px; border:1px solid var(--border); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:12px 20px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; font-size:0.9rem; transition:0.2s; width:100%; backdrop-filter:blur(10px); }
+    .btn:hover { background:rgba(255,255,255,0.12); transform:translateY(-1px); }
+    .btn:active { transform:scale(0.97); }
+    .btn.primary { background:var(--accent); border:none; }
+    .btn.danger { background:var(--danger); border:none; }
+    .btn-small { padding:7px 12px; font-size:0.8rem; width:auto; }
+
+    input, textarea { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 15px; font-size:0.95rem; outline:none; user-select:text; -webkit-user-select:text; }
+    input:focus, textarea:focus { border-color:var(--accent); }
+
     #chatScreen { display:none; flex-direction:column; flex:1; }
-    #messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:6px 16px; }
+    #messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:6px 0; }
     .msg { display:flex; flex-direction:column; animation:fadeUp 0.2s ease; }
     .msg.system { align-items:center; } .msg.me { align-items:flex-end; } .msg.other { align-items:flex-start; }
     .bubble { max-width:83%; padding:10px 16px; border-radius:20px; background:rgba(22,30,44,0.85); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); word-break:break-word; position:relative; overflow:hidden; z-index:1; }
-    .bubble .noise-layer {
-      position: absolute; top:0; left:0; width:100%; height:100%;
-      background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px);
-      pointer-events: none; z-index:2;
-    }
+    .bubble .noise-layer { position: absolute; top:0; left:0; width:100%; height:100%; background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px); pointer-events: none; z-index:2; }
     .msg.system .bubble { background:rgba(255,255,255,0.04); border:none; font-size:0.78rem; color:var(--sub); }
     .msg.me .bubble { background:linear-gradient(140deg,rgba(74,130,250,0.5),rgba(124,92,240,0.5)); border-bottom-right-radius:6px; }
     .msg.other .bubble { border-bottom-left-radius:6px; }
@@ -76,104 +67,139 @@
     .encrypted-bubble { background:#0a0f18; border:1px solid var(--border); font-family:monospace; font-size:0.7rem; color:#94a3b8; white-space:pre-wrap; word-break:break-all; padding:10px; border-radius:12px; max-width:90%; }
     .progress { height:3px; background:#1e293b; border-radius:2px; overflow:hidden; margin-top:6px; }
     .progress-bar { height:100%; width:0%; background:var(--accent); transition:width 0.3s; }
-    .file-preview img, .file-preview video { max-width:200px; max-height:200px; border-radius:12px; border:1px solid var(--border); }
-    .sticker-img { max-width:120px; max-height:120px; }
-    .gif-img { max-width:200px; max-height:200px; border-radius:12px; }
+    .file-preview img, .file-preview video { max-width:180px; max-height:140px; border-radius:12px; border:1px solid var(--border); }
 
-    .input-bar { display:flex; gap:6px; padding:10px 16px; align-items:flex-end; border-top:1px solid var(--border); }
-    #msgInput { flex:1; min-height:42px; max-height:110px; resize:none; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 15px; font-size:0.95rem; outline:none; }
+    .input-bar { display:flex; gap:6px; padding:10px 0 0; align-items:flex-end; }
+    #msgInput { flex:1; min-height:42px; max-height:110px; resize:none; }
     .icon-btn { background:none; border:none; font-size:1.3rem; cursor:pointer; padding:8px; color:var(--accent); }
     .send-btn { background:var(--accent); color:white; width:42px; height:42px; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; }
-    .action-bar { display:flex; gap:4px; padding:4px 16px 0; position:relative; }
+
+    .action-bar { display:flex; gap:4px; padding:4px 0 0; position:relative; }
     .action-btn { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:14px; cursor:pointer; font-size:0.8rem; }
     .action-btn:hover { background:rgba(255,255,255,0.1); }
 
-    .picker-overlay {
-      display:none; position:absolute; bottom:100%; left:0; right:0;
-      background:var(--surface); border:1px solid var(--border); border-radius:16px;
-      padding:12px; max-height:350px; overflow-y:auto; z-index:20; margin-bottom:4px;
-    }
+    .picker-overlay { display:none; position:absolute; bottom:100%; left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; max-height:250px; overflow-y:auto; z-index:20; margin-bottom:4px; }
     .picker-overlay.active { display:flex; flex-direction:column; gap:8px; }
     .picker-search { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; font-size:0.85rem; outline:none; margin-bottom:4px; }
     .picker-search:focus { border-color:var(--accent); }
     .picker-grid { display:flex; flex-wrap:wrap; gap:8px; }
     .picker-item { cursor:pointer; border-radius:8px; overflow:hidden; transition:0.15s; }
     .picker-item:hover { transform:scale(1.05); background:rgba(255,255,255,0.1); }
-    .picker-item img { width:80px; height:80px; object-fit:cover; border-radius:8px; }
+    .picker-item img { width:70px; height:70px; object-fit:cover; border-radius:8px; }
     .emoji-item { font-size:1.8rem; cursor:pointer; padding:4px 8px; border-radius:8px; }
     .emoji-item:hover { background:rgba(255,255,255,0.1); }
-    .settings-btn { background:none; border:none; color:var(--sub); cursor:pointer; font-size:0.75rem; padding:4px 8px; }
-    .settings-btn:hover { color:var(--text); }
 
     .hidden { display:none !important; }
     .text-center { text-align:center; } .text-sub { color:var(--sub); font-size:0.82rem; }
     .mt { margin-top:10px; } .mb { margin-bottom:10px; }
     .link-box { word-break:break-all; background:#0a0f18; padding:10px; border-radius:12px; font-size:0.72rem; margin:8px 0; max-height:75px; overflow-y:auto; color:#9aa4bf; }
     .fingerprint { font-family:monospace; font-size:0.65rem; background:#0a0f18; padding:6px; border-radius:8px; word-break:break-all; }
-    #noChatSelected { flex:1; display:flex; align-items:center; justify-content:center; color:var(--sub); }
-    #destroyedOverlay { display:none; position:absolute; inset:0; background:rgba(0,0,0,0.95); z-index:100; flex-direction:column; align-items:center; justify-content:center; color:var(--danger); font-size:1.2rem; }
-    #destroyedOverlay.active { display:flex; }
+
+    .peer-list-simple { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .peer-chip { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:20px; padding:8px 14px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:6px; }
+    .peer-chip.active { background:var(--accent); border-color:var(--accent); }
+    .peer-chip .chip-dot { width:7px; height:7px; border-radius:50%; }
+    .peer-chip .chip-dot.on { background:var(--success); }
+    .peer-chip .chip-dot.off { background:var(--danger); }
 
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spinner { width:20px; height:20px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:10px 16px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; font-size:0.85rem; transition:0.2s; backdrop-filter:blur(10px); }
-    .btn:hover { background:rgba(255,255,255,0.12); }
-    .btn.primary { background:var(--accent); border:none; }
-    .btn.danger { background:var(--danger); border:none; }
   </style>
 </head>
 <body>
 <canvas id="antiScreenshotCanvas"></canvas>
 <div class="container">
-  <div class="header"><h1>🔐 P2P 비밀 메신저</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
-  <div id="app">
-    <div class="sidebar" id="sidebar">
-      <div style="padding:10px; border-bottom:1px solid var(--border);">
-        <button class="btn primary" onclick="addContact()" style="width:100%;">＋ 연락처 추가</button>
+  <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
+  <div class="main-content" id="mainArea">
+    <!-- 메인 화면 -->
+    <div id="simpleMode">
+      <div class="card text-center">
+        <h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3>
+        <p class="text-sub mb">512+급 종단간 암호화<br>이모지·스티커·짤·파일 완벽 지원</p>
+        <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
+        <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
+        <div id="peerListSimple" class="peer-list-simple mt"></div>
       </div>
-      <div id="peerList"></div>
+      <!-- Offer 패널 -->
+      <div id="offerPanel" class="hidden">
+        <div class="card text-center">
+          <div class="spinner mb" id="offerSpinner"></div>
+          <p><strong>연결 링크 생성 중...</strong></p>
+          <p class="text-sub">생성된 링크를 상대에게 전송하세요.</p>
+          <div class="link-box" id="offerLinkDisplay">생성 중...</div>
+          <button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button>
+          <p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p>
+          <input type="text" id="answerLinkInput" placeholder="Answer 링크 입력...">
+          <button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button>
+        </div>
+      </div>
+      <!-- Answer 패널 -->
+      <div id="answerPanel" class="hidden">
+        <div id="autoAnswerContent" class="hidden">
+          <div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div>
+          <div id="answerReadyPanel" class="hidden card text-center">
+            <p><strong>✅ Answer 링크 준비 완료</strong></p>
+            <p class="text-sub">아래 링크를 방장에게 전송하세요.</p>
+            <div class="link-box" id="answerLinkDisplay">생성 중...</div>
+            <button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button>
+          </div>
+        </div>
+        <div id="manualJoinContent">
+          <div class="card"><strong>📥 초대 링크 붙여넣기</strong>
+            <textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea>
+            <button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button>
+          </div>
+          <div id="answerResultPanel" class="hidden card">
+            <strong>📤 내 Answer 링크</strong>
+            <div class="link-box" id="localAnswerLinkDisplay"></div>
+            <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="main-chat" id="mainChat">
-      <div id="noChatSelected">연락처를 선택하거나 추가하세요</div>
-      <div id="destroyedOverlay"><span>💥 대화가 파괴되었습니다</span></div>
-      <div id="chatScreen">
-        <div id="securityCard" class="card" style="margin:0 0 4px; padding:8px 14px; font-size:0.75rem; display:none; align-items:center; gap:6px;">
-          <span>🔒</span><span id="sessionFingerprint" class="fingerprint blur-target" style="flex:1;"></span>
-          <button class="btn danger" style="padding:4px 10px; font-size:0.7rem;" onclick="destroyActiveChat()">💣 폭파</button>
-        </div>
-        <div id="messages"></div>
-        <div class="action-bar" id="actionBar" style="position:relative;">
-          <button class="action-btn" onclick="togglePicker('emoji')">😀 이모지</button>
-          <button class="action-btn" onclick="togglePicker('sticker')">⭐ 스티커</button>
-          <button class="action-btn" onclick="togglePicker('gif')">🎞️ 짤</button>
-          <button class="settings-btn" onclick="setApiKey()" title="API 키 설정 (선택)">⚙️</button>
-          <div class="picker-overlay" id="emojiPicker">
-            <div class="picker-grid" id="emojiGrid"></div>
-          </div>
-          <div class="picker-overlay" id="stickerPicker">
-            <input type="text" class="picker-search" placeholder="스티커 검색..." id="stickerSearch" oninput="filterStickers()">
-            <div class="picker-grid" id="stickerGrid"></div>
-          </div>
-          <div class="picker-overlay" id="gifPicker">
-            <input type="text" class="picker-search" placeholder="GIF 검색 (영어)..." id="gifSearch" onkeydown="if(event.key==='Enter')searchGifs()">
-            <div class="picker-grid" id="gifGrid"></div>
-          </div>
-        </div>
-        <div class="input-bar">
-          <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="파일">📎</button>
-          <textarea id="msgInput" rows="1" placeholder="메시지 (종단간 암호화)"></textarea>
-          <button class="send-btn" onclick="sendText()">➤</button>
-        </div>
-        <input type="file" id="fileInput" class="hidden" multiple onchange="handleFiles(this.files)">
+
+    <!-- 채팅 화면 -->
+    <div id="chatScreen">
+      <div id="securityCard" class="card" style="margin:0 0 8px; padding:8px 14px; font-size:0.78rem; display:none; align-items:center; gap:6px;">
+        <span>🔒 세션:</span><span id="sessionFingerprint" class="fingerprint blur-target" style="flex:1;"></span>
+        <button class="btn-small danger" onclick="destroyActiveChat()">💣 폭파</button>
       </div>
+      <div id="passwordPrompt" class="card text-center">
+        <strong>🔐 채팅방 암호 입력</strong>
+        <input type="password" id="chatPasswordInput" placeholder="상대와 공유한 암호">
+        <button class="btn primary mt" id="submitPasswordBtn" onclick="submitPassword()">암호 설정</button>
+        <p class="text-sub mt">암호가 없으면 수신된 암호문만 표시됩니다.</p>
+        <p id="passwordError" class="text-sub" style="color:var(--danger); display:none;"></p>
+      </div>
+      <div id="messages"></div>
+      <div class="action-bar" style="position:relative;">
+        <button class="action-btn" onclick="togglePicker('emoji')">😀</button>
+        <button class="action-btn" onclick="togglePicker('sticker')">⭐</button>
+        <button class="action-btn" onclick="togglePicker('gif')">🎞️</button>
+        <div class="picker-overlay" id="emojiPicker"><div class="picker-grid" id="emojiGrid"></div></div>
+        <div class="picker-overlay" id="stickerPicker">
+          <input type="text" class="picker-search" placeholder="스티커 검색..." id="stickerSearch" oninput="filterStickers()">
+          <div class="picker-grid" id="stickerGrid"></div>
+        </div>
+        <div class="picker-overlay" id="gifPicker">
+          <input type="text" class="picker-search" placeholder="GIF 검색..." id="gifSearch" onkeydown="if(event.key==='Enter')searchGifs()">
+          <div class="picker-grid" id="gifGrid"></div>
+        </div>
+      </div>
+      <div class="input-bar">
+        <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="파일">📎</button>
+        <textarea id="msgInput" rows="1" placeholder="메시지 (종단간 암호화)"></textarea>
+        <button class="send-btn" onclick="sendText()">➤</button>
+      </div>
+      <input type="file" id="fileInput" class="hidden" multiple onchange="handleFiles(this.files)">
     </div>
   </div>
 </div>
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 무료 GIF 공개키 + 검색 + 완전암호화
+//  P2P 비밀 메신저 – 심플·고급·완전보안
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -215,7 +241,7 @@ const ICE_SERVERS = (() => {
   return servers.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
 })();
 
-// ==================== 멀티 세션 관리 ====================
+// ==================== 세션 관리 ====================
 const sessions = {};
 let activePeerId = null;
 const DESTROY_PREFIX = 'p2p_destroyed_';
@@ -228,23 +254,17 @@ function getOrCreateSession(peerId) {
       salt: null, ourEcdhPair: null, peerEcdhPub: null,
       handshakeDone: false, isOnline: false,
       pendingOutbox: [], receivedMessageIds: new Set(),
-      fileReceive: null, typingTimer: null
+      fileReceive: null
     };
   }
   return sessions[peerId];
 }
 
-// ==================== 세션 파괴 플래그 ====================
 function isDestroyed(peerId) { return !!(localStorage.getItem(DESTROY_PREFIX + peerId) || sessionStorage.getItem(DESTROY_PREFIX + peerId)); }
-function markDestroyed(peerId) {
-  localStorage.setItem(DESTROY_PREFIX + peerId, Date.now());
-  sessionStorage.setItem(DESTROY_PREFIX + peerId, Date.now());
-  if (location.hash) history.replaceState(null, '', location.pathname);
-}
+function markDestroyed(peerId) { localStorage.setItem(DESTROY_PREFIX + peerId, Date.now()); sessionStorage.setItem(DESTROY_PREFIX + peerId, Date.now()); if (location.hash) history.replaceState(null, '', location.pathname); }
 function clearDestroyed(peerId) { localStorage.removeItem(DESTROY_PREFIX + peerId); sessionStorage.removeItem(DESTROY_PREFIX + peerId); }
-setInterval(() => { if (activePeerId && isDestroyed(activePeerId)) showDestroyedUI(activePeerId); }, 500);
 
-// ==================== 연락처 관리 ====================
+// ==================== 연락처 관리 (간소화) ====================
 function getContacts() { try { return JSON.parse(localStorage.getItem('p2p_contacts') || '[]'); } catch (e) { return []; } }
 function saveContacts(contacts) { localStorage.setItem('p2p_contacts', JSON.stringify(contacts)); }
 function addContact() {
@@ -259,53 +279,50 @@ function addContact() {
   renderPeerList();
 }
 function renderPeerList() {
-  const list = document.getElementById('peerList');
+  const container = document.getElementById('peerListSimple');
+  if (!container) return;
   const contacts = getContacts();
-  list.innerHTML = contacts.map(c => {
+  container.innerHTML = contacts.map(c => {
     const sess = sessions[c.id];
     const online = sess && sess.isOnline;
     const destroyed = isDestroyed(c.id);
-    return `<div class="peer-item ${c.id === activePeerId ? 'active' : ''}" onclick="selectPeer('${c.id}')">
-      <span class="dot ${destroyed ? 'off' : (online ? 'on' : 'off')}"></span>
-      <span>${escapeHtml(c.name)} ${destroyed ? '💥' : ''}</span>
-    </div>`;
+    return `<span class="peer-chip ${c.id === activePeerId ? 'active' : ''} ${destroyed ? 'hidden' : ''}" onclick="selectPeer('${c.id}')">
+      <span class="chip-dot ${online ? 'on' : 'off'}"></span> ${escapeHtml(c.name)}
+    </span>`;
   }).join('');
 }
 
-// ==================== 세션 전환 ====================
 function selectPeer(peerId) {
   if (isDestroyed(peerId)) { alert('이 대화는 파괴되었습니다.'); return; }
   activePeerId = peerId;
-  document.getElementById('noChatSelected').style.display = 'none';
+  document.getElementById('simpleMode').style.display = 'none';
   document.getElementById('chatScreen').style.display = 'flex';
-  document.getElementById('destroyedOverlay').classList.remove('active');
   document.getElementById('messages').innerHTML = '';
   const sess = getOrCreateSession(peerId);
   updateConn(sess.isOnline);
   if (sess.sessionKey) {
     document.getElementById('securityCard').style.display = 'flex';
     document.getElementById('sessionFingerprint').textContent = '세션 활성';
+    document.getElementById('passwordPrompt').style.display = 'none';
   } else {
     document.getElementById('securityCard').style.display = 'none';
-    const pw = prompt('이 채팅방의 암호를 입력하세요 (상대와 동일):');
-    if (pw) { sess.password = pw; connectToPeer(peerId); }
+    document.getElementById('passwordPrompt').style.display = 'block';
   }
   renderPeerList();
 }
-function showDestroyedUI(peerId) {
-  if (activePeerId !== peerId) return;
-  document.getElementById('messages').innerHTML = '';
-  document.getElementById('chatScreen').style.display = 'none';
-  document.getElementById('noChatSelected').style.display = 'none';
-  document.getElementById('destroyedOverlay').classList.add('active');
-  document.getElementById('securityCard').style.display = 'none';
-  const sess = sessions[peerId];
-  if (sess) { if (sess.pc) sess.pc.close(); delete sessions[peerId]; }
+
+function goHome() {
   activePeerId = null;
+  document.getElementById('simpleMode').style.display = 'block';
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('securityCard').style.display = 'none';
+  document.getElementById('passwordPrompt').style.display = 'block';
+  updateConn(false);
   renderPeerList();
 }
 
-// ==================== WebRTC 세션 ====================
+// ==================== WebRTC ====================
 async function connectToPeer(peerId) {
   if (isDestroyed(peerId)) return;
   const sess = getOrCreateSession(peerId);
@@ -314,7 +331,7 @@ async function connectToPeer(peerId) {
   sess.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   sess.pc.oniceconnectionstatechange = () => {
     const state = sess.pc.iceConnectionState;
-    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); }
+    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderPeerList(); }
     else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
     else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
   };
@@ -324,7 +341,9 @@ async function connectToPeer(peerId) {
   sess.pc.createOffer().then(o => sess.pc.setLocalDescription(o)).then(() => waitIce(sess.pc).then(() => {
     const offerB64 = encodeSDP(sess.pc.localDescription);
     const link = location.origin + location.pathname + '#offer=' + offerB64 + '&peer=' + peerId;
-    alert('상대에게 이 링크를 전송하세요:\n' + link);
+    document.getElementById('offerLinkDisplay').textContent = link;
+    document.getElementById('offerSpinner').style.display = 'none';
+    document.getElementById('offerLinkDisplay').classList.remove('hidden');
   }));
 }
 function setupDC(peerId) {
@@ -332,18 +351,83 @@ function setupDC(peerId) {
   if (!sess || !sess.dc) return;
   sess.dc.onopen = () => {
     if (isDestroyed(peerId)) return;
-    sess.isOnline = true; updateConn(true);
+    sess.isOnline = true; updateConn(true); renderPeerList();
     flushOutbox(peerId);
     if (!sess.handshakeDone && !sess.sessionKey) startEcdhExchange(peerId);
   };
   sess.dc.onmessage = e => onMsg(peerId, e);
-  sess.dc.onclose = () => { sess.isOnline = false; updateConn(false); };
+  sess.dc.onclose = () => { sess.isOnline = false; updateConn(false); renderPeerList(); };
 }
-function waitIce(pc) {
-  return new Promise(r => { if (pc.iceGatheringState === 'complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); }); });
+function waitIce(pc) { return new Promise(r => { if (pc.iceGatheringState === 'complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); }); }); }
+
+// ==================== 시그널링 ====================
+async function startNewChat() {
+  const name = prompt('연락처 이름:');
+  if (!name) return;
+  const id = prompt('연락처 ID (상대와 동일하게):');
+  if (!id) return;
+  let contacts = getContacts();
+  if (!contacts.find(c => c.id === id)) { contacts.push({ id, name }); saveContacts(contacts); }
+  activePeerId = id;
+  const sess = getOrCreateSession(id);
+  sess.password = prompt('채팅방 암호를 입력하세요 (상대와 공유):');
+  if (!sess.password) return;
+  document.getElementById('simpleMode').style.display = 'none';
+  document.getElementById('offerPanel').classList.remove('hidden');
+  document.getElementById('offerSpinner').style.display = 'inline-block';
+  document.getElementById('offerLinkDisplay').classList.add('hidden');
+  connectToPeer(id);
+  renderPeerList();
+}
+function showJoinPanel() {
+  document.getElementById('offerPanel').classList.add('hidden');
+  document.getElementById('answerPanel').classList.remove('hidden');
+  document.getElementById('autoAnswerContent').classList.add('hidden');
+  document.getElementById('manualJoinContent').classList.remove('hidden');
+}
+async function createAnswerFromOffer() {
+  const t = document.getElementById('remoteOfferSDP').value.trim(); if (!t) return;
+  let offerStr = t; if (t.startsWith('http')) { const u = new URL(t); const hp = new URLSearchParams(u.hash.substring(1)); if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; } offerStr = hp.get('offer'); }
+  const offer = decodeSDP(offerStr);
+  const peerId = prompt('이 대화의 연락처 ID를 입력하세요:');
+  if (!peerId) return;
+  const sess = getOrCreateSession(peerId);
+  sess.isOfferer = false;
+  sess.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  sess.pc.oniceconnectionstatechange = () => {
+    const state = sess.pc.iceConnectionState;
+    if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderPeerList(); }
+    else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
+    else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
+  };
+  sess.pc.ondatachannel = e => { if (e.channel.label === 'chat') { sess.dc = e.channel; setupDC(peerId); } };
+  await sess.pc.setRemoteDescription(offer);
+  const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
+  await waitIce(sess.pc);
+  const answerB64 = encodeSDP(sess.pc.localDescription);
+  document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
+  document.getElementById('answerResultPanel').classList.remove('hidden');
+  activePeerId = peerId;
+  document.getElementById('simpleMode').style.display = 'none';
+  document.getElementById('chatScreen').style.display = 'flex';
+  document.getElementById('securityCard').style.display = 'none';
+  document.getElementById('passwordPrompt').style.display = 'block';
+  renderPeerList();
+}
+async function applyAnswerLink() {
+  const l = document.getElementById('answerLinkInput').value.trim(); if (!l) return;
+  if (!activePeerId || !sessions[activePeerId] || !sessions[activePeerId].pc) { alert('먼저 새 채팅을 생성한 후 Answer 링크를 적용하세요.'); return; }
+  try {
+    let answerStr = l; if (l.startsWith('http')) { const u = new URL(l); const hp = new URLSearchParams(u.hash.substring(1)); if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr = hp.get('answer'); }
+    const sess = sessions[activePeerId];
+    await sess.pc.setRemoteDescription(decodeSDP(answerStr));
+    document.getElementById('offerPanel').classList.add('hidden');
+    document.getElementById('simpleMode').style.display = 'none';
+    document.getElementById('chatScreen').style.display = 'flex';
+  } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
 
-// ==================== 시그널링 처리 ====================
+// 해시 처리
 async function checkHash() {
   const h = location.hash.substring(1); if (!h) return;
   const p = new URLSearchParams(h);
@@ -356,23 +440,22 @@ async function checkHash() {
     sess.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     sess.pc.oniceconnectionstatechange = () => {
       const state = sess.pc.iceConnectionState;
-      if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); }
+      if (state === 'connected' || state === 'completed') { sess.isOnline = true; updateConn(true); renderPeerList(); }
       else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
       else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
     };
     sess.pc.ondatachannel = e => { if (e.channel.label === 'chat') { sess.dc = e.channel; setupDC(peerId); } };
     await sess.pc.setRemoteDescription(offer);
-    const ans = await sess.pc.createAnswer();
-    await sess.pc.setLocalDescription(ans);
+    const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
     await waitIce(sess.pc);
     const answerB64 = encodeSDP(sess.pc.localDescription);
     const link = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
     alert('이 Answer 링크를 상대에게 보내세요:\n' + link);
     activePeerId = peerId;
-    document.getElementById('noChatSelected').style.display = 'none';
+    document.getElementById('simpleMode').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
-    document.getElementById('destroyedOverlay').classList.remove('active');
     document.getElementById('securityCard').style.display = 'none';
+    document.getElementById('passwordPrompt').style.display = 'block';
     renderPeerList();
   } else if (p.has('answer') && p.has('peer')) {
     const peerId = p.get('peer');
@@ -397,9 +480,7 @@ async function startEcdhExchange(peerId) {
     if (sess.isOfferer) {
       sess.salt = crypto.getRandomValues(new Uint8Array(SALT_SIZE));
       sess.dc.send(JSON.stringify({ type: '__ecdhe__', salt: buf2b64(sess.salt.buffer), pubKey: buf2b64(pubRaw) }));
-    } else {
-      sess.dc.send(JSON.stringify({ type: '__ecdhe__', pubKey: buf2b64(pubRaw) }));
-    }
+    } else { sess.dc.send(JSON.stringify({ type: '__ecdhe__', pubKey: buf2b64(pubRaw) })); }
   } catch (e) { addMsg(peerId, '보안 오류', 'system'); }
 }
 async function handleEcdheMessage(peerId, data) {
@@ -409,6 +490,14 @@ async function handleEcdheMessage(peerId, data) {
     sess.peerEcdhPub = await crypto.subtle.importKey('raw', b642buf(data.pubKey), ECDH_ALG, true, []);
     if (sess.password && sess.ourEcdhPair && sess.peerEcdhPub && sess.salt) await deriveSessionKey(peerId);
   } catch (e) { addMsg(peerId, '키 교환 실패', 'system'); }
+}
+async function submitPassword() {
+  if (!activePeerId) return;
+  const sess = sessions[activePeerId];
+  const pw = document.getElementById('chatPasswordInput').value.trim();
+  if (!pw) return;
+  sess.password = pw;
+  if (sess.salt && sess.ourEcdhPair && sess.peerEcdhPub) await deriveSessionKey(activePeerId);
 }
 async function deriveSessionKey(peerId) {
   const sess = sessions[peerId];
@@ -430,6 +519,7 @@ async function deriveSessionKey(peerId) {
   sess.handshakeDone = true;
   document.getElementById('securityCard').style.display = 'flex';
   document.getElementById('sessionFingerprint').textContent = buf2hex(await crypto.subtle.digest('SHA-256', sb)).slice(0, 32);
+  document.getElementById('passwordPrompt').style.display = 'none';
 }
 
 // ==================== 메시지 송수신 ====================
@@ -438,8 +528,7 @@ async function sendText() {
   const sess = sessions[activePeerId]; if (!sess) return;
   const inp = document.getElementById('msgInput'); const txt = inp.value.trim(); if (!txt) return;
   const msgId = genUUID(); const payload = { type: 'text', content: txt, id: msgId };
-  await sendPayload(sess, payload, txt, msgId);
-  inp.value = '';
+  await sendPayload(sess, payload, txt, msgId); inp.value = '';
 }
 async function sendPayload(sess, payload, displayContent, msgId) {
   if (!sess.dc || sess.dc.readyState !== 'open' || !sess.sessionKey) {
@@ -447,11 +536,8 @@ async function sendPayload(sess, payload, displayContent, msgId) {
     else { addMsg(activePeerId, '⚠️ 암호를 설정하세요.', 'system'); }
     return;
   }
-  try {
-    const enc = await encryptPayload(sess, payload);
-    sess.dc.send(JSON.stringify({ type: 'msg', ...enc }));
-    addMsg(activePeerId, displayContent, 'me', msgId);
-  } catch (e) { sess.pendingOutbox.push({ payload, id: msgId, displayContent }); addMsg(activePeerId, displayContent, 'me', msgId); addMsg(activePeerId, '⚠️ 전송 실패-대기열 저장', 'system'); }
+  try { const enc = await encryptPayload(sess, payload); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); addMsg(activePeerId, displayContent, 'me', msgId); }
+  catch (e) { sess.pendingOutbox.push({ payload, id: msgId, displayContent }); addMsg(activePeerId, displayContent, 'me', msgId); addMsg(activePeerId, '⚠️ 전송 실패-대기열 저장', 'system'); }
 }
 function onMsg(peerId, e) {
   if (isDestroyed(peerId)) return;
@@ -468,12 +554,12 @@ function onMsg(peerId, e) {
         switch (inner.type) {
           case 'text': addMsg(peerId, inner.content, 'other', inner.id); sendReadReceipt(peerId, inner.id); break;
           case 'emoji': addMsg(peerId, inner.content, 'other', inner.id); break;
-          case 'sticker': addMsg(peerId, `<img src="${inner.url}" class="sticker-img" alt="sticker">`, 'other', inner.id); break;
-          case 'gif': addMsg(peerId, `<img src="${inner.url}" class="gif-img" alt="gif">`, 'other', inner.id); break;
+          case 'sticker': addMsg(peerId, `<img src="${inner.url}" style="max-width:100px;max-height:100px;border-radius:12px;">`, 'other', inner.id); break;
+          case 'gif': addMsg(peerId, `<img src="${inner.url}" style="max-width:180px;max-height:180px;border-radius:12px;">`, 'other', inner.id); break;
           case 'read': markAsRead(peerId, inner.id); break;
           case 'file_start': handleFileStart(peerId, inner); break;
           case 'file_end': if (sess.fileReceive && sess.fileReceive.id === inner.id) assembleFile(peerId); break;
-          case '__destroy__': { markDestroyed(peerId); showDestroyedUI(peerId); break; }
+          case '__destroy__': { markDestroyed(peerId); goHome(); break; }
         }
       }).catch(() => addEncryptedMessage(peerId, d));
     }
@@ -507,32 +593,19 @@ async function flushOutbox(peerId) {
   addMsg(peerId, '📬 대기 메시지 전송 완료', 'system');
 }
 
-// ==================== 특수 메시지: 이모지, 스티커, 짤 ====================
+// ==================== 특수 메시지 ====================
 function sendEmoji(emoji) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'emoji', content: emoji, id: msgId }; sendPayload(sess, payload, emoji, msgId); closeAllPickers(); }
-function sendSticker(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'sticker', url, id: msgId }; sendPayload(sess, payload, `<img src="${url}" class="sticker-img" alt="sticker">`, msgId); closeAllPickers(); }
-function sendGif(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'gif', url, id: msgId }; sendPayload(sess, payload, `<img src="${url}" class="gif-img" alt="gif">`, msgId); closeAllPickers(); }
+function sendSticker(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'sticker', url, id: msgId }; sendPayload(sess, payload, `<img src="${url}" style="max-width:100px;max-height:100px;border-radius:12px;">`, msgId); closeAllPickers(); }
+function sendGif(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'gif', url, id: msgId }; sendPayload(sess, payload, `<img src="${url}" style="max-width:180px;max-height:180px;border-radius:12px;">`, msgId); closeAllPickers(); }
 
-// ==================== 이모지/스티커/짤 Picker ====================
 const EMOJI_LIST = ['😀','😂','🥰','😎','🤔','👍','❤️','🔥','🎉','💯','😢','😡','🥺','🤯','✨','🍕','🚀','💻','📱','🎵'];
 const STICKER_LIST = [
-  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ffcc00"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '웃음,행복,스마일' },
-  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff6666"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 70 Q50 50 70 70" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '슬픔,울음,우울' },
-  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff4444"/><text x="50" y="65" text-anchor="middle" font-size="40" fill="#fff">♥</text></svg>'), tags: '사랑,하트,연인' },
-  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#44ff44"/><text x="50" y="65" text-anchor="middle" font-size="40" fill="#000">★</text></svg>'), tags: '별,특별,좋아요' },
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ffcc00"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '웃음,행복' },
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff6666"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 70 Q50 50 70 70" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '슬픔,울음' },
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff4444"/><text x="50" y="65" text-anchor="middle" font-size="40" fill="#fff">♥</text></svg>'), tags: '사랑,하트' },
 ];
-
-// Giphy 공개 테스트 키 (무료, API 키 없이 사용 가능)
 const DEFAULT_GIPHY_KEY = 'dc6zaTOxFJmzC';
 let giphyApiKey = localStorage.getItem('giphy_api_key') || DEFAULT_GIPHY_KEY;
-
-function setApiKey() {
-  const key = prompt('Giphy API 키 (선택, 없으면 공개키 사용):', giphyApiKey);
-  if (key !== null) {
-    giphyApiKey = key.trim() || DEFAULT_GIPHY_KEY;
-    localStorage.setItem('giphy_api_key', giphyApiKey);
-    alert('API 키가 저장되었습니다.');
-  }
-}
 
 async function searchGifs() {
   const query = document.getElementById('gifSearch').value.trim();
@@ -543,20 +616,14 @@ async function searchGifs() {
     const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${giphyApiKey}&q=${encodeURIComponent(query)}&limit=20&rating=g`);
     const data = await res.json();
     grid.innerHTML = data.data.map(g => `<div class="picker-item" onclick="sendGif('${g.images.fixed_height.url}')"><img src="${g.images.fixed_height_small.url}" alt="gif"></div>`).join('');
-  } catch (e) {
-    grid.innerHTML = '<span style="color:var(--danger);">검색 실패</span>';
-  }
+  } catch (e) { grid.innerHTML = '<span style="color:var(--danger);">검색 실패</span>'; }
 }
-
 function filterStickers() {
   const query = document.getElementById('stickerSearch').value.toLowerCase();
   const grid = document.getElementById('stickerGrid');
   grid.innerHTML = STICKER_LIST.filter(s => s.tags.includes(query) || query === '').map(s => `<div class="picker-item" onclick="sendSticker('${s.url}')"><img src="${s.url}" alt="sticker"></div>`).join('');
 }
-
-function buildEmojiPicker() {
-  document.getElementById('emojiGrid').innerHTML = EMOJI_LIST.map(e => `<span class="emoji-item" onclick="sendEmoji('${e}')">${e}</span>`).join('');
-}
+function buildEmojiPicker() { document.getElementById('emojiGrid').innerHTML = EMOJI_LIST.map(e => `<span class="emoji-item" onclick="sendEmoji('${e}')">${e}</span>`).join(''); }
 function buildStickerPicker() { filterStickers(); }
 function togglePicker(type) {
   const picker = document.getElementById(type + 'Picker');
@@ -566,7 +633,6 @@ function togglePicker(type) {
 }
 function closeAllPickers() { document.querySelectorAll('.picker-overlay').forEach(p => p.classList.remove('active')); }
 
-// ==================== 읽음 확인 ====================
 async function sendReadReceipt(peerId, msgId) {
   const sess = sessions[peerId]; if (!sess || !sess.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return;
   try { const enc = await encryptPayload(sess, { type: 'read', id: msgId }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
@@ -576,16 +642,13 @@ function markAsRead(peerId, msgId) {
   if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read-status')) t.innerHTML += ' <span class="read-status" style="color:var(--success);">✓✓</span>'; }
 }
 
-// ==================== 파일 전송 ====================
+// 파일 전송
 function handleFileStart(peerId, inner) {
   const sess = sessions[peerId]; if (!sess) return;
   sess.fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 };
   addMsg(peerId, `📥 ${inner.name} (${formatBytes(inner.size)})`, 'other');
 }
-function handleBinaryChunk(peerId, buf) {
-  const sess = sessions[peerId]; if (!sess || !sess.fileReceive) return;
-  sess.fileReceive.chunks.push(new Uint8Array(buf)); sess.fileReceive.received += buf.byteLength;
-}
+function handleBinaryChunk(peerId, buf) { const sess = sessions[peerId]; if (!sess || !sess.fileReceive) return; sess.fileReceive.chunks.push(new Uint8Array(buf)); sess.fileReceive.received += buf.byteLength; }
 async function assembleFile(peerId) {
   const sess = sessions[peerId]; if (!sess || !sess.fileReceive) return;
   const blob = new Blob(sess.fileReceive.chunks); const iv = blob.slice(0, 12); const ct = blob.slice(12);
@@ -602,53 +665,27 @@ async function sendFile(file) {
   if (!sess || !sess.dc || sess.dc.readyState !== 'open' || !sess.sessionKey) return;
   const fileId = genUUID(); const fek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: AES_LEN }, true, ['encrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12)); const fekRaw = await crypto.subtle.exportKey('raw', fek);
-  const fileBuf = await file.arrayBuffer();
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, fek, fileBuf);
+  const fileBuf = await file.arrayBuffer(); const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, fek, fileBuf);
   const encData = new Uint8Array(iv.byteLength + ct.byteLength); encData.set(iv); encData.set(new Uint8Array(ct), iv.byteLength);
   const metaEnc = await encryptPayload(sess, { type: 'file_start', id: fileId, name: file.name, size: encData.byteLength, fek: buf2b64(fekRaw) });
-  sess.dc.send(JSON.stringify({ type: 'msg', ...metaEnc }));
-  addMsg(activePeerId, `📤 ${file.name} 전송 중...`, 'me');
+  sess.dc.send(JSON.stringify({ type: 'msg', ...metaEnc })); addMsg(activePeerId, `📤 ${file.name} 전송 중...`, 'me');
   const chunkSize = 256 * 1024; let offset = 0;
   while (offset < encData.byteLength) { const end = Math.min(offset + chunkSize, encData.byteLength); sess.dc.send(encData.slice(offset, end).buffer); offset = end; await new Promise(r => setTimeout(r, 10)); }
   const endEnc = await encryptPayload(sess, { type: 'file_end', id: fileId });
-  sess.dc.send(JSON.stringify({ type: 'msg', ...endEnc }));
-  addMsg(activePeerId, `📤 ${file.name} 전송 완료`, 'me');
+  sess.dc.send(JSON.stringify({ type: 'msg', ...endEnc })); addMsg(activePeerId, `📤 ${file.name} 전송 완료`, 'me');
 }
 
-// ==================== 대화 파괴 ====================
 async function destroyActiveChat() { if (activePeerId) await destroyChat(activePeerId); }
 async function destroyChat(peerId) {
   const sess = sessions[peerId];
-  if (!sess) { markDestroyed(peerId); showDestroyedUI(peerId); return; }
+  if (!sess) { markDestroyed(peerId); goHome(); return; }
   if (sess.sessionKey && sess.dc && sess.dc.readyState === 'open') {
     try { const enc = await encryptPayload(sess, { type: '__destroy__', timestamp: Date.now() }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
   }
-  markDestroyed(peerId);
-  if (sess.pc) sess.pc.close();
-  delete sessions[peerId];
-  if (activePeerId === peerId) showDestroyedUI(peerId);
+  markDestroyed(peerId); if (sess.pc) sess.pc.close(); delete sessions[peerId];
+  if (activePeerId === peerId) goHome();
   renderPeerList();
 }
-
-// ==================== 블러 해제 조건 (온라인일 때만 길게 누르기) ====================
-let securityLockLevel = 0; let globalBlurTimer = null;
-function applyBlurToSensitiveElements() {
-  document.querySelectorAll('.bubble').forEach(el => { if (!el.classList.contains('blur-target') && !el.closest('#msgInput') && !el.closest('.input-bar')) el.classList.add('blur-target'); });
-  document.querySelectorAll('.fingerprint, .link-box, .encrypted-bubble').forEach(el => { if (!el.classList.contains('blur-target')) el.classList.add('blur-target'); });
-}
-function lockAllBlurs(duration = 15000) { document.querySelectorAll('.blur-target').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); }); clearTimeout(globalBlurTimer); globalBlurTimer = setTimeout(() => document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked')), duration); }
-function triggerSecurityLock(level = 1) { securityLockLevel = Math.max(securityLockLevel, level); if (securityLockLevel >= 2) lockAllBlurs(20000); else if (securityLockLevel >= 1) lockAllBlurs(8000); setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000); }
-let pressTimer = null; let pressTarget = null;
-document.addEventListener('pointerdown', e => {
-  if (!activePeerId || isDestroyed(activePeerId)) return;
-  const sess = sessions[activePeerId]; if (!sess || !sess.isOnline) return;
-  const target = e.target.closest('.blur-target');
-  if (target && !target.classList.contains('locked') && securityLockLevel < 2) {
-    pressTarget = target; pressTimer = setTimeout(() => { target.classList.add('revealed'); setTimeout(() => { if (target) target.classList.remove('revealed'); }, 3000); pressTimer = null; pressTarget = null; }, 600);
-  }
-});
-document.addEventListener('pointerup', () => { clearTimeout(pressTimer); pressTimer = null; pressTarget = null; });
-document.addEventListener('pointercancel', () => { clearTimeout(pressTimer); pressTimer = null; pressTarget = null; });
 
 // ==================== 유틸리티 ====================
 const buf2hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -669,69 +706,24 @@ function addMsg(peerId, text, who, msgId) {
   d.className = 'msg ' + (who === 'me' ? 'me' : who === 'other' ? 'other' : 'system');
   if (msgId) d.id = 'msg-' + msgId;
   let timeHtml = `<div class="time">${new Date().toLocaleTimeString()}</div>`;
-  const obfuscated = text.split('').map(ch => ch + (Math.random() < 0.15 ? '\u200B' : '')).join('');
-  d.innerHTML = `<div class="bubble blur-target">${obfuscated}${timeHtml}<div class="noise-layer"></div></div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
+  d.innerHTML = `<div class="bubble">${escapeHtml(text)}${timeHtml}<div class="noise-layer"></div></div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
 }
 function addEncryptedMessage(peerId, rawData) {
   if (peerId !== activePeerId || isDestroyed(peerId)) return;
   const c = document.getElementById('messages'), d = document.createElement('div');
   d.className = 'msg system';
-  d.innerHTML = `<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
+  d.innerHTML = `<div class="encrypted-bubble"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function copyTextById(id) {
+  const el = document.getElementById(id);
+  const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
+  navigator.clipboard.writeText(text).then(() => {}).catch(() => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); alert('링크가 복사되었습니다.'); });
 }
 
-// ==================== 렌더링 왜곡 + 보안 레이어 ====================
-(function initAntiScreenshot() {
-  const canvas = document.getElementById('antiScreenshotCanvas'); const ctx = canvas.getContext('2d');
-  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; }; resize(); window.addEventListener('resize', resize);
-  const drawNoise = () => { if (!ctx) return; const img = ctx.createImageData(canvas.width, canvas.height); for (let i=0; i<img.data.length; i+=4) { img.data[i]=Math.random()*5; img.data[i+1]=Math.random()*5; img.data[i+2]=Math.random()*5; img.data[i+3]=3; } ctx.putImageData(img,0,0); };
-  setInterval(() => { drawNoise(); ctx.fillStyle='rgba(255,255,255,0.002)'; ctx.fillRect(0,0,canvas.width,canvas.height); for (let x=0; x<canvas.width; x+=4) { ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`; ctx.fillRect(x,0,1,canvas.height); } },100);
-  let frame=0; (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
-})();
-(function securityLayer(){
-  const ua=navigator.userAgent||'', plt=navigator.platform||''; const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64'; const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC'; const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
-  function logViolation(r) { triggerSecurityLock(1+(securityLockLevel>0?1:0)); }
-  window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
-  window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
-  document.addEventListener('keydown',e=>{let b=false;const k=e.key.toLowerCase();if(k==='f12'||k==='printscreen')b=true;if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;if(e.altKey&&k==='printscreen')b=true;if(isWin){if(k==='meta'||k==='win')b=true;if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true;if(e.metaKey&&e.altKey&&k==='r')b=true;if(e.metaKey&&e.shiftKey&&k==='s')b=true;}if(isMac){if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true;if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true;}if(isLinux){if(k==='printscreen')b=true;if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true;}if(b){e.preventDefault();e.stopPropagation();logViolation('key');}},true);
-  document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
-  document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
-  document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
-  document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
-  document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
-  window.addEventListener('blur',()=>triggerSecurityLock(2));
-  window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
-  window.addEventListener('pagehide',()=>triggerSecurityLock(3));
-  window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-target.locked').forEach(e=>e.classList.remove('locked'));});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
-  setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
-  new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')&&!n.closest('.picker-overlay')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
-  if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
-  navigator.clipboard.write=()=>Promise.reject('Blocked');
-  if(window.opener){window.opener=null;}
-  ['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
-  if(typeof HTMLCanvasElement!=='undefined'){HTMLCanvasElement.prototype.toDataURL=function(){return'';};HTMLCanvasElement.prototype.toBlob=function(){};HTMLCanvasElement.prototype.captureStream=function(){return null;};}
-  Element.prototype.requestFullscreen=function(){};
-  window.open=()=>null;
-  document.execCommand=function(){return false;};
-  window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
-  if(navigator.keyboard?.lock)navigator.keyboard.lock=()=>Promise.reject();
-  HTMLCanvasElement.prototype.getContext=function(type,...args){if(type?.includes('webgl'))return null;return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
-  if(navigator.wakeLock?.request)navigator.wakeLock.request=()=>Promise.reject();
-  if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject();navigator.serviceWorker.addEventListener=()=>{};}
-  window.Worker=function(){throw new Error('Blocked');};window.SharedWorker=function(){throw new Error('Blocked');};
-  window.eval=()=>{};window.Function=()=>{};
-  const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
-  window.WebSocket=function(){throw new Error('Blocked');};window.EventSource=function(){throw new Error('Blocked');};
-  navigator.sendBeacon=()=>false;
-  if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
-  HTMLIFrameElement.prototype.create=function(){throw new Error('Blocked');};
-  const _ce=document.createElement.bind(document);document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Error('Blocked');return _ce(t,o);};
-})();
-
 // ==================== 초기 실행 ====================
-buildEmojiPicker(); buildStickerPicker(); renderPeerList(); checkHash(); applyBlurToSensitiveElements();
+buildEmojiPicker(); buildStickerPicker(); renderPeerList(); checkHash();
 </script>
 </body>
 </html>
