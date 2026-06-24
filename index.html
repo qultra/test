@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 암호 채팅 – 완벽 상태·폭파·큐잉</title>
+  <title>P2P 암호 채팅 – 완벽 통합판</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -32,7 +32,8 @@
       background: var(--bg); color: var(--text);
       display: flex; justify-content: center; align-items: center;
       min-height: 100dvh; padding: 10px;
-      -webkit-backface-visibility: hidden; backface-visibility: hidden; overscroll-behavior: none;
+      -webkit-backface-visibility: hidden; backface-visibility: hidden;
+      overscroll-behavior: none;
     }
     .container {
       width: 100%; max-width: 520px; height: 95dvh;
@@ -43,7 +44,8 @@
     }
     #antiScreenshotCanvas {
       position: fixed; top:0; left:0; width:100%; height:100%;
-      z-index: 9998; pointer-events: none; opacity: 0.03; mix-blend-mode: difference;
+      z-index: 9998; pointer-events: none; opacity: 0.03;
+      mix-blend-mode: difference;
     }
     .blur-target { filter: blur(12px) !important; transition: filter 0.2s ease; cursor: pointer; }
     .blur-target.revealed { filter: blur(0) !important; }
@@ -88,6 +90,7 @@
     .progress { height:3px; background:#1e293b; border-radius:2px; overflow:hidden; margin-top:6px; }
     .progress-bar { height:100%; width:0%; background:var(--accent); transition:width 0.3s; }
     .file-preview img, .file-preview video { max-width:180px; max-height:140px; border-radius:12px; border:1px solid var(--border); }
+    .typing-indicator { font-size:0.75rem; color:var(--sub); padding:4px 16px; display:none; }
 
     .input-bar { display:flex; gap:6px; padding:10px 0 0; align-items:flex-end; }
     #msgInput { flex:1; min-height:42px; max-height:110px; resize:none; }
@@ -111,7 +114,7 @@
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <div id="simpleMode">
-      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>오프라인 큐·폭파·블러</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
+      <div class="card text-center"><h3 style="margin-bottom:6px;">서버 없이 완벽한 프라이버시</h3><p class="text-sub mb">512+급 종단간 암호화<br>입력 중·읽음·대용량 파일</p><button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button><button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button></div>
       <div id="offerPanel" class="hidden"><div class="card text-center"><div class="spinner mb" id="offerSpinner"></div><p><strong>연결 링크 생성 중...</strong></p><p class="text-sub">생성된 링크를 상대에게 전송하세요.</p><div class="link-box" id="offerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button><p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p><input type="text" id="answerLinkInput" placeholder="Answer 링크 입력..."><button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button></div></div>
       <div id="answerPanel" class="hidden"><div id="autoAnswerContent" class="hidden"><div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div><div id="answerReadyPanel" class="hidden card text-center"><p><strong>✅ Answer 링크 준비 완료</strong></p><p class="text-sub">아래 링크를 방장에게 전송하세요.</p><div class="link-box" id="answerLinkDisplay">생성 중...</div><button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button></div></div><div id="manualJoinContent"><div class="card"><strong>📥 초대 링크 붙여넣기</strong><textarea id="remoteOfferSDP" rows="3" placeholder="방장의 초대 링크 전체..."></textarea><button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 Answer 생성</button></div><div id="answerResultPanel" class="hidden card"><strong>📤 내 Answer 링크</strong><div class="link-box" id="localAnswerLinkDisplay"></div><button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button></div></div></div>
     </div>
@@ -119,6 +122,7 @@
       <div id="securityCard" class="card" style="margin:0 0 8px; padding:8px 14px; font-size:0.78rem; display:none; align-items:center; gap:6px;"><span>🔒 세션:</span><span id="sessionFingerprint" class="fingerprint blur-target" style="flex:1;"></span><button class="btn-small danger" onclick="destroyChat()">💣 대화 폭파</button></div>
       <div id="passwordPrompt" class="card text-center"><strong>🔐 채팅방 암호 입력</strong><input type="password" id="chatPasswordInput" placeholder="상대와 공유한 암호"><button class="btn primary mt" id="submitPasswordBtn" onclick="submitPassword()">암호 설정</button><p class="text-sub mt">암호가 없으면 수신된 암호문만 표시됩니다.</p><p id="passwordError" class="text-sub" style="color:var(--danger); display:none;"></p></div>
       <div id="messages"></div>
+      <div id="typingIndicator" class="typing-indicator">상대방이 입력 중...</div>
       <div class="input-bar" id="inputBar"><button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="파일">📎</button><textarea id="msgInput" rows="1" placeholder="메시지 (종단간 암호화)" autocomplete="off"></textarea><button class="send-btn" onclick="sendText()">➤</button></div>
       <input type="file" id="fileInput" class="hidden" multiple onchange="handleFiles(this.files)">
     </div>
@@ -127,7 +131,7 @@
 
 <script>
 // =====================================================================
-//  완벽한 연결 상태 표시 + 오프라인 큐 + 폭파 + 블러
+//  완벽 통합판 – 타이핑·읽음·대용량·블러·폭파·200서버
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -169,17 +173,17 @@ const ICE_SERVERS = (() => {
   return servers.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
 })();
 
-// ==================== 상태 변수 ====================
+// ==================== 전역 상태 ====================
 let pc, dc, isOfferer = false, password = null;
 let authKey, sessionKey, sendChain, recvChain;
 let ourEcdhPair = null, peerEcdhPub = null;
 let salt, handshakeDone = false, isOnline = false;
-let fileReceive = null, typingChannel = null;
+let fileReceive = null;
 let pendingOutbox = [];
 const receivedMessageIds = new Set();
 const DESTROY_KEY = 'p2p_chat_destroyed_v2';
 const DESTROY_SESSION_KEY = 'p2p_chat_destroyed_session';
-const TYPING_LABEL = 'typing';
+let typingTimer = null;
 
 // ==================== 파괴 플래그 ====================
 function isDestroyed() { return !!(localStorage.getItem(DESTROY_KEY) || sessionStorage.getItem(DESTROY_SESSION_KEY)); }
@@ -190,9 +194,7 @@ function markDestroyed() {
   if (location.hash) history.replaceState(null, '', location.pathname);
 }
 function clearDestroyedFlags() { localStorage.removeItem(DESTROY_KEY); sessionStorage.removeItem(DESTROY_SESSION_KEY); }
-
 setInterval(() => { if (isDestroyed()) { showSimple(); } }, 500);
-
 function executeDestroy() {
   document.getElementById('messages').innerHTML = '';
   receivedMessageIds.clear(); pendingOutbox = [];
@@ -204,7 +206,7 @@ function executeDestroy() {
   document.getElementById('passwordPrompt').style.display = 'block';
   document.getElementById('passwordError').style.display = 'none';
   if (pc) { pc.close(); pc = null; }
-  dc = null; typingChannel = null;
+  dc = null;
   authKey = sessionKey = null; sendChain = recvChain = null;
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false; isOnline = false;
@@ -260,43 +262,33 @@ function showSimple() {
   document.getElementById('chatScreen').style.display = 'none';
 }
 
-// ==================== WebRTC 초기화 및 시그널링 ====================
+// ==================== WebRTC ====================
 function initPC() {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   pc.oniceconnectionstatechange = () => {
     const state = pc.iceConnectionState;
-    console.log('ICE state:', state);
     if (state === 'connected' || state === 'completed') {
-      isOnline = true;
-      updateConn(true);
+      isOnline = true; updateConn(true);
       if (isDestroyed()) executeDestroy();
     } else if (state === 'disconnected') {
-      isOnline = false;
-      updateConn(false);
+      isOnline = false; updateConn(false);
       pc.restartIce();
     } else if (state === 'failed' || state === 'closed') {
-      isOnline = false;
-      updateConn(false);
+      isOnline = false; updateConn(false);
     }
   };
   pc.ondatachannel = e => {
     if (isDestroyed()) return;
     if (e.channel.label === 'chat') {
       if (dc) dc.close();
-      dc = e.channel;
-      setupDC();
-    } else if (e.channel.label === TYPING_LABEL) {
-      if (typingChannel) typingChannel.close();
-      typingChannel = e.channel;
+      dc = e.channel; setupDC();
     }
   };
 }
 function createDataChannels() {
   if (!pc || !isOfferer) return;
   if (dc) dc.close();
-  if (typingChannel) typingChannel.close();
   dc = pc.createDataChannel('chat', { ordered: true });
-  typingChannel = pc.createDataChannel(TYPING_LABEL, { ordered: false, maxRetransmits: 0 });
   setupDC();
 }
 function setupDC() {
@@ -317,82 +309,63 @@ function waitIce() {
   });
 }
 
-// ==================== 시그널링 함수들 ====================
+// ==================== 시그널링 ====================
 async function startNewChat() {
-  clearDestroyedFlags();
-  closeConnection();
-  isOfferer = true;
+  clearDestroyedFlags(); closeConnection(); isOfferer = true;
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('answerPanel').classList.add('hidden');
   document.getElementById('offerSpinner').style.display = 'inline-block';
-  initPC();
-  createDataChannels();
+  initPC(); createDataChannels();
   pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => waitIce().then(() => {
     document.getElementById('offerSpinner').style.display = 'none';
     const offerB64 = encodeSDP(pc.localDescription);
     document.getElementById('offerLinkDisplay').textContent = location.origin + location.pathname + '#offer=' + offerB64;
   }));
 }
-
 async function initiateAnswer(offer) {
-  isOfferer = false;
-  initPC();
+  isOfferer = false; initPC();
   await pc.setRemoteDescription(offer);
-  const ans = await pc.createAnswer();
-  await pc.setLocalDescription(ans);
-  await waitIce();
+  const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
   document.getElementById('answerSpinner').style.display = 'none';
   document.getElementById('answerReadyPanel').classList.remove('hidden');
   document.getElementById('answerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
 }
-
 function showJoinPanel() {
   document.getElementById('offerPanel').classList.add('hidden');
   document.getElementById('answerPanel').classList.remove('hidden');
   document.getElementById('autoAnswerContent').classList.add('hidden');
   document.getElementById('manualJoinContent').classList.remove('hidden');
 }
-
 async function createAnswerFromOffer() {
-  const t = document.getElementById('remoteOfferSDP').value.trim();
-  if (!t) return;
-  closeConnection();
-  isOfferer = false;
-  initPC();
+  const t = document.getElementById('remoteOfferSDP').value.trim(); if (!t) return;
+  closeConnection(); isOfferer = false; initPC();
   let offerStr = t;
   if (t.startsWith('http')) {
-    const u = new URL(t);
-    const hp = new URLSearchParams(u.hash.substring(1));
+    const u = new URL(t); const hp = new URLSearchParams(u.hash.substring(1));
     if (!hp.has('offer')) { alert('올바른 초대 링크가 아닙니다.'); return; }
     offerStr = hp.get('offer');
   }
   await pc.setRemoteDescription(decodeSDP(offerStr));
-  const ans = await pc.createAnswer();
-  await pc.setLocalDescription(ans);
-  await waitIce();
+  const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await waitIce();
   document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + encodeSDP(pc.localDescription);
   document.getElementById('answerResultPanel').classList.remove('hidden');
 }
-
 async function applyAnswerLink() {
-  const l = document.getElementById('answerLinkInput').value.trim();
-  if (!l) return;
+  const l = document.getElementById('answerLinkInput').value.trim(); if (!l) return;
   if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
   try {
     let answerStr = l;
     if (l.startsWith('http')) {
-      const u = new URL(l);
-      const hp = new URLSearchParams(u.hash.substring(1));
+      const u = new URL(l); const hp = new URLSearchParams(u.hash.substring(1));
       if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; }
       answerStr = hp.get('answer');
     }
     await pc.setRemoteDescription(decodeSDP(answerStr));
   } catch (e) { alert('올바르지 않은 Answer 링크입니다.'); }
 }
-
 function closeConnection() {
   if (pc) { pc.close(); pc = null; }
-  dc = null; typingChannel = null;
+  dc = null;
   authKey = sessionKey = null; sendChain = recvChain = null;
   salt = null; ourEcdhPair = null; peerEcdhPub = null; fileReceive = null; password = null;
   handshakeDone = false; isOnline = false;
@@ -407,13 +380,11 @@ function closeConnection() {
 // ==================== 해시 기반 연결 ====================
 async function checkHash() {
   if (isDestroyed()) { executeDestroy(); return; }
-  const h = location.hash.substring(1);
-  if (!h) return;
+  const h = location.hash.substring(1); if (!h) return;
   const p = new URLSearchParams(h);
   if (p.has('offer')) {
     try {
-      const offer = decodeSDP(p.get('offer'));
-      closeConnection();
+      const offer = decodeSDP(p.get('offer')); closeConnection();
       document.getElementById('simpleMode').querySelector('.card').classList.add('hidden');
       document.getElementById('answerPanel').classList.remove('hidden');
       document.getElementById('autoAnswerContent').classList.remove('hidden');
@@ -423,10 +394,7 @@ async function checkHash() {
       await initiateAnswer(offer);
     } catch (e) { alert('잘못된 초대 링크입니다.'); }
   } else if (p.has('answer')) {
-    if (!pc || !isOfferer) {
-      alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.');
-      return;
-    }
+    if (!pc || !isOfferer) { alert('채팅을 먼저 시작한 후 Answer 링크를 적용하세요.'); return; }
     try {
       const answer = decodeSDP(p.get('answer'));
       await pc.setRemoteDescription(answer);
@@ -435,7 +403,7 @@ async function checkHash() {
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 암호화 엔진 (P-521, SHA-512, 100만 PBKDF2) ====================
+// ==================== 암호화 엔진 (P-521 + SHA-512 + AES-256) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
@@ -452,7 +420,6 @@ async function startEcdhExchange() {
     }
   } catch (e) { addMsg('보안 오류', 'system'); }
 }
-
 async function handleEcdheMessage(data) {
   if (handshakeDone || isDestroyed()) return;
   try {
@@ -461,29 +428,22 @@ async function handleEcdheMessage(data) {
     if (password && ourEcdhPair && peerEcdhPub && salt) await deriveSessionKey();
   } catch (e) { addMsg('키 교환 실패', 'system'); }
 }
-
 async function submitPassword() {
   if (isDestroyed()) return;
-  const errorEl = document.getElementById('passwordError');
-  errorEl.style.display = 'none';
+  const errorEl = document.getElementById('passwordError'); errorEl.style.display = 'none';
   password = document.getElementById('chatPasswordInput').value.trim();
   if (!password) { errorEl.textContent = '암호를 입력하세요.'; errorEl.style.display = 'block'; return; }
   if (!salt || !ourEcdhPair || !peerEcdhPub) {
-    errorEl.textContent = '상대방과의 보안 연결 준비 중...';
-    errorEl.style.display = 'block';
-    return;
+    errorEl.textContent = '상대방과의 보안 연결 준비 중...'; errorEl.style.display = 'block'; return;
   }
   if (handshakeDone) return;
   try {
-    await deriveAuthKey();
-    await deriveSessionKey();
-    handshakeDone = true;
+    await deriveAuthKey(); await deriveSessionKey(); handshakeDone = true;
     document.getElementById('passwordPrompt').style.display = 'none';
     document.getElementById('securityCard').style.display = 'flex';
     addMsg('🔐 세션 활성화', 'system');
   } catch (e) { errorEl.textContent = '세션 키 실패: ' + e.message; errorEl.style.display = 'block'; }
 }
-
 async function deriveAuthKey() {
   const km = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
   authKey = await crypto.subtle.deriveKey(
@@ -491,7 +451,6 @@ async function deriveAuthKey() {
     km, { name: 'AES-GCM', length: AES_LEN }, true, ['encrypt', 'decrypt']
   );
 }
-
 async function deriveSessionKey() {
   const ecdhBits = await crypto.subtle.deriveBits({ name: 'ECDH', public: peerEcdhPub }, ourEcdhPair.privateKey, 521);
   const authRaw = await crypto.subtle.exportKey('raw', authKey);
@@ -512,7 +471,6 @@ async function deriveSessionKey() {
   document.getElementById('sessionFingerprint').textContent = buf2hex(await crypto.subtle.digest('SHA-256', sb)).slice(0, 32);
   applyBlurToSensitiveElements();
 }
-
 function compareBuffers(b1, b2) { for (let i = 0; i < b1.byteLength; i++) { if (b1[i] < b2[i]) return -1; if (b1[i] > b2[i]) return 1; } return 0; }
 async function hkdfExpand(prk, info) {
   const k = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
@@ -550,6 +508,20 @@ async function decryptPayload(d) {
   } catch (e) { recvChain.chain = prevChain; recvChain.seq = prevSeq; throw e; }
 }
 
+// ==================== 타이핑 인디케이터 (암호화) ====================
+async function sendTyping(state) {
+  if (!dc || dc.readyState !== 'open' || !sessionKey || isDestroyed()) return;
+  try {
+    const enc = await encryptPayload({ type: 'typing', state });
+    dc.send(JSON.stringify({ type: 'msg', ...enc }));
+  } catch (e) {}
+}
+document.getElementById('msgInput').addEventListener('input', () => {
+  sendTyping(true);
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => sendTyping(false), 1500);
+});
+
 // ==================== 메시지 송수신 ====================
 async function flushOutbox() {
   if (isDestroyed()) return;
@@ -569,11 +541,8 @@ async function sendText() {
       pendingOutbox.push({ payload, id: msgId });
       addMsg(txt, 'me', msgId);
       addMsg('⏳ 오프라인-복구 시 전송', 'system');
-    } else {
-      addMsg('⚠️ 암호를 설정하세요.', 'system');
-    }
-    inp.value = '';
-    return;
+    } else { addMsg('⚠️ 암호를 설정하세요.', 'system'); }
+    inp.value = ''; return;
   }
   try {
     const enc = await encryptPayload(payload);
@@ -595,7 +564,8 @@ function onMsg(e) {
         if (inner.id && receivedMessageIds.has(inner.id)) return;
         if (inner.id) receivedMessageIds.add(inner.id);
         if (inner.type === 'text') { addMsg(inner.content, 'other', inner.id); sendReadReceipt(inner.id); }
-        else if (inner.type === 'read') markAsRead(inner.id);
+        else if (inner.type === 'typing') { document.getElementById('typingIndicator').style.display = inner.state ? 'block' : 'none'; }
+        else if (inner.type === 'read') { markAsRead(inner.id); }
         else if (inner.type === 'file_start') handleFileStart(inner);
         else if (inner.type === 'file_end') { if (fileReceive && fileReceive.id === inner.id) assembleFile(); }
         else if (inner.type === '__destroy__') { markDestroyed(); executeDestroy(); }
@@ -604,19 +574,10 @@ function onMsg(e) {
   } catch (e) {}
 }
 async function destroyChat() {
-  if (!sessionKey || !dc || dc.readyState !== 'open') {
-    // 오프라인이면 폭파 플래그만 저장하고 UI 초기화
-    markDestroyed();
-    executeDestroy();
-    return;
-  }
+  if (!sessionKey || !dc || dc.readyState !== 'open') { markDestroyed(); executeDestroy(); return; }
   if (!confirm('⚠️ 상대방과 나의 모든 대화 기록을 영구 삭제합니다.\n복구는 절대 불가능합니다.\n계속하시겠습니까?')) return;
-  try {
-    const enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() });
-    dc.send(JSON.stringify({ type: 'msg', ...enc }));
-  } catch (e) {}
-  markDestroyed();
-  executeDestroy();
+  try { const enc = await encryptPayload({ type: '__destroy__', timestamp: Date.now() }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
+  markDestroyed(); executeDestroy();
 }
 function addMsg(text, who, msgId) {
   if (isDestroyed()) return;
@@ -639,7 +600,7 @@ function addEncryptedMessage(rawData) {
 async function sendReadReceipt(msgId) { if (!sessionKey || isDestroyed()) return; try { const enc = await encryptPayload({ type: 'read', id: msgId }); dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
 function markAsRead(msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read')) t.innerHTML += ' <span class="read" style="color:var(--success);">✓✓</span>'; } }
 
-// ==================== 파일 전송 ====================
+// ==================== 대용량 파일 전송 ====================
 function handleFileStart(inner) {
   fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 };
   addMsg(`📥 ${inner.name} (${formatBytes(inner.size)})`, 'other');
@@ -703,7 +664,6 @@ const b642buf = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
 const concatBufs = (...bufs) => { let len=bufs.reduce((a,b)=>a+b.byteLength,0), tmp=new Uint8Array(len), off=0; bufs.forEach(b=>{tmp.set(new Uint8Array(b),off);off+=b.byteLength;}); return tmp.buffer; };
 const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]%16;return(c=='x'?r:r&0x3|0x8).toString(16);});
 function formatBytes(b) { return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(1)+' GB'; }
-function toggleSecurityDetail() { document.getElementById('securityDetail').classList.toggle('hidden'); }
 function copyTextById(id) {
   const el = document.getElementById(id);
   const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent;
@@ -717,6 +677,110 @@ function copyTextById(id) {
   });
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+
+// ==================== 렌더링 왜곡 ====================
+(function initAntiScreenshot() {
+  const canvas = document.getElementById('antiScreenshotCanvas');
+  const ctx = canvas.getContext('2d');
+  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  resize(); window.addEventListener('resize', resize);
+  const drawNoise = () => {
+    if (!ctx) return;
+    const img = ctx.createImageData(canvas.width, canvas.height);
+    for (let i=0; i<img.data.length; i+=4) {
+      img.data[i]=Math.random()*5; img.data[i+1]=Math.random()*5; img.data[i+2]=Math.random()*5; img.data[i+3]=3;
+    }
+    ctx.putImageData(img,0,0);
+  };
+  setInterval(() => {
+    drawNoise();
+    ctx.fillStyle='rgba(255,255,255,0.002)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    for (let x=0; x<canvas.width; x+=4) {
+      ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;
+      ctx.fillRect(x,0,1,canvas.height);
+    }
+  },100);
+  let frame=0;
+  (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
+})();
+
+// ==================== 보안 레이어 ====================
+const ua=navigator.userAgent||'', plt=navigator.platform||'';
+const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
+const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
+const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
+function logViolation(r) { triggerSecurityLock(1+(securityLockLevel>0?1:0)); }
+window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
+window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
+document.addEventListener('keydown',e=>{let b=false;const k=e.key.toLowerCase();if(k==='f12'||k==='printscreen')b=true;if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;if(e.altKey&&k==='printscreen')b=true;if(isWin){if(k==='meta'||k==='win')b=true;if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true;if(e.metaKey&&e.altKey&&k==='r')b=true;if(e.metaKey&&e.shiftKey&&k==='s')b=true;}if(isMac){if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true;if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true;}if(isLinux){if(k==='printscreen')b=true;if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true;}if(b){e.preventDefault();e.stopPropagation();logViolation('key');}},true);
+document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
+document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
+document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
+document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
+document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
+let tSy=0,tSx=0,tSt=0;
+document.addEventListener('touchstart',e=>{if(e.touches.length>1){logViolation('multi');e.preventDefault();}if(e.touches.length===1){tSy=e.touches[0].clientY;tSx=e.touches[0].clientX;tSt=Date.now();}},{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+document.addEventListener('touchend',e=>{const n=Date.now();const dy=tSy-(e.changedTouches[0]?.clientY??0);const dx=tSx-(e.changedTouches[0]?.clientX??0);if(tSy>innerHeight-40&&dy>50&&n-tSt<300)logViolation('bottom');if(tSx<20&&dx<-50&&n-tSt<300)logViolation('left');if(tSx>innerWidth-20&&dx>50&&n-tSt<300)logViolation('right');});
+document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight)logViolation('mouse');});
+window.addEventListener('blur',()=>triggerSecurityLock(2));
+window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
+window.addEventListener('pagehide',()=>triggerSecurityLock(3));
+window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-target.locked').forEach(e=>e.classList.remove('locked'));});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
+let lW=innerWidth,lH=innerHeight;
+window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){logViolation('resize');lW=w;lH=h;}});
+window.addEventListener('orientationchange',()=>logViolation('orient'));
+if(visualViewport){visualViewport.addEventListener('resize',()=>logViolation('vport'));visualViewport.addEventListener('scroll',()=>logViolation('vpscroll'));}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)logViolation('fs');});
+setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
+new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
+if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
+if(navigator.getDisplayMedia)navigator.getDisplayMedia=()=>Promise.reject();
+navigator.clipboard.write=()=>Promise.reject('Blocked');
+if(window.opener){window.opener=null;}
+['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
+if(typeof HTMLCanvasElement!=='undefined'){HTMLCanvasElement.prototype.toDataURL=function(){return'';};HTMLCanvasElement.prototype.toBlob=function(){};HTMLCanvasElement.prototype.captureStream=function(){return null;};}
+Element.prototype.requestFullscreen=function(){};
+Element.prototype.webkitRequestFullscreen=function(){};
+window.open=()=>null;
+document.execCommand=function(){return false;};
+window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
+if(navigator.keyboard?.lock)navigator.keyboard.lock=()=>Promise.reject();
+if(screen?.isExtended){setInterval(()=>{if(screen.isExtended)logViolation('extmon');},5000);}
+if(matchMedia('(display-mode: standalone)').matches)logViolation('pwa');
+HTMLCanvasElement.prototype.getContext=function(type,...args){if(type?.includes('webgl'))return null;return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
+if(navigator.wakeLock?.request)navigator.wakeLock.request=()=>Promise.reject();
+if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject();navigator.serviceWorker.addEventListener=()=>{};}
+let rafC=0,lastR=0;
+(function rafLoop(t){if(lastR&&t-lastR>100){rafC++;if(rafC>3){logViolation('frame');rafC=0;}}else rafC=0;lastR=t;requestAnimationFrame(rafLoop);})(performance.now());
+let inactivityTimer;
+function resetInactivity(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none')destroyChat();},15*60*1000);}
+['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity));resetInactivity();
+window.Worker=function(){throw new Error('Blocked');};window.SharedWorker=function(){throw new Error('Blocked');};
+window.eval=()=>{};window.Function=()=>{};
+const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
+const _si=window.setInterval;window.setInterval=function(c,...a){if(typeof c==='string')return;return _si.call(this,c,...a);};
+window.WebSocket=function(){throw new Error('Blocked');};window.EventSource=function(){throw new Error('Blocked');};
+navigator.sendBeacon=()=>false;
+if(navigator.permissions)navigator.permissions.query=()=>Promise.reject(new Error('Blocked'));
+if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
+if(navigator.geolocation){navigator.geolocation.getCurrentPosition=()=>{};navigator.geolocation.watchPosition=()=>{};}
+if(window.PaymentRequest)window.PaymentRequest=function(){throw new Error('Blocked');};
+if(navigator.mediaDevices?.enumerateDevices)navigator.mediaDevices.enumerateDevices=()=>Promise.reject(new Error('Blocked'));
+if(navigator.bluetooth)navigator.bluetooth.requestDevice=()=>Promise.reject(new Error('Blocked'));
+if(navigator.usb)navigator.usb.requestDevice=()=>Promise.reject(new Error('Blocked'));
+if(navigator.serial)navigator.serial.requestPort=()=>Promise.reject(new Error('Blocked'));
+if(navigator.hid)navigator.hid.requestDevice=()=>Promise.reject(new Error('Blocked'));
+if(window.showOpenFilePicker)window.showOpenFilePicker=()=>Promise.reject(new Error('Blocked'));
+if(window.showSaveFilePicker)window.showSaveFilePicker=()=>Promise.reject(new Error('Blocked'));
+if(window.showDirectoryPicker)window.showDirectoryPicker=()=>Promise.reject(new Error('Blocked'));
+if(window.SpeechRecognition||window.webkitSpeechRecognition){window.SpeechRecognition=function(){throw new Error('Blocked');};window.webkitSpeechRecognition=function(){throw new Error('Blocked');}}
+HTMLIFrameElement.prototype.create=function(){throw new Error('Blocked');};
+const _ce=document.createElement.bind(document);
+document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Error('Blocked');return _ce(t,o);};
+const _sa=Element.prototype.setAttribute;
+Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chatScreen'))return;return _sa.call(this,n,v);};
 
 // ==================== 초기 실행 ====================
 checkHash();
