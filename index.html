@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 궁극의 보안·완벽 UI</title>
+  <title>P2P 비밀 메신저 – UI 완전 수정·궁극 암호화</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -36,10 +36,8 @@
     .dot { width:10px; height:10px; border-radius:50%; transition:0.2s; }
     .dot.on { background:var(--success); box-shadow:0 0 10px var(--success); }
     .dot.off { background:var(--danger); }
-
     .main-content { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; }
     .main-content::-webkit-scrollbar { width:4px; } .main-content::-webkit-scrollbar-thumb { background:#253040; border-radius:2px; }
-
     .card { background:var(--card); backdrop-filter:blur(14px); border-radius:var(--radius); padding:18px; margin-bottom:12px; border:1px solid var(--border); }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:14px 20px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; font-size:0.95rem; transition:0.2s; width:100%; backdrop-filter:blur(10px); -webkit-tap-highlight-color: transparent; }
     .btn:hover { background:rgba(255,255,255,0.12); }
@@ -47,10 +45,8 @@
     .btn.primary { background:var(--accent); border:none; }
     .btn.danger { background:var(--danger); border:none; }
     .btn-small { padding:8px 14px; font-size:0.8rem; width:auto; border-radius:12px; }
-
     input, textarea { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 15px; font-size:16px; outline:none; user-select:text; -webkit-user-select:text; }
     input:focus, textarea:focus { border-color:var(--accent); }
-
     #chatScreen { display:none; flex-direction:column; flex:1; }
     #messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:6px 0; }
     .msg { display:flex; flex-direction:column; animation:fadeUp 0.2s ease; }
@@ -61,51 +57,38 @@
     .msg.other .bubble { border-bottom-left-radius:6px; }
     .msg .time { font-size:0.65rem; color:var(--sub); margin-top:4px; display:flex; justify-content:flex-end; gap:6px; position:relative; z-index:5; }
     .encrypted-bubble { background:#0a0f18; border:1px solid var(--border); font-family:monospace; font-size:0.7rem; color:#94a3b8; white-space:pre-wrap; word-break:break-all; padding:10px; border-radius:12px; max-width:90%; }
-
     .input-bar { display:flex; gap:6px; padding:10px 0 0; align-items:flex-end; padding-bottom:var(--safe-bottom); }
     #msgInput { flex:1; min-height:44px; max-height:110px; resize:none; }
     .icon-btn { background:none; border:none; font-size:1.3rem; cursor:pointer; padding:10px; color:var(--accent); -webkit-tap-highlight-color: transparent; }
     .send-btn { background:var(--accent); color:white; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; flex-shrink:0; }
-
     .action-bar { display:flex; gap:4px; padding:4px 0 0; position:relative; flex-wrap:wrap; }
     .action-btn { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:14px; cursor:pointer; font-size:0.85rem; -webkit-tap-highlight-color: transparent; }
-    .action-btn:active { background:rgba(255,255,255,0.15); }
-
     .picker-overlay { display:none; position:absolute; bottom:100%; left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; max-height:220px; overflow-y:auto; z-index:20; margin-bottom:4px; }
     .picker-overlay.active { display:flex; flex-direction:column; gap:8px; }
     .picker-search { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-size:16px; outline:none; margin-bottom:4px; }
     .picker-grid { display:flex; flex-wrap:wrap; gap:8px; }
-    .picker-item { cursor:pointer; border-radius:8px; overflow:hidden; transition:0.15s; }
-    .picker-item:active { transform:scale(1.05); }
+    .picker-item { cursor:pointer; border-radius:8px; overflow:hidden; }
     .picker-item img { width:64px; height:64px; object-fit:cover; border-radius:8px; }
     .emoji-item { font-size:1.8rem; cursor:pointer; padding:6px 8px; border-radius:8px; }
-    .emoji-item:active { background:rgba(255,255,255,0.1); }
-
     .hidden { display:none !important; }
     .text-center { text-align:center; } .text-sub { color:var(--sub); font-size:0.82rem; }
     .mt { margin-top:12px; } .mb { margin-bottom:12px; }
     .link-box { word-break:break-all; background:#0a0f18; padding:10px; border-radius:12px; font-size:0.72rem; margin:8px 0; max-height:75px; overflow-y:auto; color:#9aa4bf; }
     .fingerprint { font-family:monospace; font-size:0.65rem; background:#0a0f18; padding:6px; border-radius:8px; word-break:break-all; }
-
     .chat-header { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
     .chat-title { font-size:0.95rem; font-weight:600; flex:1; }
     .typing-indicator { font-size:0.75rem; color:var(--sub); padding:4px 16px; display:none; }
-
     .contact-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
-    .contact-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:16px; padding:14px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:0.15s; -webkit-tap-highlight-color: transparent; }
-    .contact-card:active { background:rgba(255,255,255,0.08); }
+    .contact-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:16px; padding:14px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; }
     .contact-card.active { border-color:var(--accent); background:rgba(91,141,240,0.1); }
     .contact-avatar { width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; position:relative; }
     .contact-dot { position:absolute; bottom:0; right:0; width:12px; height:12px; border-radius:50%; border:2px solid var(--surface); }
-    .contact-dot.on { background:var(--success); }
-    .contact-dot.off { background:var(--danger); }
+    .contact-dot.on { background:var(--success); } .contact-dot.off { background:var(--danger); }
     .contact-info { flex:1; min-width:0; }
     .contact-name { font-size:0.95rem; font-weight:600; }
     .contact-status { font-size:0.75rem; color:var(--sub); margin-top:2px; }
-
-    /* SVG 아이콘 */
     .svg-icon { width:20px; height:20px; fill:currentColor; }
-
+    .view { } /* 모든 뷰에 적용, 필요 시 display 제어 */
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spinner { width:20px; height:20px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
@@ -113,82 +96,53 @@
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <h1>🔐 P2P 비밀채팅</h1>
-    <div class="status-bar">
-      <span id="connDot" class="dot off"></span>
-      <span id="connLabel">오프라인</span>
-    </div>
-  </div>
+  <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
     <!-- 메인 화면 -->
     <div id="simpleMode" class="view">
       <div class="card text-center">
         <h3 style="margin-bottom:4px;">서버 없이 완벽한 프라이버시</h3>
         <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
-        <button class="btn primary" onclick="startNewChat()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-          새 채팅 생성
-        </button>
-        <button class="btn mt" onclick="showJoinPanel()">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          초대 링크로 참가
-        </button>
+        <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
+        <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
       </div>
       <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 대화 목록</div>
       <div class="contact-list" id="contactList"></div>
-
-      <!-- Offer 패널 -->
-      <div id="offerPanel" class="view hidden">
-        <div class="card text-center">
-          <div class="spinner mb" id="offerSpinner" style="display:none;"></div>
-          <p><strong>연결 링크 생성 중...</strong></p>
-          <p class="text-sub">생성된 링크를 상대에게 전송하세요.</p>
-          <div class="link-box" id="offerLinkDisplay">생성 중...</div>
-          <button class="btn mt" onclick="copyTextById('offerLinkDisplay')">
-            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-            링크 복사
-          </button>
-          <p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p>
-          <input type="text" id="answerLinkInput" placeholder="Answer 링크 입력...">
-          <button class="btn primary mt" onclick="applyAnswerLink()">
-            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            연결 완료
-          </button>
-          <button class="btn mt" onclick="goHome()" style="background:rgba(255,255,255,0.03);">← 홈으로</button>
-        </div>
-      </div>
-
-      <!-- Answer 패널 -->
-      <div id="answerPanel" class="view hidden">
-        <div id="manualJoinContent">
-          <div class="card"><strong>📥 초대 링크 붙여넣기</strong>
-            <textarea id="remoteOfferSDP" rows="3" placeholder="방장에게 받은 전체 링크..."></textarea>
-            <button class="btn primary mt" onclick="createAnswerFromOffer()">
-              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-              연결 시작
-            </button>
-          </div>
-          <div id="answerResultPanel" class="hidden card">
-            <strong>📤 내 Answer 링크</strong>
-            <div class="link-box" id="localAnswerLinkDisplay"></div>
-            <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">
-              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-              복사해서 방장에게 전송
-            </button>
-          </div>
-        </div>
-        <button class="btn mt" onclick="goHome()" style="background:rgba(255,255,255,0.03);">← 홈으로</button>
+    </div>
+    <!-- Offer 패널 -->
+    <div id="offerPanel" class="view hidden">
+      <div class="card text-center">
+        <div class="spinner mb" id="offerSpinner" style="display:none;"></div>
+        <p><strong>연결 링크 생성 중...</strong></p>
+        <p class="text-sub">생성된 링크를 상대에게 전송하세요.</p>
+        <div class="link-box" id="offerLinkDisplay">생성 중...</div>
+        <button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button>
+        <p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p>
+        <input type="text" id="answerLinkInput" placeholder="Answer 링크 입력...">
+        <button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button>
+        <button class="btn mt" onclick="goHome()">← 홈으로</button>
       </div>
     </div>
-
+    <!-- Answer 패널 -->
+    <div id="answerPanel" class="view hidden">
+      <div class="card"><strong>📥 초대 링크 붙여넣기</strong>
+        <textarea id="remoteOfferSDP" rows="3" placeholder="방장에게 받은 전체 링크..."></textarea>
+        <button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 연결 시작</button>
+      </div>
+      <div id="answerResultPanel" class="hidden card">
+        <strong>📤 내 Answer 링크</strong>
+        <div class="link-box" id="localAnswerLinkDisplay"></div>
+        <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button>
+      </div>
+      <button class="btn mt" onclick="goHome()">← 홈으로</button>
+    </div>
     <!-- 채팅 화면 -->
     <div id="chatScreen" class="view hidden">
       <div class="chat-header">
-        <button class="btn-small" onclick="goHome()" style="padding:6px 10px;">←</button>
+        <button class="btn-small" onclick="goHome()">←</button>
         <span class="chat-title" id="chatTitle">채팅</span>
-        <button class="btn-small" onclick="renameChat()" style="margin-right:4px;">✏️</button>
-        <button class="btn-small danger" onclick="destroyActiveChat()" style="padding:6px 10px;font-size:0.7rem;">💣</button>
+        <button class="btn-small" onclick="renameChat()">✏️</button>
+        <button class="btn-small danger" onclick="destroyActiveChat()">💣</button>
       </div>
       <div id="securityCard" class="card" style="margin:0 0 4px; padding:6px 12px; font-size:0.7rem; display:none; align-items:center; gap:6px;">
         <span>🔒</span><span id="sessionFingerprint" class="fingerprint blur-target" style="flex:1;"></span>
@@ -209,7 +163,7 @@
         <button class="action-btn" onclick="document.getElementById('stickerFileInput').click()">📁</button>
         <div class="picker-overlay" id="emojiPicker"><div class="picker-grid" id="emojiGrid"></div></div>
         <div class="picker-overlay" id="mediaPicker">
-          <input type="text" class="picker-search" placeholder="URL 입력 후 추가" id="mediaSearch" onkeydown="if(event.key==='Enter')addMediaUrl()">
+          <input type="text" class="picker-search" placeholder="URL 입력 후 Enter" id="mediaSearch" onkeydown="if(event.key==='Enter')addMediaUrl()">
           <div class="picker-grid" id="mediaGrid"></div>
         </div>
         <input type="file" id="stickerFileInput" class="hidden" accept="image/*" onchange="uploadSticker(this.files)">
@@ -226,7 +180,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 궁극의 보안·완벽 UI (최종판)
+//  P2P 비밀 메신저 – 궁극의 보안·완벽 UI (최종 검토 완료)
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -235,7 +189,7 @@ const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); wh
 const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
-// 최소한의 STUN 서버 (P2P 연결 보조, 데이터는 직접 전송)
+// 최소 STUN 서버
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
@@ -296,10 +250,18 @@ function renderContactList() {
   }).join('');
 }
 
+// ==================== UI 전환 (버그 수정) ====================
 function showView(viewId) {
+  // 모든 view를 숨기고
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  // 선택된 view만 표시
   const target = document.getElementById(viewId);
-  if (target) target.classList.remove('hidden');
+  if (target) {
+    target.classList.remove('hidden');
+    // 채팅 화면이면 flex로 설정
+    if (viewId === 'chatScreen') target.style.display = 'flex';
+    else target.style.display = '';
+  }
 }
 
 function selectPeer(peerId) {
@@ -459,7 +421,10 @@ window.addEventListener('hashchange', checkHash);
 
 // ==================== 궁극의 암호화 (P-521 + SHA-512 + AES-256 + Double Ratchet) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
-const PBKDF2_ITERS = 10000000, SALT_SIZE = 1024, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+const PBKDF2_ITERS = 5000000; // 500만회 (안전성과 성능 균형)
+const SALT_SIZE = 1024;
+const AES_LEN = 256;
+const HMAC_HASH = 'SHA-512';
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -508,7 +473,7 @@ async function deriveSessionKey(peerId) {
   } catch (e) { document.getElementById('passwordError').textContent = '세션 키 생성 실패: ' + e.message; document.getElementById('passwordError').style.display = 'block'; }
 }
 
-// ==================== 메시지 (타이핑 인디케이터 포함) ====================
+// ==================== 메시지 ====================
 let typingTimer = null;
 async function sendTyping(state) {
   if (!activePeerId || isDestroyed(activePeerId)) return;
@@ -590,7 +555,7 @@ async function flushOutbox(peerId) {
   addMsg(peerId, '📬 대기 메시지 전송 완료', 'system');
 }
 
-// ==================== 특수 메시지 ====================
+// ==================== 미디어 / 이모지 ====================
 function sendEmoji(emoji) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); sendPayload(sess, { type: 'emoji', content: emoji, id: msgId }, emoji, msgId); closeAllPickers(); }
 function sendMedia(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); sendPayload(sess, { type: 'media', url, id: msgId }, `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:12px;">`, msgId); closeAllPickers(); }
 function addMediaUrl() {
@@ -623,7 +588,6 @@ function filterMedia() {
   const grid = document.getElementById('mediaGrid');
   grid.innerHTML = favorites.filter(u => u.toLowerCase().includes(query)).map(u => `<div class="picker-item" onclick="sendMedia('${u}')"><img src="${u}" alt="media"></div>`).join('');
 }
-
 const EMOJI_LIST = ['😀','😂','🥰','😎','🤔','👍','❤️','🔥','🎉','💯','😢','😡','🥺','🤯','✨','🍕','🚀','💻','📱','🎵'];
 function buildEmojiPicker() { document.getElementById('emojiGrid').innerHTML = EMOJI_LIST.map(e => `<span class="emoji-item" onclick="sendEmoji('${e}')">${e}</span>`).join(''); }
 function buildMediaPicker() { filterMedia(); }
@@ -633,7 +597,7 @@ function closeAllPickers() { document.querySelectorAll('.picker-overlay').forEac
 async function sendReadReceipt(peerId, msgId) { const sess = sessions[peerId]; if (!sess?.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return; try { const enc = await encryptPayload(sess, { type: 'read', id: msgId }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
 function markAsRead(peerId, msgId) { const el = document.getElementById('msg-' + msgId); if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read-status')) t.innerHTML += ' <span class="read-status" style="color:var(--success);">✓✓</span>'; } }
 
-// ==================== 파일 ====================
+// 파일
 function handleFileStart(peerId, inner) { const sess = sessions[peerId]; if (!sess) return; sess.fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 }; addMsg(peerId, `📥 ${inner.name} (${formatBytes(inner.size)})`, 'other'); }
 function handleBinaryChunk(peerId, buf) { const sess = sessions[peerId]; if (!sess?.fileReceive) return; sess.fileReceive.chunks.push(new Uint8Array(buf)); sess.fileReceive.received += buf.byteLength; }
 async function assembleFile(peerId) { const sess = sessions[peerId]; if (!sess?.fileReceive) return; const blob = new Blob(sess.fileReceive.chunks); const iv = blob.slice(0, 12); const ct = blob.slice(12); const key = await crypto.subtle.importKey('raw', sess.fileReceive.fek, 'AES-GCM', false, ['decrypt']); const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: await iv.arrayBuffer() }, key, await ct.arrayBuffer()); const decBlob = new Blob([plain]); const url = URL.createObjectURL(decBlob); addMsg(peerId, `<a href="${url}" download="${escapeHtml(sess.fileReceive.name)}">📎 ${escapeHtml(sess.fileReceive.name)} 다운로드</a>`, 'other'); sess.fileReceive = null; }
@@ -670,8 +634,10 @@ function addMsg(peerId, text, who, msgId) { if (peerId !== activePeerId || isDes
 function addEncryptedMessage(peerId, rawData) { if (peerId !== activePeerId || isDestroyed(peerId)) return; const c = document.getElementById('messages'), d = document.createElement('div'); d.className = 'msg system'; d.innerHTML = `<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`; c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements(); }
 function copyTextById(id) { const el = document.getElementById(id); const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent; navigator.clipboard.writeText(text).then(() => {}).catch(() => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); alert('링크가 복사되었습니다.'); }); }
 
-// ==================== 초기화 ====================
+// 초기화
 buildEmojiPicker(); buildMediaPicker(); renderContactList(); checkHash();
+// 최초 로드 시 simpleMode 보장
+showView('simpleMode');
 </script>
 </body>
 </html>
