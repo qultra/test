@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – UI 완전 수정·초강력 암호화</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
+  <title>P2P 비밀 메신저 – 궁극의 보안·완벽 UI</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
     :root {
@@ -30,20 +30,6 @@
       display: flex; flex-direction: column; overflow: hidden;
       border: 1px solid var(--border); position: relative;
     }
-    #antiScreenshotCanvas {
-      position: fixed; top:0; left:0; width:100%; height:100%;
-      z-index: 9998; pointer-events: none; opacity: 0.03; mix-blend-mode: difference;
-    }
-    .blur-target { filter: blur(14px) !important; transition: filter 0.3s ease; cursor: pointer; position: relative; }
-    .blur-target::after {
-      content: "길게 눌러 보기"; position: absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,0.6); color: #fff; font-size:0.7rem; pointer-events: none; z-index:10; border-radius: inherit;
-    }
-    .blur-target.revealed { filter: blur(0) !important; }
-    .blur-target.revealed::after { display: none; }
-    .blur-target.locked { filter: blur(22px) !important; cursor: not-allowed; pointer-events: auto; }
-    .blur-target.locked::after { content: "🔒 잠금"; background: rgba(255,0,0,0.5); font-weight:bold; }
-
     .header { padding:14px 20px; background:rgba(8,14,24,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; min-height:56px; }
     .header h1 { font-size:1.1rem; font-weight:700; background:linear-gradient(135deg,#90b4ff,#b794f4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .status-bar { display:flex; align-items:center; gap:7px; }
@@ -70,7 +56,6 @@
     .msg { display:flex; flex-direction:column; animation:fadeUp 0.2s ease; }
     .msg.system { align-items:center; } .msg.me { align-items:flex-end; } .msg.other { align-items:flex-start; }
     .bubble { max-width:83%; padding:10px 16px; border-radius:20px; background:rgba(22,30,44,0.85); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); word-break:break-word; position:relative; overflow:hidden; z-index:1; }
-    .bubble .noise-layer { position: absolute; top:0; left:0; width:100%; height:100%; background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px); pointer-events: none; z-index:2; }
     .msg.system .bubble { background:rgba(255,255,255,0.04); border:none; font-size:0.78rem; color:var(--sub); }
     .msg.me .bubble { background:linear-gradient(140deg,rgba(74,130,250,0.5),rgba(124,92,240,0.5)); border-bottom-right-radius:6px; }
     .msg.other .bubble { border-bottom-left-radius:6px; }
@@ -103,7 +88,6 @@
     .fingerprint { font-family:monospace; font-size:0.65rem; background:#0a0f18; padding:6px; border-radius:8px; word-break:break-all; }
 
     .chat-header { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
-    .back-btn { background:none; border:none; color:var(--accent); font-size:1.2rem; cursor:pointer; padding:6px; }
     .chat-title { font-size:0.95rem; font-weight:600; flex:1; }
     .typing-indicator { font-size:0.75rem; color:var(--sub); padding:4px 16px; display:none; }
 
@@ -119,61 +103,79 @@
     .contact-name { font-size:0.95rem; font-weight:600; }
     .contact-status { font-size:0.75rem; color:var(--sub); margin-top:2px; }
 
+    /* SVG 아이콘 */
+    .svg-icon { width:20px; height:20px; fill:currentColor; }
+
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spinner { width:20px; height:20px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
   </style>
 </head>
 <body>
-<canvas id="antiScreenshotCanvas"></canvas>
 <div class="container">
-  <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
+  <div class="header">
+    <h1>🔐 P2P 비밀채팅</h1>
+    <div class="status-bar">
+      <span id="connDot" class="dot off"></span>
+      <span id="connLabel">오프라인</span>
+    </div>
+  </div>
   <div class="main-content" id="mainArea">
     <!-- 메인 화면 -->
-    <div id="simpleMode">
+    <div id="simpleMode" class="view">
       <div class="card text-center">
         <h3 style="margin-bottom:4px;">서버 없이 완벽한 프라이버시</h3>
         <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
-        <button class="btn primary" onclick="startNewChat()">✨ 새 채팅 생성</button>
-        <button class="btn mt" onclick="showJoinPanel()">📩 초대 링크로 참가</button>
+        <button class="btn primary" onclick="startNewChat()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+          새 채팅 생성
+        </button>
+        <button class="btn mt" onclick="showJoinPanel()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          초대 링크로 참가
+        </button>
       </div>
       <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 대화 목록</div>
       <div class="contact-list" id="contactList"></div>
 
       <!-- Offer 패널 -->
-      <div id="offerPanel" style="display:none;">
+      <div id="offerPanel" class="view hidden">
         <div class="card text-center">
-          <div class="spinner mb" id="offerSpinner"></div>
+          <div class="spinner mb" id="offerSpinner" style="display:none;"></div>
           <p><strong>연결 링크 생성 중...</strong></p>
           <p class="text-sub">생성된 링크를 상대에게 전송하세요.</p>
           <div class="link-box" id="offerLinkDisplay">생성 중...</div>
-          <button class="btn mt" onclick="copyTextById('offerLinkDisplay')">📋 링크 복사</button>
+          <button class="btn mt" onclick="copyTextById('offerLinkDisplay')">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            링크 복사
+          </button>
           <p class="text-sub mt">상대가 보낸 Answer 링크를 아래에 붙여넣으세요.</p>
           <input type="text" id="answerLinkInput" placeholder="Answer 링크 입력...">
-          <button class="btn primary mt" onclick="applyAnswerLink()">✅ 연결 완료</button>
+          <button class="btn primary mt" onclick="applyAnswerLink()">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            연결 완료
+          </button>
           <button class="btn mt" onclick="goHome()" style="background:rgba(255,255,255,0.03);">← 홈으로</button>
         </div>
       </div>
+
       <!-- Answer 패널 -->
-      <div id="answerPanel" style="display:none;">
-        <div id="autoAnswerContent" style="display:none;">
-          <div class="card text-center"><div class="spinner mb" id="answerSpinner"></div><p>초대 링크 분석 중...</p></div>
-          <div id="answerReadyPanel" style="display:none;" class="card text-center">
-            <p><strong>✅ Answer 링크 준비 완료</strong></p>
-            <p class="text-sub">아래 링크를 방장에게 전송하세요.</p>
-            <div class="link-box" id="answerLinkDisplay">생성 중...</div>
-            <button class="btn mt" onclick="copyTextById('answerLinkDisplay')">📋 링크 복사</button>
-          </div>
-        </div>
+      <div id="answerPanel" class="view hidden">
         <div id="manualJoinContent">
           <div class="card"><strong>📥 초대 링크 붙여넣기</strong>
             <textarea id="remoteOfferSDP" rows="3" placeholder="방장에게 받은 전체 링크..."></textarea>
-            <button class="btn primary mt" onclick="createAnswerFromOffer()">🔄 연결 시작</button>
+            <button class="btn primary mt" onclick="createAnswerFromOffer()">
+              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              연결 시작
+            </button>
           </div>
-          <div id="answerResultPanel" style="display:none;" class="card">
+          <div id="answerResultPanel" class="hidden card">
             <strong>📤 내 Answer 링크</strong>
             <div class="link-box" id="localAnswerLinkDisplay"></div>
-            <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">📋 복사해서 방장에게 전송</button>
+            <button class="btn mt" onclick="copyTextById('localAnswerLinkDisplay')">
+              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              복사해서 방장에게 전송
+            </button>
           </div>
         </div>
         <button class="btn mt" onclick="goHome()" style="background:rgba(255,255,255,0.03);">← 홈으로</button>
@@ -181,12 +183,12 @@
     </div>
 
     <!-- 채팅 화면 -->
-    <div id="chatScreen">
-      <div class="chat-header" id="chatHeader">
-        <button class="back-btn" onclick="goHome()">←</button>
+    <div id="chatScreen" class="view hidden">
+      <div class="chat-header">
+        <button class="btn-small" onclick="goHome()" style="padding:6px 10px;">←</button>
         <span class="chat-title" id="chatTitle">채팅</span>
         <button class="btn-small" onclick="renameChat()" style="margin-right:4px;">✏️</button>
-        <button class="btn-small danger" onclick="destroyActiveChat()" style="padding:6px 10px; font-size:0.7rem;">💣</button>
+        <button class="btn-small danger" onclick="destroyActiveChat()" style="padding:6px 10px;font-size:0.7rem;">💣</button>
       </div>
       <div id="securityCard" class="card" style="margin:0 0 4px; padding:6px 12px; font-size:0.7rem; display:none; align-items:center; gap:6px;">
         <span>🔒</span><span id="sessionFingerprint" class="fingerprint blur-target" style="flex:1;"></span>
@@ -207,7 +209,7 @@
         <button class="action-btn" onclick="document.getElementById('stickerFileInput').click()">📁</button>
         <div class="picker-overlay" id="emojiPicker"><div class="picker-grid" id="emojiGrid"></div></div>
         <div class="picker-overlay" id="mediaPicker">
-          <input type="text" class="picker-search" placeholder="URL 검색..." id="mediaSearch" oninput="filterMedia()">
+          <input type="text" class="picker-search" placeholder="URL 입력 후 추가" id="mediaSearch" onkeydown="if(event.key==='Enter')addMediaUrl()">
           <div class="picker-grid" id="mediaGrid"></div>
         </div>
         <input type="file" id="stickerFileInput" class="hidden" accept="image/*" onchange="uploadSticker(this.files)">
@@ -224,7 +226,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – UI 버그 수정 + 극한 암호화 (완전판)
+//  P2P 비밀 메신저 – 궁극의 보안·완벽 UI (최종판)
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -233,38 +235,12 @@ const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); wh
 const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
-// 200개 ICE 서버
-const ICE_SERVERS = (() => {
-  const servers = [];
-  const addSTUN = (host, ports = [3478, 5349, 19302, 10000]) => ports.forEach(p => servers.push({ urls: `stun:${host}:${p}` }));
-  const addTURN = (host, ports = [3478], user, cred) => ports.forEach(p => {
-    servers.push({ urls: `turn:${host}:${p}`, username: user, credential: cred });
-    servers.push({ urls: `turn:${host}:${p}?transport=tcp`, username: user, credential: cred });
-  });
-  const hosts = [
-    'stun.l.google.com','stun1.l.google.com','stun2.l.google.com','stun3.l.google.com','stun4.l.google.com',
-    'stun.cloudflare.com','global.stun.twilio.com','stun.freeswitch.org','stun.nextcloud.com',
-    'stun.viagenie.ca','stun.ekiga.net','stun.linphone.org','stun.iptel.org','stun.services.mozilla.com',
-    'stun.sipgate.net','stun.schlund.de','stun.voiparound.com','stun.voipbuster.com','stun.voipstunt.com',
-    'stun.12voip.com','stun.1und1.de','stun.gmx.net','stun.web.de','stun.rockenstein.de','stun.voipgate.com',
-    'stun.phonepower.com','stun.12connect.com','stun.3cx.com','stun.aetaaudio.com','stun.audiocodes.com',
-    'stun.bandwidth.com','stun.callcentric.com','stun.counterpath.com','stun.dls.net','stun.easyvoip.com',
-    'stun.halonet.pl','stun.internetcalls.com','stun.intervoip.com','stun.ipcomms.net','stun.it1.de',
-    'stun.justvoip.com','stun.livevoip.com','stun.lowratevoip.com','stun.netappel.com','stun.netelip.com',
-    'stun.nfon.net','stun.nonoh.net','stun.ooma.com','stun.pbxes.com','stun.phoneserve.com',
-    'stun.sipdiscount.com','stun.sipnet.net','stun.smartvoip.com','stun.speedflow.com','stun.t-online.de',
-    'stun.telbo.com','stun.telio.no','stun.telstra.com','stun.tng.de','stun.twt.it','stun.vivox.com',
-    'stun.voip.aebc.com','stun.voip.eutelia.it','stun.voipcheap.com','stun.voipdiscount.com',
-    'stun.voipraider.com','stun.vonage.com','stun.voxox.com','stun.zadarma.com'
-  ];
-  hosts.forEach(h => addSTUN(h));
-  addTURN('openrelay.metered.ca', [80, 443], 'openrelayproject', 'openrelayproject');
-  addTURN('turn.anyfirewall.com', [443], 'webrtc', 'webrtc');
-  addTURN('numb.viagenie.ca', [3478, 80, 443], 'webrtc@live.com', 'muazkh');
-  addTURN('turn.matrix.org', [3478], 'matrix', 'matrix');
-  const seen = new Set();
-  return servers.filter(s => { const k = JSON.stringify(s); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 200);
-})();
+// 최소한의 STUN 서버 (P2P 연결 보조, 데이터는 직접 전송)
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
+];
 
 // ==================== 세션 및 연락처 ====================
 const sessions = {};
@@ -320,11 +296,16 @@ function renderContactList() {
   }).join('');
 }
 
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  const target = document.getElementById(viewId);
+  if (target) target.classList.remove('hidden');
+}
+
 function selectPeer(peerId) {
   if (isDestroyed(peerId)) { alert('이 대화는 삭제되었습니다.'); return; }
   activePeerId = peerId;
-  hideAllPanels();
-  document.getElementById('chatScreen').style.display = 'flex';
+  showView('chatScreen');
   document.getElementById('messages').innerHTML = '';
   document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
   const sess = getOrCreateSession(peerId);
@@ -340,17 +321,9 @@ function selectPeer(peerId) {
   renderContactList();
 }
 
-function hideAllPanels() {
-  document.getElementById('simpleMode').style.display = 'none';
-  document.getElementById('chatScreen').style.display = 'none';
-  document.getElementById('offerPanel').style.display = 'none';
-  document.getElementById('answerPanel').style.display = 'none';
-}
-
 function goHome() {
   activePeerId = null;
-  hideAllPanels();
-  document.getElementById('simpleMode').style.display = 'block';
+  showView('simpleMode');
   document.getElementById('messages').innerHTML = '';
   document.getElementById('securityCard').style.display = 'none';
   document.getElementById('passwordPrompt').style.display = 'block';
@@ -366,8 +339,7 @@ async function startNewChat() {
   activePeerId = peerId;
   const sess = getOrCreateSession(peerId);
   sess.isOfferer = true;
-  hideAllPanels();
-  document.getElementById('offerPanel').style.display = 'block';
+  showView('offerPanel');
   document.getElementById('offerSpinner').style.display = 'inline-block';
   document.getElementById('offerLinkDisplay').textContent = '생성 중...';
   initPC(peerId);
@@ -381,10 +353,7 @@ async function startNewChat() {
 }
 
 function showJoinPanel() {
-  hideAllPanels();
-  document.getElementById('answerPanel').style.display = 'block';
-  document.getElementById('autoAnswerContent').style.display = 'none';
-  document.getElementById('manualJoinContent').style.display = 'block';
+  showView('answerPanel');
 }
 
 async function createAnswerFromOffer() {
@@ -406,7 +375,7 @@ async function createAnswerFromOffer() {
   const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
   await waitIce(sess.pc);
   const answerB64 = encodeSDP(sess.pc.localDescription);
-  document.getElementById('answerResultPanel').style.display = 'block';
+  document.getElementById('answerResultPanel').classList.remove('hidden');
   document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
   renderContactList();
 }
@@ -420,8 +389,7 @@ async function applyAnswerLink() {
   try {
     let answerStr = l; if (l.startsWith('http')) { const u = new URL(l); const hp = new URLSearchParams(u.hash.substring(1)); if (!hp.has('answer')) { alert('올바르지 않은 Answer 링크입니다.'); return; } answerStr = hp.get('answer'); }
     await sessions[activePeerId].pc.setRemoteDescription(decodeSDP(answerStr));
-    hideAllPanels();
-    document.getElementById('chatScreen').style.display = 'flex';
+    showView('chatScreen');
     document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === activePeerId)?.name || '채팅';
     document.getElementById('passwordPrompt').style.display = 'block';
   } catch (e) { alert('Answer 링크 적용 실패'); }
@@ -471,8 +439,7 @@ async function checkHash() {
     const answerB64 = encodeSDP(sess.pc.localDescription);
     alert('이 Answer 링크를 상대에게 보내세요:\n' + (location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId));
     activePeerId = peerId;
-    hideAllPanels();
-    document.getElementById('chatScreen').style.display = 'flex';
+    showView('chatScreen');
     document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
     document.getElementById('passwordPrompt').style.display = 'block';
     renderContactList();
@@ -483,16 +450,14 @@ async function checkHash() {
     const sess = sessions[peerId];
     if (sess?.pc && sess.isOfferer) {
       await sess.pc.setRemoteDescription(answer);
-      document.getElementById('offerPanel').style.display = 'none';
-      document.getElementById('simpleMode').style.display = 'none';
-      document.getElementById('chatScreen').style.display = 'flex';
+      showView('chatScreen');
       document.getElementById('chatTitle').textContent = getContacts().find(c => c.id === peerId)?.name || '채팅';
     }
   }
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 초극한 암호화 (P-521 + SHA-512 + AES-256 + 1000만 PBKDF2) ====================
+// ==================== 궁극의 암호화 (P-521 + SHA-512 + AES-256 + Double Ratchet) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 10000000, SALT_SIZE = 1024, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
@@ -633,7 +598,9 @@ function addMediaUrl() {
   if (!url) return;
   let favorites = JSON.parse(localStorage.getItem('p2p_media_fav') || '[]');
   if (!favorites.includes(url)) { favorites.push(url); localStorage.setItem('p2p_media_fav', JSON.stringify(favorites)); }
+  document.getElementById('mediaSearch').value = '';
   filterMedia();
+  sendMedia(url);
 }
 async function uploadSticker(files) {
   if (!files || files.length === 0) return;
@@ -699,14 +666,11 @@ function updateConn(ok) { document.getElementById('connDot').className = 'dot ' 
 function compareBuffers(b1, b2) { for (let i = 0; i < b1.byteLength; i++) { if (b1[i] < b2[i]) return -1; if (b1[i] > b2[i]) return 1; } return 0; }
 async function hkdfExpand(prk, info) { const k = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']); const s = await crypto.subtle.sign('HMAC', k, info); return crypto.subtle.importKey('raw', s.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']); }
 async function ratchetForward(chainRef) { const cur = chainRef.chain; const newChain = await crypto.subtle.sign('HMAC', cur, new Uint8Array([2])); chainRef.chain = await crypto.subtle.importKey('raw', newChain.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']); const msgKey = await crypto.subtle.sign('HMAC', cur, new Uint8Array([1])); return crypto.subtle.importKey('raw', msgKey.slice(0, 32), { name: 'AES-GCM', length: AES_LEN }, false, ['encrypt', 'decrypt']); }
-function addMsg(peerId, text, who, msgId) { if (peerId !== activePeerId || isDestroyed(peerId)) return; const c = document.getElementById('messages'), d = document.createElement('div'); d.className = 'msg ' + (who === 'me' ? 'me' : who === 'other' ? 'other' : 'system'); if (msgId) d.id = 'msg-' + msgId; d.innerHTML = `<div class="bubble blur-target">${escapeHtml(text)}<div class="time">${new Date().toLocaleTimeString()}</div><div class="noise-layer"></div></div>`; c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements(); }
+function addMsg(peerId, text, who, msgId) { if (peerId !== activePeerId || isDestroyed(peerId)) return; const c = document.getElementById('messages'), d = document.createElement('div'); d.className = 'msg ' + (who === 'me' ? 'me' : who === 'other' ? 'other' : 'system'); if (msgId) d.id = 'msg-' + msgId; d.innerHTML = `<div class="bubble blur-target">${escapeHtml(text)}<div class="time">${new Date().toLocaleTimeString()}</div></div>`; c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements(); }
 function addEncryptedMessage(peerId, rawData) { if (peerId !== activePeerId || isDestroyed(peerId)) return; const c = document.getElementById('messages'), d = document.createElement('div'); d.className = 'msg system'; d.innerHTML = `<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`; c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements(); }
 function copyTextById(id) { const el = document.getElementById(id); const text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.textContent; navigator.clipboard.writeText(text).then(() => {}).catch(() => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); alert('링크가 복사되었습니다.'); }); }
 
-// 렌더링 왜곡
-(function(){ const c=document.getElementById('antiScreenshotCanvas'),x=c.getContext('2d'); const r=()=>{c.width=innerWidth;c.height=innerHeight;};r();window.addEventListener('resize',r); const n=()=>{if(!x)return;const i=x.createImageData(c.width,c.height);for(let j=0;j<i.data.length;j+=4){i.data[j]=Math.random()*5;i.data[j+1]=Math.random()*5;i.data[j+2]=Math.random()*5;i.data[j+3]=3;}x.putImageData(i,0,0);}; setInterval(()=>{n();x.fillStyle='rgba(255,255,255,0.002)';x.fillRect(0,0,c.width,c.height);for(let j=0;j<c.width;j+=4){x.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;x.fillRect(j,0,1,c.height);}},100); let f=0;(function j(){f++;document.body.style.transform=`translate(${Math.sin(f/10)*0.2}px,${Math.cos(f/15)*0.2}px)`;requestAnimationFrame(j);})(); })();
-
-// 초기화
+// ==================== 초기화 ====================
 buildEmojiPicker(); buildMediaPicker(); renderContactList(); checkHash();
 </script>
 </body>
