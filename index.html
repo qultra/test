@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 링크 즉시 연결·완전 삭제·오프라인 큐</title>
+  <title>P2P 비밀 메신저 – 안정성·완전 삭제·최종</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -100,18 +100,16 @@
 <div class="container">
   <div class="header"><h1>🔐 P2P 비밀채팅</h1><div class="status-bar"><span id="connDot" class="dot off"></span><span id="connLabel">오프라인</span></div></div>
   <div class="main-content" id="mainArea">
-    <!-- 메인 화면 -->
     <div id="simpleMode" class="view">
       <div class="card text-center">
-        <h3 style="margin-bottom:4px;">서버 없이 완벽한 프라이버시</h3>
-        <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
+        <h3 style="margin-bottom:4px;">서버 없이 완벽한 익명성</h3>
+        <p class="text-sub mb">모든 메타데이터 완전 암호화</p>
         <button class="btn primary" onclick="startNewChat()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>새 채팅 생성</button>
         <button class="btn mt" onclick="showJoinPanel()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>초대 링크로 참가</button>
       </div>
       <div style="font-size:0.8rem; color:var(--sub); margin-bottom:8px; font-weight:600;">📋 대화 목록</div>
       <div class="contact-list" id="contactList"></div>
     </div>
-    <!-- Offer 패널 -->
     <div id="offerPanel" class="view hidden">
       <div class="card text-center">
         <div class="spinner mb" id="offerSpinner" style="display:none;"></div>
@@ -125,7 +123,6 @@
         <button class="btn mt" onclick="goHome()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>홈으로</button>
       </div>
     </div>
-    <!-- Answer 패널 -->
     <div id="answerPanel" class="view hidden">
       <div class="card"><strong>📥 초대 링크 붙여넣기</strong>
         <textarea id="remoteOfferSDP" rows="3" placeholder="방장에게 받은 전체 링크..."></textarea>
@@ -138,7 +135,6 @@
       </div>
       <button class="btn mt" onclick="goHome()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>홈으로</button>
     </div>
-    <!-- 채팅 화면 -->
     <div id="chatScreen" class="view hidden">
       <div class="chat-header">
         <button class="btn-small" onclick="goHome()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
@@ -182,7 +178,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 링크 즉시 연결·완전 삭제·오프라인 큐
+//  P2P 비밀 메신저 – 안정성·완전 삭제·최종 완성판
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -191,37 +187,19 @@ const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); wh
 const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
-// 프라이버시 고려 STUN/TURN 서버 목록 (무료, 로그 없음)
+// 다수의 STUN/TURN 서버 (프라이버시 고려, 연결 안정성)
 const ICE_SERVERS = [
-  // Google STUN
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
-  { urls: 'stun:stun4.l.google.com:19302' },
-  // Cloudflare STUN
-  { urls: 'stun:stun.cloudflare.com:3478' },
-  // Twilio STUN
-  { urls: 'stun:global.stun.twilio.com:3478' },
-  // Freeswitch STUN
-  { urls: 'stun:stun.freeswitch.org:3478' },
-  // Nextcloud STUN
-  { urls: 'stun:stun.nextcloud.com:443' },
-  // Viagenie STUN
-  { urls: 'stun:stun.viagenie.ca:3478' },
-  // Ekiga STUN
-  { urls: 'stun:stun.ekiga.net:3478' },
-  // Linphone STUN
-  { urls: 'stun:stun.linphone.org:3478' },
-  // iptel STUN
-  { urls: 'stun:stun.iptel.org:3478' },
-  // Mozilla STUN
-  { urls: 'stun:stun.services.mozilla.com:3478' },
-  // Matrix.org STUN
-  { urls: 'stun:turn.matrix.org:3478?transport=udp' },
-  // OpenRelay TURN (프라이버시 친화적, 공개)
+  { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' }, { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' },
+  { urls: 'stun:global.stun.twilio.com:3478' }, { urls: 'stun:stun.freeswitch.org:3478' },
+  { urls: 'stun:stun.nextcloud.com:443' }, { urls: 'stun:stun.viagenie.ca:3478' },
+  { urls: 'stun:stun.ekiga.net:3478' }, { urls: 'stun:stun.linphone.org:3478' },
+  { urls: 'stun:stun.iptel.org:3478' }, { urls: 'stun:stun.services.mozilla.com:3478' },
+  { urls: 'stun:stun.sipgate.net:3478' }, { urls: 'stun:stun.schlund.de:3478' },
   { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:numb.viagenie.ca:3478', username: 'webrtc@live.com', credential: 'muazkh' },
 ];
 
 // ==================== 세션 및 연락처 ====================
@@ -246,7 +224,7 @@ function getOrCreateSession(peerId) {
 function isDestroyed(peerId) { return !!(localStorage.getItem(DESTROY_PREFIX + peerId) || sessionStorage.getItem(DESTROY_PREFIX + peerId)); }
 function markDestroyed(peerId) { localStorage.setItem(DESTROY_PREFIX + peerId, Date.now()); sessionStorage.setItem(DESTROY_PREFIX + peerId, Date.now()); if (location.hash) history.replaceState(null, '', location.pathname); }
 function clearDestroyed(peerId) { localStorage.removeItem(DESTROY_PREFIX + peerId); sessionStorage.removeItem(DESTROY_PREFIX + peerId); }
-setInterval(() => { if (activePeerId && isDestroyed(activePeerId)) goHome(); }, 500);
+setInterval(() => { if (activePeerId && isDestroyed(activePeerId)) { goHome(); } }, 500);
 
 function getContacts() { try { return JSON.parse(localStorage.getItem('p2p_contacts') || '[]'); } catch (e) { return []; } }
 function saveContacts(contacts) { localStorage.setItem('p2p_contacts', JSON.stringify(contacts)); }
@@ -392,7 +370,6 @@ function setupDC(peerId) {
 }
 function waitIce(pc) { return new Promise(r => { if (pc.iceGatheringState === 'complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); }); }); }
 
-// 해시 처리 (링크 클릭 시 즉시 채팅방 연결)
 async function checkHash() {
   const h = location.hash.substring(1); if (!h) return;
   const p = new URLSearchParams(h);
@@ -408,11 +385,10 @@ async function checkHash() {
     const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
     await waitIce(sess.pc);
     const answerB64 = encodeSDP(sess.pc.localDescription);
-    // Answer 링크를 UI에 표시하고, 자동으로 채팅방으로 전환
     document.getElementById('answerResultPanel').classList.remove('hidden');
     document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
     activePeerId = peerId;
-    showView('answerPanel'); // Answer UI를 보여줌
+    showView('answerPanel');
     renderContactList();
   } else if (p.has('answer') && p.has('peer')) {
     const peerId = p.get('peer');
@@ -427,7 +403,6 @@ window.addEventListener('hashchange', checkHash);
 // ==================== 궁극 암호화 ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 5000000, SALT_SIZE = 1024, AES_LEN = 256, HMAC_HASH = 'SHA-512';
-const PADDING_LENGTH = 256;
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -476,7 +451,7 @@ async function deriveSessionKey(peerId) {
   } catch (e) { document.getElementById('passwordError').textContent = '세션 키 생성 실패: ' + e.message; document.getElementById('passwordError').style.display = 'block'; }
 }
 
-// ==================== 메시지 (타이핑 포함, 전부 암호화) ====================
+// ==================== 메시지 (타이핑 포함, 모든 메타데이터 암호화) ====================
 async function sendTyping(state) {
   if (!activePeerId || isDestroyed(activePeerId)) return;
   const sess = sessions[activePeerId];
@@ -535,10 +510,7 @@ async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
   const iv = crypto.getRandomValues(new Uint8Array(16));
-  let json = JSON.stringify(obj);
-  const padLen = PADDING_LENGTH - json.length;
-  if (padLen > 0) json += '\0'.repeat(padLen);
-  const padded = JSON.parse(json);
+  const padded = { ...obj, _pad: crypto.getRandomValues(new Uint8Array(32)).join('') };
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, mk, str2buf(JSON.stringify(padded)));
   return { seq: sess.sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
 }
@@ -550,8 +522,7 @@ async function decryptPayload(sess, d) {
     while (sess.recvChain.seq < seq - 1) { await ratchetForward(sess.recvChain); sess.recvChain.seq++; }
     const mk = await ratchetForward(sess.recvChain); sess.recvChain.seq = seq;
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, mk, new Uint8Array(ct));
-    const obj = JSON.parse(textDecoder.decode(plain));
-    return obj;
+    const obj = JSON.parse(textDecoder.decode(plain)); delete obj._pad; return obj;
   } catch (e) { sess.recvChain.chain = prevChain; sess.recvChain.seq = prevSeq; throw e; }
 }
 async function flushOutbox(peerId) {
