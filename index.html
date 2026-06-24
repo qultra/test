@@ -462,11 +462,30 @@ async function handleEcdheMessage(peerId, data) {
 }
 
 async function submitPassword() {
-  if (!activePeerId) return; const sess = sessions[activePeerId];
+  if (!activePeerId) return;
+  const sess = sessions[activePeerId];
   sess.password = document.getElementById('chatPasswordInput').value.trim();
-  if (!sess.password) { document.getElementById('passwordError').textContent = '암호를 입력하세요.'; document.getElementById('passwordError').style.display = 'block'; return; }
-  if (sess.salt && sess.ourEcdhPair && sess.peerEcdhPub) await deriveSessionKey(activePeerId);
-  else { document.getElementById('passwordError').textContent = '아직 보안 연결이 준비되지 않았습니다.'; document.getElementById('passwordError').style.display = 'block'; }
+  if (!sess.password) {
+    document.getElementById('passwordError').textContent = '암호를 입력하세요.';
+    document.getElementById('passwordError').style.display = 'block';
+    return;
+  }
+  if (sess.salt && sess.ourEcdhPair && sess.peerEcdhPub) {
+    // 로딩 표시
+    document.getElementById('passwordError').textContent = '보안 세션 생성 중... 잠시만 기다려주세요.';
+    document.getElementById('passwordError').style.display = 'block';
+    // 버튼 비활성화 (중복 제출 방지)
+    const btn = document.querySelector('#passwordPrompt .btn');
+    if (btn) btn.disabled = true;
+    try {
+      await deriveSessionKey(activePeerId);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  } else {
+    document.getElementById('passwordError').textContent = '아직 보안 연결이 준비되지 않았습니다.';
+    document.getElementById('passwordError').style.display = 'block';
+  }
 }
 
 async function deriveSessionKey(peerId) {
