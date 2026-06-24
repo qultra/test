@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 완전 파괴·블러·보안</title>
+  <title>P2P 비밀 메신저 – 무료 GIF 검색·완전암호화</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -58,7 +58,7 @@
     }
     .peer-item:hover { background:rgba(255,255,255,0.05); }
     .peer-item.active { background:rgba(91,141,240,0.15); border-left:3px solid var(--accent); }
-    .main-chat { flex:1; display:flex; flex-direction:column; }
+    .main-chat { flex:1; display:flex; flex-direction:column; position:relative; }
     #chatScreen { display:none; flex-direction:column; flex:1; }
     #messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:6px 16px; }
     .msg { display:flex; flex-direction:column; animation:fadeUp 0.2s ease; }
@@ -87,11 +87,23 @@
     .action-bar { display:flex; gap:4px; padding:4px 16px 0; position:relative; }
     .action-btn { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:14px; cursor:pointer; font-size:0.8rem; }
     .action-btn:hover { background:rgba(255,255,255,0.1); }
-    .emoji-picker, .sticker-picker, .gif-picker { display:none; position:absolute; bottom:100%; left:16px; right:16px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; max-height:200px; overflow-y:auto; z-index:10; flex-wrap:wrap; gap:8px; }
-    .emoji-picker.active, .sticker-picker.active, .gif-picker.active { display:flex; }
-    .emoji-item, .sticker-item, .gif-item { cursor:pointer; font-size:1.5rem; padding:4px; border-radius:8px; }
-    .emoji-item:hover, .sticker-item:hover, .gif-item:hover { background:rgba(255,255,255,0.1); }
-    .gif-item img { max-width:100px; max-height:100px; border-radius:8px; }
+
+    .picker-overlay {
+      display:none; position:absolute; bottom:100%; left:0; right:0;
+      background:var(--surface); border:1px solid var(--border); border-radius:16px;
+      padding:12px; max-height:350px; overflow-y:auto; z-index:20; margin-bottom:4px;
+    }
+    .picker-overlay.active { display:flex; flex-direction:column; gap:8px; }
+    .picker-search { width:100%; background:#0a0f18; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; font-size:0.85rem; outline:none; margin-bottom:4px; }
+    .picker-search:focus { border-color:var(--accent); }
+    .picker-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .picker-item { cursor:pointer; border-radius:8px; overflow:hidden; transition:0.15s; }
+    .picker-item:hover { transform:scale(1.05); background:rgba(255,255,255,0.1); }
+    .picker-item img { width:80px; height:80px; object-fit:cover; border-radius:8px; }
+    .emoji-item { font-size:1.8rem; cursor:pointer; padding:4px 8px; border-radius:8px; }
+    .emoji-item:hover { background:rgba(255,255,255,0.1); }
+    .settings-btn { background:none; border:none; color:var(--sub); cursor:pointer; font-size:0.75rem; padding:4px 8px; }
+    .settings-btn:hover { color:var(--text); }
 
     .hidden { display:none !important; }
     .text-center { text-align:center; } .text-sub { color:var(--sub); font-size:0.82rem; }
@@ -122,7 +134,7 @@
       </div>
       <div id="peerList"></div>
     </div>
-    <div class="main-chat" id="mainChat" style="position:relative;">
+    <div class="main-chat" id="mainChat">
       <div id="noChatSelected">연락처를 선택하거나 추가하세요</div>
       <div id="destroyedOverlay"><span>💥 대화가 파괴되었습니다</span></div>
       <div id="chatScreen">
@@ -131,13 +143,22 @@
           <button class="btn danger" style="padding:4px 10px; font-size:0.7rem;" onclick="destroyActiveChat()">💣 폭파</button>
         </div>
         <div id="messages"></div>
-        <div class="action-bar" id="actionBar">
+        <div class="action-bar" id="actionBar" style="position:relative;">
           <button class="action-btn" onclick="togglePicker('emoji')">😀 이모지</button>
           <button class="action-btn" onclick="togglePicker('sticker')">⭐ 스티커</button>
           <button class="action-btn" onclick="togglePicker('gif')">🎞️ 짤</button>
-          <div class="emoji-picker" id="emojiPicker"></div>
-          <div class="sticker-picker" id="stickerPicker"></div>
-          <div class="gif-picker" id="gifPicker"></div>
+          <button class="settings-btn" onclick="setApiKey()" title="API 키 설정 (선택)">⚙️</button>
+          <div class="picker-overlay" id="emojiPicker">
+            <div class="picker-grid" id="emojiGrid"></div>
+          </div>
+          <div class="picker-overlay" id="stickerPicker">
+            <input type="text" class="picker-search" placeholder="스티커 검색..." id="stickerSearch" oninput="filterStickers()">
+            <div class="picker-grid" id="stickerGrid"></div>
+          </div>
+          <div class="picker-overlay" id="gifPicker">
+            <input type="text" class="picker-search" placeholder="GIF 검색 (영어)..." id="gifSearch" onkeydown="if(event.key==='Enter')searchGifs()">
+            <div class="picker-grid" id="gifGrid"></div>
+          </div>
         </div>
         <div class="input-bar">
           <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="파일">📎</button>
@@ -152,7 +173,7 @@
 
 <script>
 // =====================================================================
-//  완전 파괴·블러 불가·보안 – 최종 완성판
+//  P2P 비밀 메신저 – 무료 GIF 공개키 + 검색 + 완전암호화
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -213,28 +234,15 @@ function getOrCreateSession(peerId) {
   return sessions[peerId];
 }
 
-// ==================== 세션 파괴 플래그 (강력) ====================
-function isDestroyed(peerId) {
-  return !!(localStorage.getItem(DESTROY_PREFIX + peerId) || sessionStorage.getItem(DESTROY_PREFIX + peerId));
-}
+// ==================== 세션 파괴 플래그 ====================
+function isDestroyed(peerId) { return !!(localStorage.getItem(DESTROY_PREFIX + peerId) || sessionStorage.getItem(DESTROY_PREFIX + peerId)); }
 function markDestroyed(peerId) {
-  const ts = Date.now();
-  localStorage.setItem(DESTROY_PREFIX + peerId, ts);
-  sessionStorage.setItem(DESTROY_PREFIX + peerId, ts);
-  // URL 해시 제거 (혹시 모를 재연결 방지)
+  localStorage.setItem(DESTROY_PREFIX + peerId, Date.now());
+  sessionStorage.setItem(DESTROY_PREFIX + peerId, Date.now());
   if (location.hash) history.replaceState(null, '', location.pathname);
 }
-function clearDestroyed(peerId) {
-  localStorage.removeItem(DESTROY_PREFIX + peerId);
-  sessionStorage.removeItem(DESTROY_PREFIX + peerId);
-}
-
-// 주기적으로 파괴 상태 확인
-setInterval(() => {
-  if (activePeerId && isDestroyed(activePeerId)) {
-    showDestroyedUI(activePeerId);
-  }
-}, 500);
+function clearDestroyed(peerId) { localStorage.removeItem(DESTROY_PREFIX + peerId); sessionStorage.removeItem(DESTROY_PREFIX + peerId); }
+setInterval(() => { if (activePeerId && isDestroyed(activePeerId)) showDestroyedUI(activePeerId); }, 500);
 
 // ==================== 연락처 관리 ====================
 function getContacts() { try { return JSON.parse(localStorage.getItem('p2p_contacts') || '[]'); } catch (e) { return []; } }
@@ -266,10 +274,7 @@ function renderPeerList() {
 
 // ==================== 세션 전환 ====================
 function selectPeer(peerId) {
-  if (isDestroyed(peerId)) {
-    alert('이 대화는 파괴되었습니다.');
-    return;
-  }
+  if (isDestroyed(peerId)) { alert('이 대화는 파괴되었습니다.'); return; }
   activePeerId = peerId;
   document.getElementById('noChatSelected').style.display = 'none';
   document.getElementById('chatScreen').style.display = 'flex';
@@ -283,14 +288,10 @@ function selectPeer(peerId) {
   } else {
     document.getElementById('securityCard').style.display = 'none';
     const pw = prompt('이 채팅방의 암호를 입력하세요 (상대와 동일):');
-    if (pw) {
-      sess.password = pw;
-      connectToPeer(peerId);
-    }
+    if (pw) { sess.password = pw; connectToPeer(peerId); }
   }
   renderPeerList();
 }
-
 function showDestroyedUI(peerId) {
   if (activePeerId !== peerId) return;
   document.getElementById('messages').innerHTML = '';
@@ -298,12 +299,8 @@ function showDestroyedUI(peerId) {
   document.getElementById('noChatSelected').style.display = 'none';
   document.getElementById('destroyedOverlay').classList.add('active');
   document.getElementById('securityCard').style.display = 'none';
-  // 세션 정리
   const sess = sessions[peerId];
-  if (sess) {
-    if (sess.pc) sess.pc.close();
-    delete sessions[peerId];
-  }
+  if (sess) { if (sess.pc) sess.pc.close(); delete sessions[peerId]; }
   activePeerId = null;
   renderPeerList();
 }
@@ -321,9 +318,7 @@ async function connectToPeer(peerId) {
     else if (state === 'disconnected') { sess.isOnline = false; updateConn(false); sess.pc.restartIce(); }
     else if (state === 'failed' || state === 'closed') { sess.isOnline = false; updateConn(false); }
   };
-  sess.pc.ondatachannel = e => {
-    if (e.channel.label === 'chat') { sess.dc = e.channel; setupDC(peerId); }
-  };
+  sess.pc.ondatachannel = e => { if (e.channel.label === 'chat') { sess.dc = e.channel; setupDC(peerId); } };
   sess.dc = sess.pc.createDataChannel('chat', { ordered: true });
   setupDC(peerId);
   sess.pc.createOffer().then(o => sess.pc.setLocalDescription(o)).then(() => waitIce(sess.pc).then(() => {
@@ -332,7 +327,6 @@ async function connectToPeer(peerId) {
     alert('상대에게 이 링크를 전송하세요:\n' + link);
   }));
 }
-
 function setupDC(peerId) {
   const sess = sessions[peerId];
   if (!sess || !sess.dc) return;
@@ -345,12 +339,8 @@ function setupDC(peerId) {
   sess.dc.onmessage = e => onMsg(peerId, e);
   sess.dc.onclose = () => { sess.isOnline = false; updateConn(false); };
 }
-
 function waitIce(pc) {
-  return new Promise(r => {
-    if (pc.iceGatheringState === 'complete') r();
-    else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); });
-  });
+  return new Promise(r => { if (pc.iceGatheringState === 'complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); }); });
 }
 
 // ==================== 시그널링 처리 ====================
@@ -389,14 +379,12 @@ async function checkHash() {
     if (isDestroyed(peerId)) return;
     const answer = decodeSDP(p.get('answer'));
     const sess = sessions[peerId];
-    if (sess && sess.pc && sess.isOfferer) {
-      await sess.pc.setRemoteDescription(answer);
-    }
+    if (sess && sess.pc && sess.isOfferer) await sess.pc.setRemoteDescription(answer);
   }
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 암호화 엔진 (P-521, SHA-512, AES-256) ====================
+// ==================== 암호화 엔진 ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
 
@@ -414,17 +402,14 @@ async function startEcdhExchange(peerId) {
     }
   } catch (e) { addMsg(peerId, '보안 오류', 'system'); }
 }
-
 async function handleEcdheMessage(peerId, data) {
-  const sess = sessions[peerId];
-  if (sess.handshakeDone) return;
+  const sess = sessions[peerId]; if (sess.handshakeDone) return;
   try {
     if (data.salt) sess.salt = new Uint8Array(b642buf(data.salt));
     sess.peerEcdhPub = await crypto.subtle.importKey('raw', b642buf(data.pubKey), ECDH_ALG, true, []);
     if (sess.password && sess.ourEcdhPair && sess.peerEcdhPub && sess.salt) await deriveSessionKey(peerId);
   } catch (e) { addMsg(peerId, '키 교환 실패', 'system'); }
 }
-
 async function deriveSessionKey(peerId) {
   const sess = sessions[peerId];
   const km = await crypto.subtle.importKey('raw', str2buf(sess.password), 'PBKDF2', false, ['deriveKey']);
@@ -447,17 +432,15 @@ async function deriveSessionKey(peerId) {
   document.getElementById('sessionFingerprint').textContent = buf2hex(await crypto.subtle.digest('SHA-256', sb)).slice(0, 32);
 }
 
-// ==================== 메시지 송수신 (모든 타입 암호화) ====================
+// ==================== 메시지 송수신 ====================
 async function sendText() {
   if (!activePeerId || isDestroyed(activePeerId)) return;
-  const sess = sessions[activePeerId];
-  if (!sess) return;
+  const sess = sessions[activePeerId]; if (!sess) return;
   const inp = document.getElementById('msgInput'); const txt = inp.value.trim(); if (!txt) return;
   const msgId = genUUID(); const payload = { type: 'text', content: txt, id: msgId };
   await sendPayload(sess, payload, txt, msgId);
   inp.value = '';
 }
-
 async function sendPayload(sess, payload, displayContent, msgId) {
   if (!sess.dc || sess.dc.readyState !== 'open' || !sess.sessionKey) {
     if (sess.sessionKey) { sess.pendingOutbox.push({ payload, id: msgId, displayContent }); addMsg(activePeerId, displayContent, 'me', msgId); addMsg(activePeerId, '⏳ 오프라인-복구 시 전송', 'system'); }
@@ -470,11 +453,9 @@ async function sendPayload(sess, payload, displayContent, msgId) {
     addMsg(activePeerId, displayContent, 'me', msgId);
   } catch (e) { sess.pendingOutbox.push({ payload, id: msgId, displayContent }); addMsg(activePeerId, displayContent, 'me', msgId); addMsg(activePeerId, '⚠️ 전송 실패-대기열 저장', 'system'); }
 }
-
 function onMsg(peerId, e) {
   if (isDestroyed(peerId)) return;
-  const sess = sessions[peerId];
-  if (!sess) return;
+  const sess = sessions[peerId]; if (!sess) return;
   if (e.data instanceof ArrayBuffer) { handleBinaryChunk(peerId, e.data); return; }
   try {
     const d = JSON.parse(e.data);
@@ -489,21 +470,15 @@ function onMsg(peerId, e) {
           case 'emoji': addMsg(peerId, inner.content, 'other', inner.id); break;
           case 'sticker': addMsg(peerId, `<img src="${inner.url}" class="sticker-img" alt="sticker">`, 'other', inner.id); break;
           case 'gif': addMsg(peerId, `<img src="${inner.url}" class="gif-img" alt="gif">`, 'other', inner.id); break;
-          case 'typing': break; // 타이핑 인디케이터 생략 (메타데이터 노출 방지)
           case 'read': markAsRead(peerId, inner.id); break;
           case 'file_start': handleFileStart(peerId, inner); break;
           case 'file_end': if (sess.fileReceive && sess.fileReceive.id === inner.id) assembleFile(peerId); break;
-          case '__destroy__': {
-            markDestroyed(peerId);
-            showDestroyedUI(peerId);
-            break;
-          }
+          case '__destroy__': { markDestroyed(peerId); showDestroyedUI(peerId); break; }
         }
       }).catch(() => addEncryptedMessage(peerId, d));
     }
   } catch (e) {}
 }
-
 async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
@@ -519,73 +494,81 @@ async function decryptPayload(sess, d) {
   try {
     if (seq <= sess.recvChain.seq) throw new Error('Invalid seq');
     while (sess.recvChain.seq < seq - 1) { await ratchetForward(sess.recvChain); sess.recvChain.seq++; }
-    const mk = await ratchetForward(sess.recvChain);
-    sess.recvChain.seq = seq;
+    const mk = await ratchetForward(sess.recvChain); sess.recvChain.seq = seq;
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, mk, new Uint8Array(ct));
-    const obj = JSON.parse(textDecoder.decode(plain));
-    delete obj._pad;
-    return obj;
+    const obj = JSON.parse(textDecoder.decode(plain)); delete obj._pad; return obj;
   } catch (e) { sess.recvChain.chain = prevChain; sess.recvChain.seq = prevSeq; throw e; }
 }
-
 async function flushOutbox(peerId) {
   const sess = sessions[peerId];
   if (!sess || !sess.dc || sess.dc.readyState !== 'open' || sess.pendingOutbox.length === 0) return;
   const toSend = [...sess.pendingOutbox]; sess.pendingOutbox = [];
-  for (const msg of toSend) {
-    try { const enc = await encryptPayload(sess, msg.payload); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
-  }
+  for (const msg of toSend) { try { const enc = await encryptPayload(sess, msg.payload); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {} }
   addMsg(peerId, '📬 대기 메시지 전송 완료', 'system');
 }
 
 // ==================== 특수 메시지: 이모지, 스티커, 짤 ====================
-function sendEmoji(emoji) {
-  if (!activePeerId || isDestroyed(activePeerId)) return;
-  const sess = sessions[activePeerId]; if (!sess) return;
-  const msgId = genUUID(); const payload = { type: 'emoji', content: emoji, id: msgId };
-  sendPayload(sess, payload, emoji, msgId);
-  closeAllPickers();
-}
-function sendSticker(url) {
-  if (!activePeerId || isDestroyed(activePeerId)) return;
-  const sess = sessions[activePeerId]; if (!sess) return;
-  const msgId = genUUID(); const payload = { type: 'sticker', url, id: msgId };
-  sendPayload(sess, payload, `<img src="${url}" class="sticker-img" alt="sticker">`, msgId);
-  closeAllPickers();
-}
-function sendGif(url) {
-  if (!activePeerId || isDestroyed(activePeerId)) return;
-  const sess = sessions[activePeerId]; if (!sess) return;
-  const msgId = genUUID(); const payload = { type: 'gif', url, id: msgId };
-  sendPayload(sess, payload, `<img src="${url}" class="gif-img" alt="gif">`, msgId);
-  closeAllPickers();
-}
+function sendEmoji(emoji) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'emoji', content: emoji, id: msgId }; sendPayload(sess, payload, emoji, msgId); closeAllPickers(); }
+function sendSticker(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'sticker', url, id: msgId }; sendPayload(sess, payload, `<img src="${url}" class="sticker-img" alt="sticker">`, msgId); closeAllPickers(); }
+function sendGif(url) { if (!activePeerId || isDestroyed(activePeerId)) return; const sess = sessions[activePeerId]; if (!sess) return; const msgId = genUUID(); const payload = { type: 'gif', url, id: msgId }; sendPayload(sess, payload, `<img src="${url}" class="gif-img" alt="gif">`, msgId); closeAllPickers(); }
 
+// ==================== 이모지/스티커/짤 Picker ====================
 const EMOJI_LIST = ['😀','😂','🥰','😎','🤔','👍','❤️','🔥','🎉','💯','😢','😡','🥺','🤯','✨','🍕','🚀','💻','📱','🎵'];
-const STICKER_URLS = [
-  'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ffcc00"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="4" fill="none"/></svg>'),
-  'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff6666"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 70 Q50 50 70 70" stroke="#000" stroke-width="4" fill="none"/></svg>'),
-];
-const GIF_URLS = [
-  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjR0eGZ6eG5qZmZ5eWd5eWZ4eGZ5eWZ5d2Z5eWZ5d2Z5eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPJei8QM/giphy.gif',
-  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdHd0eGZ6eG5qZmZ5eWd5eWZ4eGZ5eWZ5d2Z5eWZ5d2Z5eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlNQ03J5JxX6lva/giphy.gif',
+const STICKER_LIST = [
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ffcc00"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '웃음,행복,스마일' },
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff6666"/><circle cx="35" cy="40" r="5" fill="#000"/><circle cx="65" cy="40" r="5" fill="#000"/><path d="M30 70 Q50 50 70 70" stroke="#000" stroke-width="4" fill="none"/></svg>'), tags: '슬픔,울음,우울' },
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#ff4444"/><text x="50" y="65" text-anchor="middle" font-size="40" fill="#fff">♥</text></svg>'), tags: '사랑,하트,연인' },
+  { url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#44ff44"/><text x="50" y="65" text-anchor="middle" font-size="40" fill="#000">★</text></svg>'), tags: '별,특별,좋아요' },
 ];
 
-function buildEmojiPicker() { document.getElementById('emojiPicker').innerHTML = EMOJI_LIST.map(e => `<span class="emoji-item" onclick="sendEmoji('${e}')">${e}</span>`).join(''); }
-function buildStickerPicker() { document.getElementById('stickerPicker').innerHTML = STICKER_URLS.map((url, i) => `<span class="sticker-item" onclick="sendSticker('${url}')"><img src="${url}" width="40" height="40" alt="sticker${i}"></span>`).join(''); }
-function buildGifPicker() { document.getElementById('gifPicker').innerHTML = GIF_URLS.map((url, i) => `<span class="gif-item" onclick="sendGif('${url}')"><img src="${url}" alt="gif${i}"></span>`).join(''); }
+// Giphy 공개 테스트 키 (무료, API 키 없이 사용 가능)
+const DEFAULT_GIPHY_KEY = 'dc6zaTOxFJmzC';
+let giphyApiKey = localStorage.getItem('giphy_api_key') || DEFAULT_GIPHY_KEY;
+
+function setApiKey() {
+  const key = prompt('Giphy API 키 (선택, 없으면 공개키 사용):', giphyApiKey);
+  if (key !== null) {
+    giphyApiKey = key.trim() || DEFAULT_GIPHY_KEY;
+    localStorage.setItem('giphy_api_key', giphyApiKey);
+    alert('API 키가 저장되었습니다.');
+  }
+}
+
+async function searchGifs() {
+  const query = document.getElementById('gifSearch').value.trim();
+  if (!query) return;
+  const grid = document.getElementById('gifGrid');
+  grid.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${giphyApiKey}&q=${encodeURIComponent(query)}&limit=20&rating=g`);
+    const data = await res.json();
+    grid.innerHTML = data.data.map(g => `<div class="picker-item" onclick="sendGif('${g.images.fixed_height.url}')"><img src="${g.images.fixed_height_small.url}" alt="gif"></div>`).join('');
+  } catch (e) {
+    grid.innerHTML = '<span style="color:var(--danger);">검색 실패</span>';
+  }
+}
+
+function filterStickers() {
+  const query = document.getElementById('stickerSearch').value.toLowerCase();
+  const grid = document.getElementById('stickerGrid');
+  grid.innerHTML = STICKER_LIST.filter(s => s.tags.includes(query) || query === '').map(s => `<div class="picker-item" onclick="sendSticker('${s.url}')"><img src="${s.url}" alt="sticker"></div>`).join('');
+}
+
+function buildEmojiPicker() {
+  document.getElementById('emojiGrid').innerHTML = EMOJI_LIST.map(e => `<span class="emoji-item" onclick="sendEmoji('${e}')">${e}</span>`).join('');
+}
+function buildStickerPicker() { filterStickers(); }
 function togglePicker(type) {
   const picker = document.getElementById(type + 'Picker');
   const isActive = picker.classList.contains('active');
   closeAllPickers();
   if (!isActive) picker.classList.add('active');
 }
-function closeAllPickers() { document.querySelectorAll('.emoji-picker, .sticker-picker, .gif-picker').forEach(p => p.classList.remove('active')); }
+function closeAllPickers() { document.querySelectorAll('.picker-overlay').forEach(p => p.classList.remove('active')); }
 
 // ==================== 읽음 확인 ====================
 async function sendReadReceipt(peerId, msgId) {
-  const sess = sessions[peerId];
-  if (!sess || !sess.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return;
+  const sess = sessions[peerId]; if (!sess || !sess.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return;
   try { const enc = await encryptPayload(sess, { type: 'read', id: msgId }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
 }
 function markAsRead(peerId, msgId) {
@@ -593,7 +576,7 @@ function markAsRead(peerId, msgId) {
   if (el) { const t = el.querySelector('.time'); if (t && !t.querySelector('.read-status')) t.innerHTML += ' <span class="read-status" style="color:var(--success);">✓✓</span>'; }
 }
 
-// ==================== 파일 전송 (대용량) ====================
+// ==================== 파일 전송 ====================
 function handleFileStart(peerId, inner) {
   const sess = sessions[peerId]; if (!sess) return;
   sess.fileReceive = { id: inner.id, name: inner.name, size: inner.size, fek: b642buf(inner.fek), chunks: [], received: 0 };
@@ -601,13 +584,11 @@ function handleFileStart(peerId, inner) {
 }
 function handleBinaryChunk(peerId, buf) {
   const sess = sessions[peerId]; if (!sess || !sess.fileReceive) return;
-  sess.fileReceive.chunks.push(new Uint8Array(buf));
-  sess.fileReceive.received += buf.byteLength;
+  sess.fileReceive.chunks.push(new Uint8Array(buf)); sess.fileReceive.received += buf.byteLength;
 }
 async function assembleFile(peerId) {
   const sess = sessions[peerId]; if (!sess || !sess.fileReceive) return;
-  const blob = new Blob(sess.fileReceive.chunks);
-  const iv = blob.slice(0, 12); const ct = blob.slice(12);
+  const blob = new Blob(sess.fileReceive.chunks); const iv = blob.slice(0, 12); const ct = blob.slice(12);
   const key = await crypto.subtle.importKey('raw', sess.fileReceive.fek, 'AES-GCM', false, ['decrypt']);
   const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: await iv.arrayBuffer() }, key, await ct.arrayBuffer());
   const decBlob = new Blob([plain]); const url = URL.createObjectURL(decBlob);
@@ -619,24 +600,16 @@ async function sendFile(file) {
   if (!activePeerId || isDestroyed(activePeerId)) return;
   const sess = sessions[activePeerId];
   if (!sess || !sess.dc || sess.dc.readyState !== 'open' || !sess.sessionKey) return;
-  const fileId = genUUID();
-  const fek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: AES_LEN }, true, ['encrypt']);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const fekRaw = await crypto.subtle.exportKey('raw', fek);
+  const fileId = genUUID(); const fek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: AES_LEN }, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12)); const fekRaw = await crypto.subtle.exportKey('raw', fek);
   const fileBuf = await file.arrayBuffer();
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, fek, fileBuf);
-  const encData = new Uint8Array(iv.byteLength + ct.byteLength);
-  encData.set(iv); encData.set(new Uint8Array(ct), iv.byteLength);
+  const encData = new Uint8Array(iv.byteLength + ct.byteLength); encData.set(iv); encData.set(new Uint8Array(ct), iv.byteLength);
   const metaEnc = await encryptPayload(sess, { type: 'file_start', id: fileId, name: file.name, size: encData.byteLength, fek: buf2b64(fekRaw) });
   sess.dc.send(JSON.stringify({ type: 'msg', ...metaEnc }));
   addMsg(activePeerId, `📤 ${file.name} 전송 중...`, 'me');
   const chunkSize = 256 * 1024; let offset = 0;
-  while (offset < encData.byteLength) {
-    const end = Math.min(offset + chunkSize, encData.byteLength);
-    sess.dc.send(encData.slice(offset, end).buffer);
-    offset = end;
-    await new Promise(r => setTimeout(r, 10));
-  }
+  while (offset < encData.byteLength) { const end = Math.min(offset + chunkSize, encData.byteLength); sess.dc.send(encData.slice(offset, end).buffer); offset = end; await new Promise(r => setTimeout(r, 10)); }
   const endEnc = await encryptPayload(sess, { type: 'file_end', id: fileId });
   sess.dc.send(JSON.stringify({ type: 'msg', ...endEnc }));
   addMsg(activePeerId, `📤 ${file.name} 전송 완료`, 'me');
@@ -648,61 +621,30 @@ async function destroyChat(peerId) {
   const sess = sessions[peerId];
   if (!sess) { markDestroyed(peerId); showDestroyedUI(peerId); return; }
   if (sess.sessionKey && sess.dc && sess.dc.readyState === 'open') {
-    try {
-      const enc = await encryptPayload(sess, { type: '__destroy__', timestamp: Date.now() });
-      sess.dc.send(JSON.stringify({ type: 'msg', ...enc }));
-    } catch (e) {}
+    try { const enc = await encryptPayload(sess, { type: '__destroy__', timestamp: Date.now() }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
   }
   markDestroyed(peerId);
   if (sess.pc) sess.pc.close();
   delete sessions[peerId];
-  if (activePeerId === peerId) {
-    showDestroyedUI(peerId);
-  }
+  if (activePeerId === peerId) showDestroyedUI(peerId);
   renderPeerList();
 }
 
-// ==================== 블러 해제 조건 (강력) ====================
-let securityLockLevel = 0;
-let globalBlurTimer = null;
+// ==================== 블러 해제 조건 (온라인일 때만 길게 누르기) ====================
+let securityLockLevel = 0; let globalBlurTimer = null;
 function applyBlurToSensitiveElements() {
-  document.querySelectorAll('.bubble').forEach(el => {
-    if (!el.classList.contains('blur-target') && !el.closest('#msgInput') && !el.closest('.input-bar')) {
-      el.classList.add('blur-target');
-    }
-  });
-  document.querySelectorAll('.fingerprint, .link-box, .encrypted-bubble').forEach(el => {
-    if (!el.classList.contains('blur-target')) el.classList.add('blur-target');
-  });
+  document.querySelectorAll('.bubble').forEach(el => { if (!el.classList.contains('blur-target') && !el.closest('#msgInput') && !el.closest('.input-bar')) el.classList.add('blur-target'); });
+  document.querySelectorAll('.fingerprint, .link-box, .encrypted-bubble').forEach(el => { if (!el.classList.contains('blur-target')) el.classList.add('blur-target'); });
 }
-function lockAllBlurs(duration = 15000) {
-  document.querySelectorAll('.blur-target').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); });
-  clearTimeout(globalBlurTimer);
-  globalBlurTimer = setTimeout(() => document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked')), duration);
-}
-function triggerSecurityLock(level = 1) {
-  securityLockLevel = Math.max(securityLockLevel, level);
-  if (securityLockLevel >= 2) lockAllBlurs(20000);
-  else if (securityLockLevel >= 1) lockAllBlurs(8000);
-  setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000);
-}
-
-// 길게 누르기 감지 (0.6초 이상) - 블러 해제
-let pressTimer = null;
-let pressTarget = null;
+function lockAllBlurs(duration = 15000) { document.querySelectorAll('.blur-target').forEach(el => { el.classList.add('locked'); el.classList.remove('revealed'); }); clearTimeout(globalBlurTimer); globalBlurTimer = setTimeout(() => document.querySelectorAll('.blur-target.locked').forEach(el => el.classList.remove('locked')), duration); }
+function triggerSecurityLock(level = 1) { securityLockLevel = Math.max(securityLockLevel, level); if (securityLockLevel >= 2) lockAllBlurs(20000); else if (securityLockLevel >= 1) lockAllBlurs(8000); setTimeout(() => { securityLockLevel = Math.max(0, securityLockLevel - 1); }, 30000); }
+let pressTimer = null; let pressTarget = null;
 document.addEventListener('pointerdown', e => {
   if (!activePeerId || isDestroyed(activePeerId)) return;
-  const sess = sessions[activePeerId];
-  if (!sess || !sess.isOnline) return; // 오프라인이면 블러 해제 불가
+  const sess = sessions[activePeerId]; if (!sess || !sess.isOnline) return;
   const target = e.target.closest('.blur-target');
   if (target && !target.classList.contains('locked') && securityLockLevel < 2) {
-    pressTarget = target;
-    pressTimer = setTimeout(() => {
-      target.classList.add('revealed');
-      setTimeout(() => { if (target) target.classList.remove('revealed'); }, 3000);
-      pressTimer = null;
-      pressTarget = null;
-    }, 600);
+    pressTarget = target; pressTimer = setTimeout(() => { target.classList.add('revealed'); setTimeout(() => { if (target) target.classList.remove('revealed'); }, 3000); pressTimer = null; pressTarget = null; }, 600);
   }
 });
 document.addEventListener('pointerup', () => { clearTimeout(pressTimer); pressTimer = null; pressTarget = null; });
@@ -717,155 +659,79 @@ const concatBufs = (...bufs) => { let len=bufs.reduce((a,b)=>a+b.byteLength,0), 
 const genUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g,c=>{const r=crypto.getRandomValues(new Uint8Array(1))[0]%16;return(c=='x'?r:r&0x3|0x8).toString(16);});
 function formatBytes(b) { return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(1)+' GB'; }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
-function updateConn(ok) {
-  document.getElementById('connDot').className = 'dot ' + (ok ? 'on' : 'off');
-  document.getElementById('connLabel').textContent = ok ? '연결됨' : '오프라인';
-}
+function updateConn(ok) { document.getElementById('connDot').className = 'dot ' + (ok ? 'on' : 'off'); document.getElementById('connLabel').textContent = ok ? '연결됨' : '오프라인'; }
 function compareBuffers(b1, b2) { for (let i = 0; i < b1.byteLength; i++) { if (b1[i] < b2[i]) return -1; if (b1[i] > b2[i]) return 1; } return 0; }
-async function hkdfExpand(prk, info) {
-  const k = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
-  const s = await crypto.subtle.sign('HMAC', k, info);
-  return crypto.subtle.importKey('raw', s.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
-}
-async function ratchetForward(chainRef) {
-  const cur = chainRef.chain;
-  const newChain = await crypto.subtle.sign('HMAC', cur, new Uint8Array([2]));
-  chainRef.chain = await crypto.subtle.importKey('raw', newChain.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']);
-  const msgKey = await crypto.subtle.sign('HMAC', cur, new Uint8Array([1]));
-  return crypto.subtle.importKey('raw', msgKey.slice(0, 32), { name: 'AES-GCM', length: AES_LEN }, false, ['encrypt', 'decrypt']);
-}
+async function hkdfExpand(prk, info) { const k = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']); const s = await crypto.subtle.sign('HMAC', k, info); return crypto.subtle.importKey('raw', s.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']); }
+async function ratchetForward(chainRef) { const cur = chainRef.chain; const newChain = await crypto.subtle.sign('HMAC', cur, new Uint8Array([2])); chainRef.chain = await crypto.subtle.importKey('raw', newChain.slice(0, 32), { name: 'HMAC', hash: HMAC_HASH }, false, ['sign']); const msgKey = await crypto.subtle.sign('HMAC', cur, new Uint8Array([1])); return crypto.subtle.importKey('raw', msgKey.slice(0, 32), { name: 'AES-GCM', length: AES_LEN }, false, ['encrypt', 'decrypt']); }
 function addMsg(peerId, text, who, msgId) {
   if (peerId !== activePeerId || isDestroyed(peerId)) return;
   const c = document.getElementById('messages'), d = document.createElement('div');
   d.className = 'msg ' + (who === 'me' ? 'me' : who === 'other' ? 'other' : 'system');
   if (msgId) d.id = 'msg-' + msgId;
   let timeHtml = `<div class="time">${new Date().toLocaleTimeString()}</div>`;
-  // 텍스트에 제로 너비 공간 삽입하여 추출 방해
   const obfuscated = text.split('').map(ch => ch + (Math.random() < 0.15 ? '\u200B' : '')).join('');
   d.innerHTML = `<div class="bubble blur-target">${obfuscated}${timeHtml}<div class="noise-layer"></div></div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight;
-  applyBlurToSensitiveElements();
+  c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
 }
 function addEncryptedMessage(peerId, rawData) {
   if (peerId !== activePeerId || isDestroyed(peerId)) return;
   const c = document.getElementById('messages'), d = document.createElement('div');
   d.className = 'msg system';
   d.innerHTML = `<div class="encrypted-bubble blur-target"><strong>🔒 암호화된 메시지</strong><br>${escapeHtml(JSON.stringify(rawData, null, 2))}</div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight;
-  applyBlurToSensitiveElements();
+  c.appendChild(d); c.scrollTop = c.scrollHeight; applyBlurToSensitiveElements();
 }
 
-// ==================== 렌더링 왜곡 ====================
+// ==================== 렌더링 왜곡 + 보안 레이어 ====================
 (function initAntiScreenshot() {
-  const canvas = document.getElementById('antiScreenshotCanvas');
-  const ctx = canvas.getContext('2d');
-  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
-  resize(); window.addEventListener('resize', resize);
-  const drawNoise = () => {
-    if (!ctx) return;
-    const img = ctx.createImageData(canvas.width, canvas.height);
-    for (let i=0; i<img.data.length; i+=4) {
-      img.data[i]=Math.random()*5; img.data[i+1]=Math.random()*5; img.data[i+2]=Math.random()*5; img.data[i+3]=3;
-    }
-    ctx.putImageData(img,0,0);
-  };
-  setInterval(() => {
-    drawNoise();
-    ctx.fillStyle='rgba(255,255,255,0.002)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    for (let x=0; x<canvas.width; x+=4) {
-      ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`;
-      ctx.fillRect(x,0,1,canvas.height);
-    }
-  },100);
-  let frame=0;
-  (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
+  const canvas = document.getElementById('antiScreenshotCanvas'); const ctx = canvas.getContext('2d');
+  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; }; resize(); window.addEventListener('resize', resize);
+  const drawNoise = () => { if (!ctx) return; const img = ctx.createImageData(canvas.width, canvas.height); for (let i=0; i<img.data.length; i+=4) { img.data[i]=Math.random()*5; img.data[i+1]=Math.random()*5; img.data[i+2]=Math.random()*5; img.data[i+3]=3; } ctx.putImageData(img,0,0); };
+  setInterval(() => { drawNoise(); ctx.fillStyle='rgba(255,255,255,0.002)'; ctx.fillRect(0,0,canvas.width,canvas.height); for (let x=0; x<canvas.width; x+=4) { ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.01)`; ctx.fillRect(x,0,1,canvas.height); } },100);
+  let frame=0; (function jitter(){ frame++; document.body.style.transform=`translate(${Math.sin(frame/10)*0.2}px,${Math.cos(frame/15)*0.2}px)`; requestAnimationFrame(jitter); })();
+})();
+(function securityLayer(){
+  const ua=navigator.userAgent||'', plt=navigator.platform||''; const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64'; const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC'; const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
+  function logViolation(r) { triggerSecurityLock(1+(securityLockLevel>0?1:0)); }
+  window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
+  window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
+  document.addEventListener('keydown',e=>{let b=false;const k=e.key.toLowerCase();if(k==='f12'||k==='printscreen')b=true;if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;if(e.altKey&&k==='printscreen')b=true;if(isWin){if(k==='meta'||k==='win')b=true;if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true;if(e.metaKey&&e.altKey&&k==='r')b=true;if(e.metaKey&&e.shiftKey&&k==='s')b=true;}if(isMac){if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true;if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true;}if(isLinux){if(k==='printscreen')b=true;if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true;}if(b){e.preventDefault();e.stopPropagation();logViolation('key');}},true);
+  document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
+  document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
+  document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
+  document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
+  document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
+  window.addEventListener('blur',()=>triggerSecurityLock(2));
+  window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
+  window.addEventListener('pagehide',()=>triggerSecurityLock(3));
+  window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-target.locked').forEach(e=>e.classList.remove('locked'));});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
+  setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
+  new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')&&!n.closest('.picker-overlay')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
+  if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
+  navigator.clipboard.write=()=>Promise.reject('Blocked');
+  if(window.opener){window.opener=null;}
+  ['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
+  if(typeof HTMLCanvasElement!=='undefined'){HTMLCanvasElement.prototype.toDataURL=function(){return'';};HTMLCanvasElement.prototype.toBlob=function(){};HTMLCanvasElement.prototype.captureStream=function(){return null;};}
+  Element.prototype.requestFullscreen=function(){};
+  window.open=()=>null;
+  document.execCommand=function(){return false;};
+  window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
+  if(navigator.keyboard?.lock)navigator.keyboard.lock=()=>Promise.reject();
+  HTMLCanvasElement.prototype.getContext=function(type,...args){if(type?.includes('webgl'))return null;return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
+  if(navigator.wakeLock?.request)navigator.wakeLock.request=()=>Promise.reject();
+  if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject();navigator.serviceWorker.addEventListener=()=>{};}
+  window.Worker=function(){throw new Error('Blocked');};window.SharedWorker=function(){throw new Error('Blocked');};
+  window.eval=()=>{};window.Function=()=>{};
+  const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
+  window.WebSocket=function(){throw new Error('Blocked');};window.EventSource=function(){throw new Error('Blocked');};
+  navigator.sendBeacon=()=>false;
+  if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
+  HTMLIFrameElement.prototype.create=function(){throw new Error('Blocked');};
+  const _ce=document.createElement.bind(document);document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Error('Blocked');return _ce(t,o);};
 })();
 
-// ==================== 보안 레이어 (강화) ====================
-const ua=navigator.userAgent||'', plt=navigator.platform||'';
-const isWin=/Windows/i.test(ua)||plt==='Win32'||plt==='Win64';
-const isMac=/Macintosh/i.test(ua)||plt==='MacIntel'||plt==='MacPPC';
-const isLinux=/Linux/i.test(ua)&&!/Android/i.test(ua);
-function logViolation(r) { triggerSecurityLock(1+(securityLockLevel>0?1:0)); }
-window.addEventListener('beforeprint',e=>{e.preventDefault();triggerSecurityLock(3);});
-window.addEventListener('print',e=>{e.preventDefault();triggerSecurityLock(3);});
-document.addEventListener('keydown',e=>{let b=false;const k=e.key.toLowerCase();if(k==='f12'||k==='printscreen')b=true;if((e.ctrlKey||e.metaKey)&&(k==='s'||k==='p'||k==='u'))b=true;if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='c'||k==='j'))b=true;if(e.altKey&&k==='printscreen')b=true;if(isWin){if(k==='meta'||k==='win')b=true;if(e.metaKey&&(k==='g'||k==='r'||k==='s'||k==='t'))b=true;if(e.metaKey&&e.altKey&&k==='r')b=true;if(e.metaKey&&e.shiftKey&&k==='s')b=true;}if(isMac){if(e.metaKey&&e.shiftKey&&(k==='3'||k==='4'||k==='5'))b=true;if(e.metaKey&&e.shiftKey&&e.ctrlKey&&(k==='3'||k==='4'))b=true;}if(isLinux){if(k==='printscreen')b=true;if(e.altKey||e.shiftKey||e.ctrlKey||e.metaKey)if(k==='printscreen')b=true;}if(b){e.preventDefault();e.stopPropagation();logViolation('key');}},true);
-document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('ctx');});
-document.addEventListener('dragstart',e=>{e.preventDefault();logViolation('drag');});
-document.addEventListener('selectstart',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('sel');}});
-document.addEventListener('copy',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('copy');}});
-document.addEventListener('cut',e=>{if(!e.target.matches('input,textarea')){e.preventDefault();logViolation('cut');}});
-let tSy=0,tSx=0,tSt=0;
-document.addEventListener('touchstart',e=>{if(e.touches.length>1){logViolation('multi');e.preventDefault();}if(e.touches.length===1){tSy=e.touches[0].clientY;tSx=e.touches[0].clientX;tSt=Date.now();}},{passive:false});
-document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
-document.addEventListener('touchend',e=>{const n=Date.now();const dy=tSy-(e.changedTouches[0]?.clientY??0);const dx=tSx-(e.changedTouches[0]?.clientX??0);if(tSy>innerHeight-40&&dy>50&&n-tSt<300)logViolation('bottom');if(tSx<20&&dx<-50&&n-tSt<300)logViolation('left');if(tSx>innerWidth-20&&dx>50&&n-tSt<300)logViolation('right');});
-document.documentElement.addEventListener('mouseleave',e=>{if(e.clientY<=0||e.clientX<=0||e.clientX>=innerWidth||e.clientY>=innerHeight)logViolation('mouse');});
-window.addEventListener('blur',()=>triggerSecurityLock(2));
-window.addEventListener('focus',()=>{securityLockLevel=Math.max(0,securityLockLevel-1);});
-window.addEventListener('pagehide',()=>triggerSecurityLock(3));
-window.addEventListener('pageshow',()=>{securityLockLevel=0;document.querySelectorAll('.blur-target.locked').forEach(e=>e.classList.remove('locked'));});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')triggerSecurityLock(2);else securityLockLevel=Math.max(0,securityLockLevel-1);});
-let lW=innerWidth,lH=innerHeight;
-window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;if(Math.abs(w-lW)>1||Math.abs(h-lH)>1){logViolation('resize');lW=w;lH=h;}});
-window.addEventListener('orientationchange',()=>logViolation('orient'));
-if(visualViewport){visualViewport.addEventListener('resize',()=>logViolation('vport'));visualViewport.addEventListener('scroll',()=>logViolation('vpscroll'));}
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)logViolation('fs');});
-setInterval(()=>{const s=performance.now();debugger;if(performance.now()-s>100)logViolation('dev');if(outerWidth-innerWidth>150||outerHeight-innerHeight>150)logViolation('devsize');},3000);
-new MutationObserver(m=>{for(const r of m)for(const n of r.addedNodes)if(n.nodeType===1&&!n.closest('#messages')&&!n.closest('#antiScreenshotCanvas')&&!n.closest('.emoji-picker')&&!n.closest('.sticker-picker')&&!n.closest('.gif-picker')){n.remove();logViolation('dom');}}).observe(document.body,{childList:true,subtree:true,attributes:true});
-if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('Blocked'));if(navigator.mediaDevices.getDisplayMedia)navigator.mediaDevices.getDisplayMedia=()=>Promise.reject(new Error('Blocked'));}
-if(navigator.getDisplayMedia)navigator.getDisplayMedia=()=>Promise.reject();
-navigator.clipboard.write=()=>Promise.reject('Blocked');
-if(window.opener){window.opener=null;}
-['log','warn','error','info','debug','table','trace'].forEach(m=>{console[m]=()=>{};Object.defineProperty(console,m,{value:()=>{},writable:false,configurable:false});});
-if(typeof HTMLCanvasElement!=='undefined'){HTMLCanvasElement.prototype.toDataURL=function(){return'';};HTMLCanvasElement.prototype.toBlob=function(){};HTMLCanvasElement.prototype.captureStream=function(){return null;};}
-Element.prototype.requestFullscreen=function(){};
-Element.prototype.webkitRequestFullscreen=function(){};
-window.open=()=>null;
-document.execCommand=function(){return false;};
-window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='';});
-if(navigator.keyboard?.lock)navigator.keyboard.lock=()=>Promise.reject();
-if(screen?.isExtended){setInterval(()=>{if(screen.isExtended)logViolation('extmon');},5000);}
-if(matchMedia('(display-mode: standalone)').matches)logViolation('pwa');
-HTMLCanvasElement.prototype.getContext=function(type,...args){if(type?.includes('webgl'))return null;return CanvasRenderingContext2D.prototype.getContext.apply(this,arguments);};
-if(navigator.wakeLock?.request)navigator.wakeLock.request=()=>Promise.reject();
-if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject();navigator.serviceWorker.addEventListener=()=>{};}
-let rafC=0,lastR=0;
-(function rafLoop(t){if(lastR&&t-lastR>100){rafC++;if(rafC>3){logViolation('frame');rafC=0;}}else rafC=0;lastR=t;requestAnimationFrame(rafLoop);})(performance.now());
-let inactivityTimer;
-function resetInactivity(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(document.getElementById('chatScreen').style.display!=='none'&&activePeerId)destroyChat(activePeerId);},15*60*1000);}
-['mousemove','keydown','scroll','click'].forEach(e=>document.addEventListener(e,resetInactivity));resetInactivity();
-window.Worker=function(){throw new Error('Blocked');};window.SharedWorker=function(){throw new Error('Blocked');};
-window.eval=()=>{};window.Function=()=>{};
-const _st=window.setTimeout;window.setTimeout=function(c,...a){if(typeof c==='string')return;return _st.call(this,c,...a);};
-const _si=window.setInterval;window.setInterval=function(c,...a){if(typeof c==='string')return;return _si.call(this,c,...a);};
-window.WebSocket=function(){throw new Error('Blocked');};window.EventSource=function(){throw new Error('Blocked');};
-navigator.sendBeacon=()=>false;
-if(navigator.permissions)navigator.permissions.query=()=>Promise.reject(new Error('Blocked'));
-if(window.Notification){window.Notification.requestPermission=()=>Promise.reject(new Error('Blocked'));window.Notification.permission='denied';}
-if(navigator.geolocation){navigator.geolocation.getCurrentPosition=()=>{};navigator.geolocation.watchPosition=()=>{};}
-if(window.PaymentRequest)window.PaymentRequest=function(){throw new Error('Blocked');};
-if(navigator.mediaDevices?.enumerateDevices)navigator.mediaDevices.enumerateDevices=()=>Promise.reject(new Error('Blocked'));
-if(navigator.bluetooth)navigator.bluetooth.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(navigator.usb)navigator.usb.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(navigator.serial)navigator.serial.requestPort=()=>Promise.reject(new Error('Blocked'));
-if(navigator.hid)navigator.hid.requestDevice=()=>Promise.reject(new Error('Blocked'));
-if(window.showOpenFilePicker)window.showOpenFilePicker=()=>Promise.reject(new Error('Blocked'));
-if(window.showSaveFilePicker)window.showSaveFilePicker=()=>Promise.reject(new Error('Blocked'));
-if(window.showDirectoryPicker)window.showDirectoryPicker=()=>Promise.reject(new Error('Blocked'));
-if(window.SpeechRecognition||window.webkitSpeechRecognition){window.SpeechRecognition=function(){throw new Error('Blocked');};window.webkitSpeechRecognition=function(){throw new Error('Blocked');}}
-HTMLIFrameElement.prototype.create=function(){throw new Error('Blocked');};
-const _ce=document.createElement.bind(document);
-document.createElement=function(t,o){if(t.toLowerCase()==='iframe')throw new Error('Blocked');return _ce(t,o);};
-const _sa=Element.prototype.setAttribute;
-Element.prototype.setAttribute=function(n,v){if(n==='style'&&this.closest('#chatScreen'))return;return _sa.call(this,n,v);};
-
 // ==================== 초기 실행 ====================
-buildEmojiPicker();
-buildStickerPicker();
-buildGifPicker();
-renderPeerList();
-checkHash();
-applyBlurToSensitiveElements();
+buildEmojiPicker(); buildStickerPicker(); renderPeerList(); checkHash(); applyBlurToSensitiveElements();
 </script>
 </body>
 </html>
