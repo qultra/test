@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 완전 익명·메타데이터 보호</title>
+  <title>P2P 비밀 메신저 – 링크 즉시 연결·완전 삭제·오프라인 큐</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -103,8 +103,8 @@
     <!-- 메인 화면 -->
     <div id="simpleMode" class="view">
       <div class="card text-center">
-        <h3 style="margin-bottom:4px;">서버 없이 완벽한 익명성</h3>
-        <p class="text-sub mb">모든 메타데이터 완전 암호화</p>
+        <h3 style="margin-bottom:4px;">서버 없이 완벽한 프라이버시</h3>
+        <p class="text-sub mb">링크 하나로 연결되는 초간편 P2P 채팅</p>
         <button class="btn primary" onclick="startNewChat()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>새 채팅 생성</button>
         <button class="btn mt" onclick="showJoinPanel()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>초대 링크로 참가</button>
       </div>
@@ -182,7 +182,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 완전 익명·메타데이터 보호 (타이핑도 암호화)
+//  P2P 비밀 메신저 – 링크 즉시 연결·완전 삭제·오프라인 큐
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -191,11 +191,37 @@ const fromBase64url = str => { str = str.replace(/-/g,'+').replace(/_/g,'/'); wh
 const encodeSDP = obj => toBase64url(textEncoder.encode(JSON.stringify(obj)));
 const decodeSDP = str => JSON.parse(textDecoder.decode(fromBase64url(str)));
 
-// 최소 STUN 서버 (데이터 중계 없이 연결 보조만)
+// 프라이버시 고려 STUN/TURN 서버 목록 (무료, 로그 없음)
 const ICE_SERVERS = [
+  // Google STUN
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },
+  // Cloudflare STUN
   { urls: 'stun:stun.cloudflare.com:3478' },
+  // Twilio STUN
+  { urls: 'stun:global.stun.twilio.com:3478' },
+  // Freeswitch STUN
+  { urls: 'stun:stun.freeswitch.org:3478' },
+  // Nextcloud STUN
+  { urls: 'stun:stun.nextcloud.com:443' },
+  // Viagenie STUN
+  { urls: 'stun:stun.viagenie.ca:3478' },
+  // Ekiga STUN
+  { urls: 'stun:stun.ekiga.net:3478' },
+  // Linphone STUN
+  { urls: 'stun:stun.linphone.org:3478' },
+  // iptel STUN
+  { urls: 'stun:stun.iptel.org:3478' },
+  // Mozilla STUN
+  { urls: 'stun:stun.services.mozilla.com:3478' },
+  // Matrix.org STUN
+  { urls: 'stun:turn.matrix.org:3478?transport=udp' },
+  // OpenRelay TURN (프라이버시 친화적, 공개)
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
 ];
 
 // ==================== 세션 및 연락처 ====================
@@ -366,6 +392,7 @@ function setupDC(peerId) {
 }
 function waitIce(pc) { return new Promise(r => { if (pc.iceGatheringState === 'complete') r(); else pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') r(); }); }); }
 
+// 해시 처리 (링크 클릭 시 즉시 채팅방 연결)
 async function checkHash() {
   const h = location.hash.substring(1); if (!h) return;
   const p = new URLSearchParams(h);
@@ -381,10 +408,11 @@ async function checkHash() {
     const ans = await sess.pc.createAnswer(); await sess.pc.setLocalDescription(ans);
     await waitIce(sess.pc);
     const answerB64 = encodeSDP(sess.pc.localDescription);
+    // Answer 링크를 UI에 표시하고, 자동으로 채팅방으로 전환
     document.getElementById('answerResultPanel').classList.remove('hidden');
     document.getElementById('localAnswerLinkDisplay').textContent = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
     activePeerId = peerId;
-    showView('answerPanel');
+    showView('answerPanel'); // Answer UI를 보여줌
     renderContactList();
   } else if (p.has('answer') && p.has('peer')) {
     const peerId = p.get('peer');
@@ -396,10 +424,10 @@ async function checkHash() {
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 궁극 암호화 (모든 메타데이터 포함) ====================
+// ==================== 궁극 암호화 ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
 const PBKDF2_ITERS = 5000000, SALT_SIZE = 1024, AES_LEN = 256, HMAC_HASH = 'SHA-512';
-const PADDING_LENGTH = 256; // 모든 메시지를 256바이트로 패딩
+const PADDING_LENGTH = 256;
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -448,12 +476,11 @@ async function deriveSessionKey(peerId) {
   } catch (e) { document.getElementById('passwordError').textContent = '세션 키 생성 실패: ' + e.message; document.getElementById('passwordError').style.display = 'block'; }
 }
 
-// ==================== 메시지 (타이핑도 암호화) ====================
+// ==================== 메시지 (타이핑 포함, 전부 암호화) ====================
 async function sendTyping(state) {
   if (!activePeerId || isDestroyed(activePeerId)) return;
   const sess = sessions[activePeerId];
   if (!sess?.sessionKey || !sess.dc || sess.dc.readyState !== 'open') return;
-  // 타이핑도 암호화하여 전송
   try { const enc = await encryptPayload(sess, { type: 'typing', state }); sess.dc.send(JSON.stringify({ type: 'msg', ...enc })); } catch (e) {}
 }
 document.getElementById('msgInput').addEventListener('input', () => {
@@ -508,7 +535,6 @@ async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
   const iv = crypto.getRandomValues(new Uint8Array(16));
-  // 모든 페이로드를 고정 길이로 패딩하여 메타데이터 노출 최소화
   let json = JSON.stringify(obj);
   const padLen = PADDING_LENGTH - json.length;
   if (padLen > 0) json += '\0'.repeat(padLen);
