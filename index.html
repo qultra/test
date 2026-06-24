@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
-  <title>P2P 비밀 메신저 – 최종 완벽판</title>
+  <title>P2P 비밀 메신저 – 초강력 암호화·완벽 UI</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src *; media-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; referrer no-referrer;">
   <meta name="referrer" content="no-referrer">
   <style>
@@ -223,7 +223,7 @@
 
 <script>
 // =====================================================================
-//  P2P 비밀 메신저 – 최종 완벽판 (모든 버그 수정)
+//  P2P 비밀 메신저 – 초강력 암호화·완벽 UI
 // =====================================================================
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -352,7 +352,6 @@ async function startNewChat() {
   activePeerId = peerId;
   const sess = getOrCreateSession(peerId);
   sess.isOfferer = true;
-  // 메인 화면을 숨기고 offer 패널을 바로 표시
   document.getElementById('simpleMode').style.display = 'none';
   document.getElementById('offerPanel').classList.remove('hidden');
   document.getElementById('offerSpinner').style.display = 'inline-block';
@@ -398,7 +397,6 @@ async function createAnswerFromOffer() {
   const link = location.origin + location.pathname + '#answer=' + answerB64 + '&peer=' + peerId;
   document.getElementById('answerResultPanel').classList.remove('hidden');
   document.getElementById('localAnswerLinkDisplay').textContent = link;
-  // 바로 채팅 화면으로 전환하지 않고, 사용자에게 Answer 링크를 보내라고 알림
   renderContactList();
 }
 
@@ -483,9 +481,9 @@ async function checkHash() {
 }
 window.addEventListener('hashchange', checkHash);
 
-// ==================== 암호화 엔진 (P-521 + SHA-512 + AES-256) ====================
+// ==================== 초강력 암호화 엔진 (P-521 + SHA-512 + AES-256) ====================
 const ECDH_ALG = { name: 'ECDH', namedCurve: 'P-521' };
-const PBKDF2_ITERS = 1000000, SALT_SIZE = 128, AES_LEN = 256, HMAC_HASH = 'SHA-512';
+const PBKDF2_ITERS = 2000000, SALT_SIZE = 256, AES_LEN = 256, HMAC_HASH = 'SHA-512'; // 더 긴 솔트, 더 많은 반복
 
 async function startEcdhExchange(peerId) {
   const sess = sessions[peerId];
@@ -581,7 +579,7 @@ async function encryptPayload(sess, obj) {
   if (!sess.sendChain) throw new Error('세션키 없음');
   const mk = await ratchetForward(sess.sendChain);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const padded = { ...obj, _pad: Math.random().toString(36).slice(2, 10) };
+  const padded = { ...obj, _pad: Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10) };
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, mk, str2buf(JSON.stringify(padded)));
   return { seq: sess.sendChain.seq++, iv: Array.from(new Uint8Array(iv)), ct: Array.from(new Uint8Array(ct)) };
 }
